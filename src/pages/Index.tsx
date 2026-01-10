@@ -1,5 +1,6 @@
 import Navigation from "@/components/wedding/Navigation";
 import Hero from "@/components/wedding/Hero";
+import Countdown from "@/components/wedding/Countdown";
 import OurStory from "@/components/wedding/OurStory";
 import EventDetails from "@/components/wedding/EventDetails";
 import RSVP from "@/components/wedding/RSVP";
@@ -14,6 +15,8 @@ const Index = () => {
         <div id="home">
           <Hero />
         </div>
+
+        <Countdown />
         
         <div id="our-story">
           <OurStory />
