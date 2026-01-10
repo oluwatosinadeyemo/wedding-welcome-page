@@ -34,7 +34,7 @@ const OurStory = () => {
 
           <div className="order-1 md:order-2">
             <div className="relative">
-              <div className="absolute -inset-4 bg-gradient-to-br from-sage-light to-rose-light rounded-sm opacity-50" />
+              <div className="absolute -inset-4 bg-gradient-to-br from-hydrangea-light to-lavender-light rounded-sm opacity-50" />
               <img
                 src={coupleImage}
                 alt="Tosin and Pelumi"

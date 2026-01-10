@@ -45,7 +45,7 @@ const TravelAccommodation = () => {
     <section id="travel" className="py-20 bg-white">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16 animate-fade-in">
-          <p className="text-sage font-sans uppercase tracking-[0.3em] text-sm mb-4">
+          <p className="text-hydrangea font-sans uppercase tracking-[0.3em] text-sm mb-4">
             Plan Your Visit
           </p>
           <h2 className="font-serif text-4xl md:text-5xl text-foreground mb-4">
@@ -61,12 +61,12 @@ const TravelAccommodation = () => {
           {directions.map((item, index) => (
             <div
               key={item.title}
-              className="bg-ivory rounded-lg p-8 border border-champagne/30"
+              className="bg-ivory rounded-lg p-8 border border-silver/30"
               style={{ animationDelay: `${index * 100}ms` }}
             >
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-full bg-sage/10 flex items-center justify-center flex-shrink-0">
-                  <item.icon className="w-5 h-5 text-sage" />
+                <div className="w-12 h-12 rounded-full bg-hydrangea/10 flex items-center justify-center flex-shrink-0">
+                  <item.icon className="w-5 h-5 text-hydrangea" />
                 </div>
                 <div>
                   <h3 className="font-serif text-xl text-foreground mb-2">
@@ -83,7 +83,7 @@ const TravelAccommodation = () => {
 
         {/* Map */}
         <div className="mb-16 animate-fade-in-up">
-          <div className="bg-ivory rounded-lg p-4 border border-champagne/30">
+          <div className="bg-ivory rounded-lg p-4 border border-silver/30">
             <div className="aspect-[16/9] md:aspect-[21/9] rounded-lg overflow-hidden">
               <iframe
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3955.123456789!2d3.3515!3d7.1475!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2sAbeokuta%2C%20Nigeria!5e0!3m2!1sen!2sng!4v1234567890"
@@ -97,7 +97,7 @@ const TravelAccommodation = () => {
                 className="grayscale-[30%] contrast-[1.1]"
               />
             </div>
-            <div className="flex items-center justify-center gap-2 mt-4 text-sage">
+            <div className="flex items-center justify-center gap-2 mt-4 text-hydrangea">
               <MapPin className="w-4 h-4" />
               <span className="font-sans text-sm">
                 Lambs Event Centre, Abeokuta, Ogun State, Nigeria
@@ -109,43 +109,43 @@ const TravelAccommodation = () => {
         {/* Hotels */}
         <div className="animate-fade-in-up">
           <div className="flex items-center justify-center gap-4 mb-8">
-            <div className="w-16 h-px bg-gradient-to-r from-transparent to-champagne" />
-            <Hotel className="w-5 h-5 text-gold" />
+            <div className="w-16 h-px bg-gradient-to-r from-transparent to-silver" />
+            <Hotel className="w-5 h-5 text-primary" />
             <h3 className="font-serif text-2xl text-foreground">Recommended Hotels</h3>
-            <Hotel className="w-5 h-5 text-gold" />
-            <div className="w-16 h-px bg-gradient-to-l from-transparent to-champagne" />
+            <Hotel className="w-5 h-5 text-primary" />
+            <div className="w-16 h-px bg-gradient-to-l from-transparent to-silver" />
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
             {hotels.map((hotel, index) => (
               <div
                 key={hotel.name}
-                className="bg-ivory rounded-lg p-6 border border-champagne/30 hover:shadow-lg transition-shadow duration-300"
+                className="bg-ivory rounded-lg p-6 border border-silver/30 hover:shadow-lg transition-shadow duration-300"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 <div className="flex items-start justify-between mb-3">
                   <h4 className="font-serif text-lg text-foreground">
                     {hotel.name}
                   </h4>
-                  <span className="text-gold font-sans text-sm">{hotel.price}</span>
+                  <span className="text-primary font-sans text-sm">{hotel.price}</span>
                 </div>
-                <p className="text-sage font-sans text-xs uppercase tracking-wider mb-3">
+                <p className="text-hydrangea font-sans text-xs uppercase tracking-wider mb-3">
                   {hotel.distance}
                 </p>
                 <p className="text-muted-foreground font-sans text-sm mb-4">
                   {hotel.description}
                 </p>
-                <div className="flex items-center gap-4 pt-4 border-t border-champagne/30">
+                <div className="flex items-center gap-4 pt-4 border-t border-silver/30">
                   <a
                     href={`tel:${hotel.phone}`}
-                    className="flex items-center gap-1 text-sage hover:text-foreground transition-colors text-sm"
+                    className="flex items-center gap-1 text-hydrangea hover:text-foreground transition-colors text-sm"
                   >
                     <Phone className="w-3 h-3" />
                     <span className="font-sans">{hotel.phone}</span>
                   </a>
                   <a
                     href={hotel.website}
-                    className="flex items-center gap-1 text-sage hover:text-foreground transition-colors text-sm ml-auto"
+                    className="flex items-center gap-1 text-hydrangea hover:text-foreground transition-colors text-sm ml-auto"
                   >
                     <span className="font-sans">Website</span>
                     <ExternalLink className="w-3 h-3" />
@@ -159,9 +159,9 @@ const TravelAccommodation = () => {
         {/* Decorative element */}
         <div className="flex justify-center mt-16">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-px bg-gradient-to-r from-transparent to-champagne" />
-            <span className="text-gold text-2xl">♥</span>
-            <div className="w-12 h-px bg-gradient-to-l from-transparent to-champagne" />
+            <div className="w-12 h-px bg-gradient-to-r from-transparent to-silver" />
+            <span className="text-primary text-2xl">♥</span>
+            <div className="w-12 h-px bg-gradient-to-l from-transparent to-silver" />
           </div>
         </div>
       </div>
