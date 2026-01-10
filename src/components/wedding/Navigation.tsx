@@ -31,7 +31,7 @@ const Navigation = () => {
           onClick={() => scrollToSection("home")}
           className="flex items-center gap-2 group"
         >
-          <Heart className="w-5 h-5 text-primary group-hover:fill-rose/30 transition-all" />
+          <Heart className="w-5 h-5 text-primary group-hover:fill-lavender/30 transition-all" />
           <span className="wedding-heading text-xl">T & P</span>
         </button>
 

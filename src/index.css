@@ -6,44 +6,44 @@
 
 @layer base {
   :root {
-    --background: 40 33% 98%;
-    --foreground: 30 10% 20%;
+    --background: 220 30% 97%;
+    --foreground: 220 20% 20%;
 
-    --card: 40 30% 96%;
-    --card-foreground: 30 10% 20%;
+    --card: 220 30% 95%;
+    --card-foreground: 220 20% 20%;
 
-    --popover: 40 33% 98%;
-    --popover-foreground: 30 10% 20%;
+    --popover: 220 30% 97%;
+    --popover-foreground: 220 20% 20%;
 
-    --primary: 150 25% 35%;
-    --primary-foreground: 40 33% 98%;
+    --primary: 220 60% 50%;
+    --primary-foreground: 220 30% 97%;
 
-    --secondary: 350 30% 80%;
-    --secondary-foreground: 30 10% 20%;
+    --secondary: 270 40% 75%;
+    --secondary-foreground: 220 20% 20%;
 
-    --muted: 40 20% 92%;
-    --muted-foreground: 30 10% 45%;
+    --muted: 220 20% 92%;
+    --muted-foreground: 220 15% 45%;
 
-    --accent: 35 40% 85%;
-    --accent-foreground: 30 10% 20%;
+    --accent: 200 40% 88%;
+    --accent-foreground: 220 20% 20%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 40 20% 88%;
-    --input: 40 20% 88%;
-    --ring: 150 25% 35%;
+    --border: 220 20% 88%;
+    --input: 220 20% 88%;
+    --ring: 220 60% 50%;
 
     --radius: 0.25rem;
 
-    /* Custom wedding theme tokens */
-    --sage: 150 25% 35%;
-    --sage-light: 150 20% 90%;
-    --rose: 350 30% 75%;
-    --rose-light: 350 30% 92%;
-    --ivory: 40 33% 98%;
-    --champagne: 35 40% 85%;
-    --gold: 38 60% 50%;
+    /* Custom wedding theme tokens - Blue Garden */
+    --hydrangea: 220 60% 50%;
+    --hydrangea-light: 220 50% 92%;
+    --lavender: 270 40% 75%;
+    --lavender-light: 270 40% 92%;
+    --ivory: 220 30% 97%;
+    --silver: 220 20% 88%;
+    --gold: 45 70% 55%;
 
     /* Typography */
     --font-serif: 'Cormorant Garamond', Georgia, serif;
@@ -63,23 +63,23 @@
   }
 
   .dark {
-    --background: 30 10% 10%;
-    --foreground: 40 33% 95%;
-    --card: 30 10% 12%;
-    --card-foreground: 40 33% 95%;
-    --popover: 30 10% 10%;
-    --popover-foreground: 40 33% 95%;
-    --primary: 150 30% 60%;
-    --primary-foreground: 30 10% 10%;
-    --secondary: 350 25% 30%;
-    --secondary-foreground: 40 33% 95%;
-    --muted: 30 10% 20%;
-    --muted-foreground: 40 20% 65%;
-    --accent: 35 30% 25%;
-    --accent-foreground: 40 33% 95%;
-    --border: 30 10% 20%;
-    --input: 30 10% 20%;
-    --ring: 150 30% 60%;
+    --background: 220 20% 10%;
+    --foreground: 220 30% 95%;
+    --card: 220 20% 12%;
+    --card-foreground: 220 30% 95%;
+    --popover: 220 20% 10%;
+    --popover-foreground: 220 30% 95%;
+    --primary: 220 70% 65%;
+    --primary-foreground: 220 20% 10%;
+    --secondary: 270 35% 40%;
+    --secondary-foreground: 220 30% 95%;
+    --muted: 220 15% 20%;
+    --muted-foreground: 220 20% 65%;
+    --accent: 200 30% 25%;
+    --accent-foreground: 220 30% 95%;
+    --border: 220 15% 20%;
+    --input: 220 15% 20%;
+    --ring: 220 70% 65%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;

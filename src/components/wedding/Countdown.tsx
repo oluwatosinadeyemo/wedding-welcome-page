@@ -40,7 +40,7 @@ const Countdown = () => {
     <section className="py-20 bg-ivory">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12 animate-fade-in">
-          <p className="text-sage font-sans uppercase tracking-[0.3em] text-sm mb-4">
+          <p className="text-hydrangea font-sans uppercase tracking-[0.3em] text-sm mb-4">
             Counting Down To
           </p>
           <h2 className="font-serif text-4xl md:text-5xl text-foreground mb-2">
@@ -59,14 +59,14 @@ const Countdown = () => {
               style={{ animationDelay: `${index * 100}ms` }}
             >
               <div className="relative">
-                <div className="w-20 h-20 md:w-28 md:h-28 bg-white rounded-lg shadow-lg border border-champagne/30 flex items-center justify-center">
+                <div className="w-20 h-20 md:w-28 md:h-28 bg-white rounded-lg shadow-lg border border-silver/30 flex items-center justify-center">
                   <span className="font-serif text-3xl md:text-5xl text-foreground">
                     {String(unit.value).padStart(2, "0")}
                   </span>
                 </div>
-                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-16 md:w-24 h-1 bg-gradient-to-r from-transparent via-rose/30 to-transparent" />
+                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-16 md:w-24 h-1 bg-gradient-to-r from-transparent via-lavender/30 to-transparent" />
               </div>
-              <span className="mt-4 text-sage font-sans uppercase tracking-widest text-xs md:text-sm">
+              <span className="mt-4 text-hydrangea font-sans uppercase tracking-widest text-xs md:text-sm">
                 {unit.label}
               </span>
             </div>
@@ -75,9 +75,9 @@ const Countdown = () => {
 
         <div className="flex justify-center mt-12">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-px bg-gradient-to-r from-transparent to-champagne" />
-            <span className="text-gold text-2xl">♥</span>
-            <div className="w-12 h-px bg-gradient-to-l from-transparent to-champagne" />
+            <div className="w-12 h-px bg-gradient-to-r from-transparent to-silver" />
+            <span className="text-primary text-2xl">♥</span>
+            <div className="w-12 h-px bg-gradient-to-l from-transparent to-silver" />
           </div>
         </div>
       </div>

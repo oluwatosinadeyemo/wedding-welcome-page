@@ -11,7 +11,7 @@ const Footer = () => {
         
         <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm">
           <span>Made with</span>
-          <Heart className="w-4 h-4 text-rose fill-rose/50" />
+          <Heart className="w-4 h-4 text-lavender fill-lavender/50" />
           <span>for our special day</span>
         </div>
         

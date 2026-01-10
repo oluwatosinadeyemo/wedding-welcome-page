@@ -34,7 +34,7 @@ const EventDetails = () => {
 
         {/* Venue Image */}
         <div className="mb-16 relative">
-          <div className="absolute -inset-2 bg-gradient-to-r from-sage-light via-champagne to-rose-light rounded-sm opacity-40" />
+          <div className="absolute -inset-2 bg-gradient-to-r from-hydrangea-light via-silver to-lavender-light rounded-sm opacity-40" />
           <img
             src={venueImage}
             alt="Lambs Event Centre venue"
