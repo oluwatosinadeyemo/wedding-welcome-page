@@ -4,6 +4,8 @@ import Countdown from "@/components/wedding/Countdown";
 import OurStory from "@/components/wedding/OurStory";
 import EventDetails from "@/components/wedding/EventDetails";
 import TravelAccommodation from "@/components/wedding/TravelAccommodation";
+import PhotoGallery from "@/components/wedding/PhotoGallery";
+import QRCodePass from "@/components/wedding/QRCodePass";
 import RSVP from "@/components/wedding/RSVP";
 import Footer from "@/components/wedding/Footer";
 
@@ -28,6 +30,14 @@ const Index = () => {
         </div>
 
         <TravelAccommodation />
+
+        <div id="gallery">
+          <PhotoGallery />
+        </div>
+
+        <div id="pass">
+          <QRCodePass />
+        </div>
         
         <div id="rsvp">
           <RSVP />
