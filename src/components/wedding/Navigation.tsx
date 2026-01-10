@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { Heart } from "lucide-react";
+import { Heart, Menu, X } from "lucide-react";
 
 const Navigation = () => {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -16,40 +17,79 @@ const Navigation = () => {
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     element?.scrollIntoView({ behavior: "smooth" });
+    setIsMobileMenuOpen(false);
   };
 
-  return (
-    <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        isScrolled
-          ? "bg-background/95 backdrop-blur-md shadow-sm py-4"
-          : "bg-transparent py-6"
-      }`}
-    >
-      <div className="max-w-6xl mx-auto px-6 flex items-center justify-between">
-        <button
-          onClick={() => scrollToSection("home")}
-          className="flex items-center gap-2 group"
-        >
-          <Heart className="w-5 h-5 text-primary group-hover:fill-lavender/30 transition-all" />
-          <span className="wedding-heading text-xl">T & P</span>
-        </button>
+  const navItems = ["Our Story", "Details", "Gallery", "Pass", "RSVP"];
 
-        <div className="hidden md:flex items-center gap-8">
-          {["Our Story", "Details", "RSVP"].map((item) => (
-            <button
-              key={item}
-              onClick={() =>
-                scrollToSection(item.toLowerCase().replace(" ", "-"))
-              }
-              className="wedding-subheading text-xs hover:text-primary transition-colors"
-            >
-              {item}
-            </button>
-          ))}
+  return (
+    <>
+      <nav
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+          isScrolled
+            ? "bg-background/80 backdrop-blur-xl border-b border-border/50 py-4"
+            : "bg-transparent py-6"
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+          <button
+            onClick={() => scrollToSection("home")}
+            className="flex items-center gap-3 group"
+          >
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+              <Heart className="w-5 h-5 text-primary group-hover:fill-primary/30 transition-all" />
+            </div>
+            <span className="wedding-heading text-2xl hidden sm:block">T & P</span>
+          </button>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-1">
+            {navItems.map((item) => (
+              <button
+                key={item}
+                onClick={() =>
+                  scrollToSection(item.toLowerCase().replace(" ", "-"))
+                }
+                className="px-4 py-2 rounded-full text-sm font-sans text-muted-foreground hover:text-foreground hover:bg-card/50 transition-all duration-300"
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            className="md:hidden w-10 h-10 rounded-full bg-card/50 flex items-center justify-center"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? (
+              <X className="w-5 h-5 text-foreground" />
+            ) : (
+              <Menu className="w-5 h-5 text-foreground" />
+            )}
+          </button>
         </div>
-      </div>
-    </nav>
+      </nav>
+
+      {/* Mobile Menu */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-40 bg-background/95 backdrop-blur-xl md:hidden">
+          <div className="flex flex-col items-center justify-center h-full gap-6">
+            {navItems.map((item) => (
+              <button
+                key={item}
+                onClick={() =>
+                  scrollToSection(item.toLowerCase().replace(" ", "-"))
+                }
+                className="text-2xl font-serif text-foreground hover:text-primary transition-colors"
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
