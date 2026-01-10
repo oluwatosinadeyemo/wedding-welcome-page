@@ -3,28 +3,28 @@ import { MapPin, Car, Plane, Hotel, Phone, ExternalLink } from "lucide-react";
 const TravelAccommodation = () => {
   const hotels = [
     {
-      name: "The Grand Estate Hotel",
-      distance: "0.5 miles from venue",
-      description: "Luxury accommodations with special wedding rates available",
-      phone: "(555) 123-4567",
+      name: "Park Inn by Radisson",
+      distance: "5 km from venue",
+      description: "Modern luxury hotel with excellent amenities and conference facilities",
+      phone: "+234 803 123 4567",
       website: "#",
-      price: "$$$",
+      price: "₦₦₦",
     },
     {
-      name: "Rosewood Inn & Suites",
-      distance: "1.2 miles from venue",
-      description: "Charming boutique hotel with complimentary breakfast",
-      phone: "(555) 234-5678",
+      name: "Gateway Hotel",
+      distance: "3 km from venue",
+      description: "Comfortable accommodations with Nigerian hospitality",
+      phone: "+234 803 234 5678",
       website: "#",
-      price: "$$",
+      price: "₦₦",
     },
     {
-      name: "Garden View Lodge",
-      distance: "2.0 miles from venue",
-      description: "Family-friendly with spacious rooms and pool",
-      phone: "(555) 345-6789",
+      name: "Premier Hotel Abeokuta",
+      distance: "4 km from venue",
+      description: "Family-friendly with spacious rooms and restaurant",
+      phone: "+234 803 345 6789",
       website: "#",
-      price: "$$",
+      price: "₦₦",
     },
   ];
 
@@ -32,12 +32,12 @@ const TravelAccommodation = () => {
     {
       icon: Plane,
       title: "By Air",
-      description: "The nearest airport is Napa County Airport (APC), approximately 15 miles from the venue. San Francisco International (SFO) is 60 miles away.",
+      description: "The nearest airport is Murtala Muhammed International Airport (LOS) in Lagos, approximately 80 km from Abeokuta. Domestic flights also available via other Nigerian airports.",
     },
     {
       icon: Car,
       title: "By Car",
-      description: "From Highway 29, take the Oakville Cross Road exit. The venue is 2 miles east on the left side. Complimentary valet parking available.",
+      description: "From Lagos, take the Lagos-Abeokuta Expressway. The venue is located in the heart of Abeokuta. Ample parking available at the venue.",
     },
   ];
 
@@ -52,7 +52,7 @@ const TravelAccommodation = () => {
             Travel & Accommodation
           </h2>
           <p className="text-muted-foreground font-sans max-w-2xl mx-auto">
-            We've arranged special rates at nearby hotels for our guests. Please mention "Williams-Bennett Wedding" when booking.
+            We've arranged special rates at nearby hotels for our guests. Please mention "Tosin & Pelumi Wedding" when booking.
           </p>
         </div>
 
@@ -86,7 +86,7 @@ const TravelAccommodation = () => {
           <div className="bg-ivory rounded-lg p-4 border border-champagne/30">
             <div className="aspect-[16/9] md:aspect-[21/9] rounded-lg overflow-hidden">
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3132.0847036967366!2d-122.40869492392791!3d38.43257497181057!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8085c6f3f2a2b8c5%3A0x5a5a5a5a5a5a5a5a!2sNapa%20Valley%2C%20CA!5e0!3m2!1sen!2sus!4v1234567890"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3955.123456789!2d3.3515!3d7.1475!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2sAbeokuta%2C%20Nigeria!5e0!3m2!1sen!2sng!4v1234567890"
                 width="100%"
                 height="100%"
                 style={{ border: 0 }}
@@ -100,7 +100,7 @@ const TravelAccommodation = () => {
             <div className="flex items-center justify-center gap-2 mt-4 text-sage">
               <MapPin className="w-4 h-4" />
               <span className="font-sans text-sm">
-                The Vineyard Estate, 1234 Wine Country Lane, Napa Valley, CA
+                Lambs Event Centre, Abeokuta, Ogun State, Nigeria
               </span>
             </div>
           </div>
