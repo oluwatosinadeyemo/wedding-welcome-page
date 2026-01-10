@@ -3,6 +3,7 @@ import Hero from "@/components/wedding/Hero";
 import Countdown from "@/components/wedding/Countdown";
 import OurStory from "@/components/wedding/OurStory";
 import EventDetails from "@/components/wedding/EventDetails";
+import TravelAccommodation from "@/components/wedding/TravelAccommodation";
 import RSVP from "@/components/wedding/RSVP";
 import Footer from "@/components/wedding/Footer";
 
@@ -25,6 +26,8 @@ const Index = () => {
         <div id="details">
           <EventDetails />
         </div>
+
+        <TravelAccommodation />
         
         <div id="rsvp">
           <RSVP />
