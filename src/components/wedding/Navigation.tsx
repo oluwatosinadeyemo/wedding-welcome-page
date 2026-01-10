@@ -32,7 +32,7 @@ const Navigation = () => {
           className="flex items-center gap-2 group"
         >
           <Heart className="w-5 h-5 text-primary group-hover:fill-rose/30 transition-all" />
-          <span className="wedding-heading text-xl">E & J</span>
+          <span className="wedding-heading text-xl">T & P</span>
         </button>
 
         <div className="hidden md:flex items-center gap-8">
