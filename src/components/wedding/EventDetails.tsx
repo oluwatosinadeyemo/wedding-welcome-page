@@ -37,7 +37,7 @@ const EventDetails = () => {
           <div className="absolute -inset-2 bg-gradient-to-r from-sage-light via-champagne to-rose-light rounded-sm opacity-40" />
           <img
             src={venueImage}
-            alt="Rosewood Estate venue"
+            alt="Lambs Event Centre venue"
             className="relative w-full aspect-[21/9] object-cover rounded-sm shadow-lg"
           />
         </div>
@@ -46,11 +46,11 @@ const EventDetails = () => {
         <div className="text-center mb-16 space-y-4">
           <div className="flex items-center justify-center gap-3 text-foreground">
             <CalendarDays className="w-5 h-5 text-primary" />
-            <span className="font-serif text-xl">Sunday, September 21, 2025</span>
+            <span className="font-serif text-xl">Saturday, December 12, 2026</span>
           </div>
           <div className="flex items-center justify-center gap-3 text-muted-foreground">
             <MapPin className="w-5 h-5 text-primary" />
-            <span>Rosewood Estate, 1234 Vineyard Lane, Napa Valley, CA</span>
+            <span>Lambs Event Centre, Abeokuta, Ogun State, Nigeria</span>
           </div>
         </div>
 

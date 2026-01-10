@@ -20,17 +20,17 @@ const Hero = () => {
         </p>
         
         <h1 className="wedding-heading text-5xl md:text-7xl lg:text-8xl mb-4 animate-fade-in">
-          Emma <span className="font-light italic">&</span> James
+          Tosin <span className="font-light italic">&</span> Pelumi
         </h1>
         
         <div className="wedding-divider my-8 animate-fade-in-delay-2" />
         
         <p className="wedding-subheading animate-fade-in-delay-3 text-base md:text-lg">
-          September 21, 2025
+          December 12, 2026
         </p>
         
         <p className="text-muted-foreground mt-4 animate-fade-in-delay-3 font-sans text-sm md:text-base">
-          Rosewood Estate, Napa Valley
+          Lambs Event Centre, Abeokuta, Nigeria
         </p>
       </div>
 
