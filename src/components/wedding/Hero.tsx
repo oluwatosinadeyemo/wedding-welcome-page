@@ -1,4 +1,4 @@
-import heroImage from "@/assets/hero-wedding.jpg";
+import heroImage from "@/assets/lambs-venue-bw.jpg";
 import { motion } from "framer-motion";
 
 const Hero = () => {
@@ -8,7 +8,7 @@ const Hero = () => {
       <div className="absolute inset-0">
         <img
           src={heroImage}
-          alt="Blue garden wedding"
+          alt="Lambs Event Centre, Abeokuta"
           className="w-full h-full object-cover scale-110"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/50 to-background" />
