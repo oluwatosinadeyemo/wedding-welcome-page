@@ -4,23 +4,23 @@ import venueImage from "@/assets/venue.jpg";
 const EventDetails = () => {
   const events = [
     {
-      title: "Ceremony",
-      time: "4:00 PM",
+      title: "Nikkai",
+      time: "10:00 AM",
       location: "Main Hall",
-      description: "Join us as we exchange our vows in an intimate ceremony",
+      description: "Join us as we exchange our vows in an intimate Islamic ceremony",
       icon: "💍",
     },
     {
-      title: "Cocktail Hour",
-      time: "5:00 PM",
-      location: "The Garden",
-      description: "Drinks, small chops, and great conversation",
-      icon: "🥂",
+      title: "Traditional Wedding",
+      time: "12:00 PM",
+      location: "Main Hall",
+      description: "Celebrate with us as we honour our cultural heritage",
+      icon: "🎊",
     },
     {
       title: "Reception",
-      time: "6:30 PM",
-      location: "Grand Ballroom",
+      time: "2:00 PM",
+      location: "Main Hall",
       description: "Dinner, dancing, and celebration into the night",
       icon: "🎉",
     },
