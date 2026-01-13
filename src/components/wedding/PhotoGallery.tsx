@@ -17,9 +17,12 @@ interface Photo {
 }
 
 const MAX_PHOTOS_PER_USER = 10;
+const MAX_FILE_SIZE_MB = 10;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 const PhotoGallery = () => {
   const [photos, setPhotos] = useState<Photo[]>([]);
+  const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
   const [isUploading, setIsUploading] = useState(false);
   const [uploaderName, setUploaderName] = useState("");
   const [caption, setCaption] = useState("");
@@ -59,6 +62,19 @@ const PhotoGallery = () => {
     }
 
     setPhotos(data || []);
+
+    // Generate signed URLs for all photos (valid for 1 hour)
+    const urls: Record<string, string> = {};
+    for (const photo of data || []) {
+      const { data: signedData, error: signedError } = await supabase.storage
+        .from("wedding-photos")
+        .createSignedUrl(photo.file_path, 3600); // 1 hour expiry
+      
+      if (!signedError && signedData?.signedUrl) {
+        urls[photo.id] = signedData.signedUrl;
+      }
+    }
+    setPhotoUrls(urls);
 
     // Count user's photos for limit display
     if (user) {
@@ -172,6 +188,16 @@ const PhotoGallery = () => {
       return;
     }
 
+    // Validate file size (10MB limit)
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      toast({
+        title: "File too large",
+        description: `Please upload an image under ${MAX_FILE_SIZE_MB}MB`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsUploading(true);
 
     try {
@@ -260,11 +286,8 @@ const PhotoGallery = () => {
     }
   };
 
-  const getPublicUrl = (filePath: string) => {
-    const { data } = supabase.storage
-      .from("wedding-photos")
-      .getPublicUrl(filePath);
-    return data.publicUrl;
+  const getPhotoUrl = (photoId: string) => {
+    return photoUrls[photoId] || '';
   };
 
   return (
@@ -453,7 +476,7 @@ const PhotoGallery = () => {
                   className="group relative aspect-square rounded-2xl overflow-hidden cursor-pointer"
                 >
                   <img
-                    src={getPublicUrl(photo.file_path)}
+                    src={getPhotoUrl(photo.id)}
                     alt={photo.caption || "Wedding photo"}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />
@@ -513,7 +536,7 @@ const PhotoGallery = () => {
             </button>
             <div className="max-w-4xl max-h-[80vh]" onClick={(e) => e.stopPropagation()}>
               <img
-                src={getPublicUrl(selectedPhoto.file_path)}
+                src={getPhotoUrl(selectedPhoto.id)}
                 alt={selectedPhoto.caption || "Wedding photo"}
                 className="max-w-full max-h-[70vh] object-contain rounded-2xl"
               />
