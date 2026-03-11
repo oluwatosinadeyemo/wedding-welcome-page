@@ -38,8 +38,8 @@ const RSVP = () => {
               <Mail className="w-5 h-5 text-primary" />
               <span className="font-sans">Questions?</span>
             </div>
-            <a href="mailto:tosin.pelumi.wedding@email.com" className="text-primary hover:underline text-sm sm:text-base break-all sm:break-normal">
-              tosin.pelumi.wedding@email.com
+            <a href="mailto:oluwatosinadeyemo50@gmail.com" className="text-primary hover:underline text-sm sm:text-base break-all sm:break-normal">
+              oluwatosinadeyemo50@gmail.com
             </a>
           </div>
         </div>

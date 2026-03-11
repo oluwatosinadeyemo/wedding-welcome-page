@@ -31,29 +31,18 @@ const RSVPForm = () => {
     setIsSubmitting(true);
 
     try {
-      const generatedCode = `WALK-IN-${Date.now().toString(36).toUpperCase()}`;
-      const { data: newGuest, error: guestError } = await (supabase
-        .from("guests" as any) as any)
-        .insert({
-          full_name: values.full_name.trim(),
-          invite_code: generatedCode,
-          party_size: values.number_of_guests,
-        })
-        .select("id")
-        .single();
+      // Use SECURITY DEFINER RPC to bypass guests table RLS
+      const { error: rpcError } = await (supabase.rpc as any)(
+        "submit_walkin_rsvp",
+        {
+          p_full_name: values.full_name.trim(),
+          p_attending: values.attending,
+          p_number_of_guests: values.number_of_guests,
+          p_message: values.message || null,
+        }
+      );
 
-      if (guestError) throw guestError;
-
-      const { error: rsvpError } = await (supabase
-        .from("rsvps" as any) as any)
-        .insert({
-          guest_id: newGuest.id,
-          attending: values.attending,
-          number_of_guests: values.number_of_guests,
-          message: values.message || null,
-        });
-
-      if (rsvpError) throw rsvpError;
+      if (rpcError) throw rpcError;
 
       setSubmittedData({
         attending: values.attending,

@@ -1,24 +1,56 @@
 import { useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { Download, Ticket, User, Calendar, MapPin, Search, Loader2, ArrowRight } from "lucide-react";
+import { Download, Ticket, User, Calendar, MapPin, Loader2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { useGuestLookup } from "@/hooks/use-guest-lookup";
 import { useToast } from "@/hooks/use-toast";
 
+interface GuestPassData {
+  id: string;
+  full_name: string;
+  party_size: number;
+  has_rsvp: boolean;
+  rsvp_attending: string | null;
+  has_pass: boolean;
+}
+
 const QRCodePass = () => {
-  const [inviteCode, setInviteCode] = useState("");
+  const [guestName, setGuestName] = useState("");
+  const [guest, setGuest] = useState<GuestPassData | null>(null);
   const [passId, setPassId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const { guest, isLoading, error, lookupGuest, reset: resetLookup } = useGuestLookup();
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const [step, setStep] = useState<"lookup" | "generate" | "display">("lookup");
 
   const handleLookup = async () => {
-    const result = await lookupGuest(inviteCode);
-    if (result) {
+    if (!guestName.trim()) {
+      setError("Please enter your name");
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const { data, error: rpcError } = await (supabase.rpc as any)(
+        "lookup_guest_by_name",
+        { guest_name: guestName.trim() }
+      );
+
+      if (rpcError) throw rpcError;
+
+      if (!data || data.length === 0) {
+        setError("No RSVP found for that name. Please RSVP first.");
+        return;
+      }
+
+      const result = data[0] as GuestPassData;
+      setGuest(result);
+
       if (result.rsvp_attending !== "yes") {
         setStep("generate");
       } else if (result.has_pass) {
@@ -37,6 +69,10 @@ const QRCodePass = () => {
       } else {
         setStep("generate");
       }
+    } catch (err: any) {
+      setError(err.message || "Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -45,9 +81,8 @@ const QRCodePass = () => {
     setIsGenerating(true);
 
     try {
-      const { data, error: rpcError } = await (supabase.rpc as any)("generate_guest_pass", {
+      const { data, error: rpcError } = await (supabase.rpc as any)("generate_pass_by_guest_id", {
         p_guest_id: guest.id,
-        p_invite_code: inviteCode.trim(),
       });
 
       if (rpcError) throw rpcError;
@@ -145,9 +180,10 @@ const QRCodePass = () => {
 
   const handleStartOver = () => {
     setStep("lookup");
-    setInviteCode("");
+    setGuestName("");
     setPassId(null);
-    resetLookup();
+    setGuest(null);
+    setError(null);
   };
 
   return (
@@ -171,7 +207,7 @@ const QRCodePass = () => {
         </div>
 
         <div className="max-w-md mx-auto">
-          {/* Step 1: Invite Code Lookup */}
+          {/* Step 1: Name Lookup */}
           {step === "lookup" && (
             <div className="glass-card p-8 animate-fade-in">
               <div className="flex items-center justify-center w-16 h-16 mx-auto mb-6 rounded-2xl bg-primary/10">
@@ -181,15 +217,15 @@ const QRCodePass = () => {
                 Get Your Pass
               </h3>
               <p className="text-muted-foreground text-sm text-center mb-6">
-                Enter your invite code to generate your digital pass
+                Enter the name you used when you RSVP'd
               </p>
               <div className="space-y-4">
                 <Input
-                  placeholder="e.g. TP-ADEOLA-001"
-                  value={inviteCode}
-                  onChange={(e) => setInviteCode(e.target.value)}
+                  placeholder="Enter your full name"
+                  value={guestName}
+                  onChange={(e) => setGuestName(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleLookup()}
-                  className="bg-background/50 border-border/50 rounded-xl text-center text-lg py-6 uppercase"
+                  className="bg-background/50 border-border/50 rounded-xl text-center text-lg py-6"
                   autoFocus
                 />
                 {error && (
@@ -197,7 +233,7 @@ const QRCodePass = () => {
                 )}
                 <Button
                   onClick={handleLookup}
-                  disabled={!inviteCode.trim() || isLoading}
+                  disabled={!guestName.trim() || isLoading}
                   className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-6 rounded-xl text-sm uppercase tracking-wider font-sans"
                 >
                   {isLoading ? (
@@ -248,7 +284,7 @@ const QRCodePass = () => {
               ) : (
                 <>
                   <div className="flex items-center justify-center w-16 h-16 mx-auto mb-6 rounded-2xl bg-secondary/10">
-                    <Search className="w-8 h-8 text-secondary" />
+                    <User className="w-8 h-8 text-secondary" />
                   </div>
                   <h3 className="font-serif text-2xl text-foreground mb-4">
                     RSVP Required
