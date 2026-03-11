@@ -47,7 +47,7 @@ const Countdown = () => {
           <p className="text-primary font-sans uppercase tracking-[0.2em] text-sm mb-4 font-medium">
             Counting Down To
           </p>
-          <h2 className="font-serif text-4xl md:text-6xl text-foreground mb-2 font-medium">
+          <h2 className="font-serif text-3xl sm:text-4xl md:text-6xl text-foreground mb-2 font-medium">
             Our Special Day
           </h2>
           <p className="text-muted-foreground font-sans mt-4">
@@ -55,7 +55,7 @@ const Countdown = () => {
           </p>
         </div>
 
-        <div className="flex justify-center gap-4 md:gap-8 animate-fade-in-up">
+        <div className="flex justify-center gap-3 sm:gap-4 md:gap-8 animate-fade-in-up">
           {timeUnits.map((unit, index) => (
             <div
               key={unit.label}
@@ -64,8 +64,8 @@ const Countdown = () => {
             >
               <div className="relative group">
                 <div className="absolute -inset-1 bg-gradient-to-r from-primary to-secondary rounded-2xl blur opacity-30 group-hover:opacity-50 transition duration-500" />
-                <div className="relative w-20 h-24 md:w-32 md:h-40 glass-card flex flex-col items-center justify-center">
-                  <span className="font-serif text-4xl md:text-6xl text-foreground font-medium">
+                <div className="relative w-16 h-20 sm:w-20 sm:h-24 md:w-32 md:h-40 glass-card flex flex-col items-center justify-center">
+                  <span className="font-serif text-2xl sm:text-4xl md:text-6xl text-foreground font-medium">
                     {String(unit.value).padStart(2, "0")}
                   </span>
                 </div>

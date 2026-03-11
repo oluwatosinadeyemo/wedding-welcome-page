@@ -34,7 +34,7 @@ const EventDetails = () => {
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="text-center mb-20">
           <p className="wedding-subheading mb-4 text-primary">Join Us</p>
-          <h2 className="wedding-heading text-5xl md:text-7xl">Wedding Day</h2>
+          <h2 className="wedding-heading text-3xl sm:text-5xl md:text-7xl">Wedding Day</h2>
           <div className="wedding-divider mt-8 w-32" />
         </div>
 
@@ -44,20 +44,20 @@ const EventDetails = () => {
           <img
             src={venueImage}
             alt="Lambs Event Centre venue"
-            className="relative w-full aspect-[21/9] object-cover rounded-3xl shadow-2xl"
+            className="relative w-full aspect-[4/3] sm:aspect-[16/9] md:aspect-[21/9] object-cover rounded-3xl shadow-2xl"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent rounded-3xl" />
           
           {/* Venue Info Overlay */}
-          <div className="absolute bottom-8 left-8 right-8">
-            <div className="glass-card p-6 md:p-8 inline-block">
-              <div className="flex items-center gap-3 text-foreground mb-2">
-                <CalendarDays className="w-5 h-5 text-primary" />
-                <span className="font-serif text-xl md:text-2xl">Saturday, December 12, 2026</span>
+          <div className="absolute bottom-4 left-4 right-4 sm:bottom-8 sm:left-8 sm:right-8">
+            <div className="glass-card p-4 sm:p-6 md:p-8 inline-block">
+              <div className="flex items-center gap-2 sm:gap-3 text-foreground mb-2">
+                <CalendarDays className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
+                <span className="font-serif text-sm sm:text-xl md:text-2xl">Saturday, December 12, 2026</span>
               </div>
-              <div className="flex items-center gap-3 text-muted-foreground">
-                <MapPin className="w-5 h-5 text-primary" />
-                <span className="font-sans">Lambs Event Centre, Abeokuta, Ogun State, Nigeria</span>
+              <div className="flex items-center gap-2 sm:gap-3 text-muted-foreground">
+                <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
+                <span className="font-sans text-xs sm:text-base">Lambs Event Centre, Abeokuta, Ogun State, Nigeria</span>
               </div>
             </div>
           </div>

@@ -4,13 +4,13 @@ const OurStory = () => {
   return (
     <section className="wedding-section relative overflow-hidden">
       {/* Background Effects */}
-      <div className="absolute top-1/2 left-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -translate-y-1/2" />
-      <div className="absolute top-1/2 right-0 w-80 h-80 bg-secondary/5 rounded-full blur-3xl -translate-y-1/2" />
+      <div className="absolute top-1/2 left-0 w-48 h-48 sm:w-72 sm:h-72 md:w-96 md:h-96 bg-primary/5 rounded-full blur-3xl -translate-y-1/2" />
+      <div className="absolute top-1/2 right-0 w-40 h-40 sm:w-60 sm:h-60 md:w-80 md:h-80 bg-secondary/5 rounded-full blur-3xl -translate-y-1/2" />
       
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="text-center mb-20">
           <p className="wedding-subheading mb-4 text-primary">Our Journey</p>
-          <h2 className="wedding-heading text-5xl md:text-7xl">Our Story</h2>
+          <h2 className="wedding-heading text-3xl sm:text-5xl md:text-7xl">Our Story</h2>
           <div className="wedding-divider mt-8 w-32" />
         </div>
 

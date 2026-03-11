@@ -154,15 +154,15 @@ const QRCodePass = () => {
     <section id="pass" className="py-24 relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-b from-background via-card/30 to-background" />
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
-      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-secondary/10 rounded-full blur-3xl" />
+      <div className="absolute top-1/4 left-1/4 w-48 h-48 sm:w-72 sm:h-72 md:w-96 md:h-96 bg-primary/10 rounded-full blur-3xl" />
+      <div className="absolute bottom-1/4 right-1/4 w-40 h-40 sm:w-60 sm:h-60 md:w-80 md:h-80 bg-secondary/10 rounded-full blur-3xl" />
 
       <div className="container mx-auto px-4 relative z-10">
         <div className="text-center mb-16">
           <p className="text-primary font-sans uppercase tracking-[0.2em] text-sm mb-4 font-medium">
             Your Invitation
           </p>
-          <h2 className="font-serif text-5xl md:text-7xl text-foreground mb-4 font-medium">
+          <h2 className="font-serif text-3xl sm:text-5xl md:text-7xl text-foreground mb-4 font-medium">
             Digital Pass
           </h2>
           <p className="text-muted-foreground font-sans max-w-2xl mx-auto mt-6">

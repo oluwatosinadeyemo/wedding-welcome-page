@@ -123,7 +123,7 @@
   }
 
   .wedding-section {
-    @apply py-24 md:py-32 px-6;
+    @apply py-16 sm:py-24 md:py-32 px-4 sm:px-6;
   }
 
   .wedding-card {

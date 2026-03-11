@@ -200,7 +200,7 @@ const PhotoGallery = () => {
           <p className="text-primary font-sans uppercase tracking-[0.2em] text-sm mb-4 font-medium">
             Memories
           </p>
-          <h2 className="font-serif text-5xl md:text-7xl text-foreground mb-4 font-medium">
+          <h2 className="font-serif text-3xl sm:text-5xl md:text-7xl text-foreground mb-4 font-medium">
             Photo Gallery
           </h2>
           <p className="text-muted-foreground font-sans max-w-2xl mx-auto mt-6">
