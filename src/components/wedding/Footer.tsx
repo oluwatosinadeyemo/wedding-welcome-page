@@ -1,4 +1,4 @@
-import { Heart, Instagram, Twitter } from "lucide-react";
+import { Heart, Instagram } from "lucide-react";
 
 const Footer = () => {
   return (
@@ -24,16 +24,12 @@ const Footer = () => {
         {/* Social Links */}
         <div className="flex items-center justify-center gap-4 mb-8">
           <a
-            href="#"
+            href="https://www.instagram.com/explore/tags/TosinAndPelumi2026/"
+            target="_blank"
+            rel="noopener noreferrer"
             className="w-12 h-12 rounded-full bg-card/80 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
           >
             <Instagram className="w-5 h-5" />
-          </a>
-          <a
-            href="#"
-            className="w-12 h-12 rounded-full bg-card/80 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
-          >
-            <Twitter className="w-5 h-5" />
           </a>
         </div>
         
