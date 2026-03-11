@@ -25,7 +25,7 @@ export function useGuestLookup() {
     setError(null);
 
     try {
-      const { data, error: rpcError } = await supabase.rpc(
+      const { data, error: rpcError } = await (supabase.rpc as any)(
         "lookup_guest_by_invite_code",
         { code: inviteCode.trim() }
       );

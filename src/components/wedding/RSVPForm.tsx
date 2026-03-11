@@ -55,8 +55,8 @@ const RSVPForm = () => {
     setIsSubmitting(true);
 
     try {
-      const { error: upsertError } = await supabase
-        .from("rsvps")
+      const { error: upsertError } = await (supabase
+        .from("rsvps" as any) as any)
         .upsert(
           {
             guest_id: guest.id,

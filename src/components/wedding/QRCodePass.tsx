@@ -22,8 +22,8 @@ const QRCodePass = () => {
       if (result.rsvp_attending !== "yes") {
         setStep("generate");
       } else if (result.has_pass) {
-        const { data: guestRow } = await supabase
-          .from("guests")
+        const { data: guestRow } = await (supabase
+          .from("guests" as any) as any)
           .select("pass_id")
           .eq("id", result.id)
           .single();

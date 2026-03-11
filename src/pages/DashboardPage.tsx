@@ -104,8 +104,8 @@ const DashboardPage = () => {
     }
 
     // Fetch total guest count
-    const { count } = await supabase
-      .from("guests")
+    const { count } = await (supabase
+      .from("guests" as any) as any)
       .select("*", { count: "exact", head: true });
     setTotalGuests(count || 0);
 
