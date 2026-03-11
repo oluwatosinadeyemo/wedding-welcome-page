@@ -87,8 +87,8 @@ const DashboardPage = () => {
 
   const fetchData = useCallback(async () => {
     // Fetch RSVPs with guest info
-    const { data: rsvpData } = await supabase
-      .from("rsvps")
+    const { data: rsvpData } = await (supabase
+      .from("rsvps" as any) as any)
       .select(`
         id, attending, number_of_guests, message, submitted_at,
         guest:guests!inner(full_name, invite_code, party_size, side)
