@@ -117,6 +117,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_guest_pass: {
+        Args: { p_guest_id: string; p_invite_code: string }
+        Returns: string
+      }
       lookup_guest_by_invite_code: {
         Args: { code: string }
         Returns: {
