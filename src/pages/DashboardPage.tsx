@@ -28,7 +28,7 @@ import {
 import type { User } from "@supabase/supabase-js";
 import JSZip from "jszip";
 
-const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || "";
+const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || "oluwatosinadeyemo50@gmail.com";
 
 interface RSVPEntry {
   id: string;
@@ -87,8 +87,8 @@ const DashboardPage = () => {
 
   const fetchData = useCallback(async () => {
     // Fetch RSVPs with guest info
-    const { data: rsvpData } = await supabase
-      .from("rsvps")
+    const { data: rsvpData } = await (supabase
+      .from("rsvps" as any) as any)
       .select(`
         id, attending, number_of_guests, message, submitted_at,
         guest:guests!inner(full_name, invite_code, party_size, side)
@@ -104,8 +104,8 @@ const DashboardPage = () => {
     }
 
     // Fetch total guest count
-    const { count } = await supabase
-      .from("guests")
+    const { count } = await (supabase
+      .from("guests" as any) as any)
       .select("*", { count: "exact", head: true });
     setTotalGuests(count || 0);
 
@@ -115,7 +115,7 @@ const DashboardPage = () => {
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (photoData) setPhotos(photoData);
+    if (photoData) setPhotos(photoData as unknown as PhotoEntry[]);
   }, []);
 
   useEffect(() => {

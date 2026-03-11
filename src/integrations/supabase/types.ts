@@ -16,76 +16,58 @@ export type Database = {
     Tables: {
       guests: {
         Row: {
-          id: string
+          created_at: string
           full_name: string
-          email: string | null
-          phone: string | null
+          id: string
           invite_code: string
           party_size: number
-          table_assignment: string | null
-          side: string | null
           pass_id: string | null
-          pass_generated_at: string | null
-          created_at: string
-          updated_at: string
+          side: string | null
         }
         Insert: {
-          id?: string
+          created_at?: string
           full_name: string
-          email?: string | null
-          phone?: string | null
+          id?: string
           invite_code: string
           party_size?: number
-          table_assignment?: string | null
-          side?: string | null
           pass_id?: string | null
-          pass_generated_at?: string | null
-          created_at?: string
-          updated_at?: string
+          side?: string | null
         }
         Update: {
-          id?: string
+          created_at?: string
           full_name?: string
-          email?: string | null
-          phone?: string | null
+          id?: string
           invite_code?: string
           party_size?: number
-          table_assignment?: string | null
-          side?: string | null
           pass_id?: string | null
-          pass_generated_at?: string | null
-          created_at?: string
-          updated_at?: string
+          side?: string | null
         }
         Relationships: []
       }
       rsvps: {
         Row: {
-          id: string
-          guest_id: string
           attending: string
-          number_of_guests: number
+          guest_id: string
+          id: string
           message: string | null
+          number_of_guests: number
           submitted_at: string
-          updated_at: string
         }
         Insert: {
-          id?: string
-          guest_id: string
           attending: string
-          number_of_guests?: number
+          guest_id: string
+          id?: string
           message?: string | null
+          number_of_guests?: number
           submitted_at?: string
-          updated_at?: string
         }
         Update: {
-          id?: string
-          guest_id?: string
           attending?: string
-          number_of_guests?: number
+          guest_id?: string
+          id?: string
           message?: string | null
+          number_of_guests?: number
           submitted_at?: string
-          updated_at?: string
         }
         Relationships: [
           {
@@ -94,7 +76,7 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "guests"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       wedding_photos: {
@@ -135,20 +117,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      lookup_guest_by_invite_code: {
-        Args: { code: string }
-        Returns: {
-          id: string
-          full_name: string
-          party_size: number
-          has_rsvp: boolean
-          rsvp_attending: string | null
-          has_pass: boolean
-        }[]
-      }
       generate_guest_pass: {
         Args: { p_guest_id: string; p_invite_code: string }
         Returns: string
+      }
+      lookup_guest_by_invite_code: {
+        Args: { code: string }
+        Returns: {
+          full_name: string
+          has_pass: boolean
+          has_rsvp: boolean
+          id: string
+          party_size: number
+          rsvp_attending: string
+        }[]
       }
     }
     Enums: {

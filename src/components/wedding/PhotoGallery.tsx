@@ -58,7 +58,7 @@ const PhotoGallery = () => {
       return;
     }
 
-    setPhotos(data || []);
+    setPhotos((data as unknown as Photo[]) || []);
 
     const urls: Record<string, string> = {};
     for (const photo of data || []) {
