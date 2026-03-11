@@ -28,7 +28,7 @@ import {
 import type { User } from "@supabase/supabase-js";
 import JSZip from "jszip";
 
-const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || "";
+const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || "oluwatosinadeyemo50@gmail.com";
 
 interface RSVPEntry {
   id: string;
