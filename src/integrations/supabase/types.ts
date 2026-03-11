@@ -14,6 +14,71 @@ export type Database = {
   }
   public: {
     Tables: {
+      guests: {
+        Row: {
+          created_at: string
+          full_name: string
+          id: string
+          invite_code: string
+          party_size: number
+          pass_id: string | null
+          side: string | null
+        }
+        Insert: {
+          created_at?: string
+          full_name: string
+          id?: string
+          invite_code: string
+          party_size?: number
+          pass_id?: string | null
+          side?: string | null
+        }
+        Update: {
+          created_at?: string
+          full_name?: string
+          id?: string
+          invite_code?: string
+          party_size?: number
+          pass_id?: string | null
+          side?: string | null
+        }
+        Relationships: []
+      }
+      rsvps: {
+        Row: {
+          attending: string
+          guest_id: string
+          id: string
+          message: string | null
+          number_of_guests: number
+          submitted_at: string
+        }
+        Insert: {
+          attending: string
+          guest_id: string
+          id?: string
+          message?: string | null
+          number_of_guests?: number
+          submitted_at?: string
+        }
+        Update: {
+          attending?: string
+          guest_id?: string
+          id?: string
+          message?: string | null
+          number_of_guests?: number
+          submitted_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rsvps_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: true
+            referencedRelation: "guests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wedding_photos: {
         Row: {
           caption: string | null
@@ -49,7 +114,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      lookup_guest_by_invite_code: {
+        Args: { code: string }
+        Returns: {
+          full_name: string
+          has_pass: boolean
+          has_rsvp: boolean
+          id: string
+          party_size: number
+          rsvp_attending: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
