@@ -34,8 +34,8 @@ const RSVPForm = () => {
     if (result) {
       // Pre-fill if they already RSVP'd
       if (result.has_rsvp) {
-        const { data: existingRsvp } = await supabase
-          .from("rsvps")
+        const { data: existingRsvp } = await (supabase
+          .from("rsvps" as any) as any)
           .select("*")
           .eq("guest_id", result.id)
           .single();
