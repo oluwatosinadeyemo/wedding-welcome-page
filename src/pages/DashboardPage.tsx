@@ -60,6 +60,7 @@ const DashboardPage = () => {
   const [authPassword, setAuthPassword] = useState("");
   const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [isSignUp, setIsSignUp] = useState(false);
 
   const [rsvps, setRsvps] = useState<RSVPEntry[]>([]);
   const [totalGuests, setTotalGuests] = useState(0);
@@ -126,14 +127,26 @@ const DashboardPage = () => {
     e.preventDefault();
     setIsAuthLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: authEmail,
-        password: authPassword,
-      });
-      if (error) throw error;
+      if (isSignUp) {
+        const { error } = await supabase.auth.signUp({
+          email: authEmail,
+          password: authPassword,
+        });
+        if (error) throw error;
+        toast({
+          title: "Account created!",
+          description: "You are now signed in.",
+        });
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: authEmail,
+          password: authPassword,
+        });
+        if (error) throw error;
+      }
     } catch (err: any) {
       toast({
-        title: "Login failed",
+        title: isSignUp ? "Sign up failed" : "Login failed",
         description: err.message || "Please try again",
         variant: "destructive",
       });
@@ -238,7 +251,7 @@ const DashboardPage = () => {
               Couple Dashboard
             </h2>
             <p className="text-muted-foreground text-sm text-center mb-6">
-              Sign in with your admin account to manage your wedding
+              {isSignUp ? "Create your admin account" : "Sign in with your admin account to manage your wedding"}
             </p>
             {user && !isAdmin && (
               <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm text-center">
@@ -271,13 +284,21 @@ const DashboardPage = () => {
                 disabled={isAuthLoading}
                 className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl py-6"
               >
-                {isAuthLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sign In"}
+                {isAuthLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : isSignUp ? "Create Account" : "Sign In"}
               </Button>
             </form>
-            <div className="mt-4 text-center">
-              <Link to="/" className="text-muted-foreground hover:text-foreground text-sm">
-                Back to Wedding Site
-              </Link>
+            <div className="mt-4 text-center space-y-2">
+              <button
+                onClick={() => setIsSignUp(!isSignUp)}
+                className="text-primary hover:text-primary/80 text-sm"
+              >
+                {isSignUp ? "Already have an account? Sign in" : "First time? Create an account"}
+              </button>
+              <div>
+                <Link to="/" className="text-muted-foreground hover:text-foreground text-sm">
+                  Back to Wedding Site
+                </Link>
+              </div>
             </div>
           </div>
         </div>
