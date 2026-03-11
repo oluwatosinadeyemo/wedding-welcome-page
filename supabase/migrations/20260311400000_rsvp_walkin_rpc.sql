@@ -30,8 +30,8 @@ BEGIN
     RAISE EXCEPTION 'Number of guests must be between 1 and 10.';
   END IF;
 
-  -- Generate a unique invite code for walk-in guests
-  v_invite_code := 'WALK-IN-' || encode(gen_random_bytes(6), 'hex');
+  -- Generate a unique invite code for walk-in guests using gen_random_uuid
+  v_invite_code := 'WALK-IN-' || left(replace(gen_random_uuid()::text, '-', ''), 12);
 
   -- Create the guest record
   INSERT INTO public.guests (full_name, invite_code, party_size)
