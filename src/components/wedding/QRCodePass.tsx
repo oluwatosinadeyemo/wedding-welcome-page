@@ -45,14 +45,14 @@ const QRCodePass = () => {
     setIsGenerating(true);
 
     try {
-      const { data, error: rpcError } = await supabase.rpc("generate_guest_pass", {
+      const { data, error: rpcError } = await (supabase.rpc as any)("generate_guest_pass", {
         p_guest_id: guest.id,
         p_invite_code: inviteCode.trim(),
       });
 
       if (rpcError) throw rpcError;
 
-      setPassId(data);
+      setPassId(data as string);
       setStep("display");
       toast({
         title: "Pass Generated!",

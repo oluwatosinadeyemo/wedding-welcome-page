@@ -115,7 +115,7 @@ const DashboardPage = () => {
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (photoData) setPhotos(photoData);
+    if (photoData) setPhotos(photoData as unknown as PhotoEntry[]);
   }, []);
 
   useEffect(() => {
