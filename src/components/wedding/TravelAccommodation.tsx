@@ -10,7 +10,7 @@ const TravelAccommodation = () => {
           distance: "8 mins to venue",
           description: "Elegant suites with top-notch facilities and exceptional service",
           phone: "+234 803 456 7890",
-          website: "#",
+          website: "https://www.celiasuites.com/",
           price: "₦50,000",
           rating: 4,
         },
@@ -24,7 +24,7 @@ const TravelAccommodation = () => {
           distance: "10 mins to venue",
           description: "Well-appointed rooms with quality service and convenient location",
           phone: "+234 803 234 5678",
-          website: "#",
+          website: "https://ibdhotels.com/",
           price: "₦55,000",
           rating: 4,
         },
@@ -33,7 +33,7 @@ const TravelAccommodation = () => {
           distance: "12 mins to venue",
           description: "Stylish residence offering premium comfort and personalized service",
           phone: "+234 803 345 6789",
-          website: "#",
+          website: "https://www.mitrosresidences.com/",
           price: "₦65,000",
           rating: 4,
         },
@@ -42,7 +42,7 @@ const TravelAccommodation = () => {
           distance: "15 mins to venue",
           description: "Comfortable accommodation with excellent hospitality and modern amenities",
           phone: "+234 803 123 4567",
-          website: "#",
+          website: "https://abiishotels.com/",
           price: "₦45,000",
           rating: 4,
         },
@@ -51,7 +51,7 @@ const TravelAccommodation = () => {
           distance: "15 mins to venue",
           description: "Modern amenities with high privacy and excellent service",
           phone: "+234 803 901 2345",
-          website: "#",
+          website: "https://www.tripadvisor.com/Hotel_Review-g1760497-d7612838-Reviews-Richton_Hotel_and_Suites-Abeokuta_Ogun_State.html",
           price: "₦138,000",
           rating: 4,
         },
@@ -65,7 +65,7 @@ const TravelAccommodation = () => {
           distance: "20 mins to venue",
           description: "Spacious rooms with modern amenities and friendly staff",
           phone: "+234 803 567 8901",
-          website: "#",
+          website: "https://camashotel.org/",
           price: "₦40,000",
           rating: 4,
         },
@@ -74,7 +74,7 @@ const TravelAccommodation = () => {
           distance: "20 mins to venue",
           description: "5-star hotel with extensive facilities and premium dining",
           phone: "+234 803 789 0123",
-          website: "#",
+          website: "https://conferencehotelnigeria.com/abeokuta/",
           price: "₦195,000",
           rating: 5,
         },
@@ -83,7 +83,7 @@ const TravelAccommodation = () => {
           distance: "25 mins to venue",
           description: "Premier luxury hotel with world-class amenities and conference facilities",
           phone: "+234 803 678 9012",
-          website: "#",
+          website: "https://www.radissonhotels.com/en-us/hotels/park-inn-abeokuta",
           price: "₦230,000",
           rating: 5,
         },
@@ -92,7 +92,7 @@ const TravelAccommodation = () => {
           distance: "25 mins to venue",
           description: "Highly recommended for its pool, spa, and exceptional service",
           phone: "+234 803 012 3456",
-          website: "#",
+          website: "https://abeokuta.providencehotelandsuites.com/",
           price: "₦100,000",
           rating: 4,
         },
@@ -101,7 +101,7 @@ const TravelAccommodation = () => {
           distance: "30 mins to venue",
           description: "Located at the Olusegun Obasanjo Presidential Library complex",
           phone: "+234 803 890 1234",
-          website: "#",
+          website: "https://greenlegacyresort.com/",
           price: "₦145,000",
           rating: 5,
         },
@@ -243,6 +243,8 @@ const TravelAccommodation = () => {
                         </a>
                         <a
                           href={hotel.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="flex-1 flex items-center justify-center gap-1 py-2 rounded-lg bg-secondary/10 text-secondary hover:bg-secondary/20 transition-colors text-xs"
                         >
                           <ExternalLink className="w-3 h-3" />

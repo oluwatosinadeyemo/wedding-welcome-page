@@ -25,7 +25,7 @@ const Hero = () => {
           We're Getting Married
         </p>
         
-        <h1 className="wedding-heading text-6xl md:text-8xl lg:text-9xl mb-6 animate-fade-in bg-gradient-to-r from-foreground via-primary to-secondary bg-clip-text text-transparent">
+        <h1 className="wedding-heading text-6xl md:text-8xl lg:text-9xl mb-6 animate-fade-in bg-gradient-to-r from-white via-blue-200 to-purple-200 bg-clip-text text-transparent">
           Tosin <span className="font-light italic">&</span> Pelumi
         </h1>
         
