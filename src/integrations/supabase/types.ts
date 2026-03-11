@@ -14,94 +14,10 @@ export type Database = {
   }
   public: {
     Tables: {
-      guests: {
-        Row: {
-          id: string
-          full_name: string
-          email: string | null
-          phone: string | null
-          invite_code: string
-          party_size: number
-          table_assignment: string | null
-          side: string | null
-          pass_id: string | null
-          pass_generated_at: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          full_name: string
-          email?: string | null
-          phone?: string | null
-          invite_code: string
-          party_size?: number
-          table_assignment?: string | null
-          side?: string | null
-          pass_id?: string | null
-          pass_generated_at?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          full_name?: string
-          email?: string | null
-          phone?: string | null
-          invite_code?: string
-          party_size?: number
-          table_assignment?: string | null
-          side?: string | null
-          pass_id?: string | null
-          pass_generated_at?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      rsvps: {
-        Row: {
-          id: string
-          guest_id: string
-          attending: string
-          number_of_guests: number
-          message: string | null
-          submitted_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          guest_id: string
-          attending: string
-          number_of_guests?: number
-          message?: string | null
-          submitted_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          guest_id?: string
-          attending?: string
-          number_of_guests?: number
-          message?: string | null
-          submitted_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "rsvps_guest_id_fkey"
-            columns: ["guest_id"]
-            isOneToOne: true
-            referencedRelation: "guests"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
       wedding_photos: {
         Row: {
           caption: string | null
           created_at: string
-          expires_at: string | null
           file_name: string
           file_path: string
           id: string
@@ -111,7 +27,6 @@ export type Database = {
         Insert: {
           caption?: string | null
           created_at?: string
-          expires_at?: string | null
           file_name: string
           file_path: string
           id?: string
@@ -121,7 +36,6 @@ export type Database = {
         Update: {
           caption?: string | null
           created_at?: string
-          expires_at?: string | null
           file_name?: string
           file_path?: string
           id?: string
@@ -135,21 +49,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      lookup_guest_by_invite_code: {
-        Args: { code: string }
-        Returns: {
-          id: string
-          full_name: string
-          party_size: number
-          has_rsvp: boolean
-          rsvp_attending: string | null
-          has_pass: boolean
-        }[]
-      }
-      generate_guest_pass: {
-        Args: { p_guest_id: string; p_invite_code: string }
-        Returns: string
-      }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never
