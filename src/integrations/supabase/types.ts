@@ -83,6 +83,7 @@ export type Database = {
         Row: {
           caption: string | null
           created_at: string
+          expires_at: string | null
           file_name: string
           file_path: string
           id: string
@@ -92,6 +93,7 @@ export type Database = {
         Insert: {
           caption?: string | null
           created_at?: string
+          expires_at?: string | null
           file_name: string
           file_path: string
           id?: string
@@ -101,6 +103,7 @@ export type Database = {
         Update: {
           caption?: string | null
           created_at?: string
+          expires_at?: string | null
           file_name?: string
           file_path?: string
           id?: string
