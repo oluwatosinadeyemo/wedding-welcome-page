@@ -1,38 +1,86 @@
 import { useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { Download, Ticket, User, Calendar, MapPin } from "lucide-react";
+import { Download, Ticket, User, Calendar, MapPin, Search, Loader2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
+import { useGuestLookup } from "@/hooks/use-guest-lookup";
+import { useToast } from "@/hooks/use-toast";
 
 const QRCodePass = () => {
-  const [guestName, setGuestName] = useState("");
-  const [passGenerated, setPassGenerated] = useState(false);
+  const [inviteCode, setInviteCode] = useState("");
+  const [passId, setPassId] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const { guest, isLoading, error, lookupGuest, reset: resetLookup } = useGuestLookup();
+  const { toast } = useToast();
 
-  const weddingDetails = {
-    couple: "Tosin & Pelumi",
-    date: "December 12, 2026",
-    venue: "Lambs Event Centre, Abeokuta",
-    time: "4:00 PM",
+  const [step, setStep] = useState<"lookup" | "generate" | "display">("lookup");
+
+  const handleLookup = async () => {
+    const result = await lookupGuest(inviteCode);
+    if (result) {
+      if (result.rsvp_attending !== "yes") {
+        setStep("generate");
+      } else if (result.has_pass) {
+        const { data: guestRow } = await supabase
+          .from("guests")
+          .select("pass_id")
+          .eq("id", result.id)
+          .single();
+
+        if (guestRow?.pass_id) {
+          setPassId(guestRow.pass_id);
+          setStep("display");
+        } else {
+          setStep("generate");
+        }
+      } else {
+        setStep("generate");
+      }
+    }
+  };
+
+  const handleGeneratePass = async () => {
+    if (!guest) return;
+    setIsGenerating(true);
+
+    try {
+      const { data, error: rpcError } = await supabase.rpc("generate_guest_pass", {
+        p_guest_id: guest.id,
+        p_invite_code: inviteCode.trim(),
+      });
+
+      if (rpcError) throw rpcError;
+
+      setPassId(data);
+      setStep("display");
+      toast({
+        title: "Pass Generated!",
+        description: "Your digital wedding pass is ready.",
+      });
+    } catch (err: any) {
+      toast({
+        title: "Could not generate pass",
+        description: err.message || "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const generateQRValue = () => {
     return JSON.stringify({
+      pass_id: passId,
+      guest: guest?.full_name || "Guest",
       event: "Tosin & Pelumi Wedding",
-      guest: guestName || "Guest",
-      date: weddingDetails.date,
-      venue: weddingDetails.venue,
-      id: `TP2026-${Date.now().toString(36).toUpperCase()}`,
+      date: "2026-12-12",
     });
-  };
-
-  const handleGeneratePass = () => {
-    if (!guestName.trim()) return;
-    setPassGenerated(true);
   };
 
   const downloadPass = () => {
     const svg = document.getElementById("wedding-qr-code");
-    if (!svg) return;
+    if (!svg || !guest) return;
 
     const svgData = new XMLSerializer().serializeToString(svg);
     const canvas = document.createElement("canvas");
@@ -41,60 +89,65 @@ const QRCodePass = () => {
 
     img.onload = () => {
       canvas.width = 400;
-      canvas.height = 600;
-      
+      canvas.height = 620;
+
       if (ctx) {
-        // Background
         ctx.fillStyle = "#0a0a14";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Gradient overlay
         const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
         gradient.addColorStop(0, "rgba(59, 130, 246, 0.1)");
         gradient.addColorStop(1, "rgba(168, 85, 247, 0.1)");
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Header
         ctx.fillStyle = "#ffffff";
         ctx.font = "bold 24px 'Playfair Display', serif";
         ctx.textAlign = "center";
         ctx.fillText("Wedding Pass", canvas.width / 2, 50);
 
-        // Couple names
         ctx.font = "italic 32px 'Playfair Display', serif";
         ctx.fillText("Tosin & Pelumi", canvas.width / 2, 100);
 
-        // QR Code
         ctx.drawImage(img, (canvas.width - 200) / 2, 130, 200, 200);
 
-        // Guest name
         ctx.font = "18px Inter, sans-serif";
         ctx.fillStyle = "#a1a1aa";
         ctx.fillText("Guest", canvas.width / 2, 370);
         ctx.fillStyle = "#ffffff";
         ctx.font = "bold 20px Inter, sans-serif";
-        ctx.fillText(guestName, canvas.width / 2, 400);
+        ctx.fillText(guest.full_name, canvas.width / 2, 400);
 
-        // Details
         ctx.fillStyle = "#a1a1aa";
         ctx.font = "14px Inter, sans-serif";
-        ctx.fillText("📅 December 12, 2026 • 4:00 PM", canvas.width / 2, 460);
-        ctx.fillText("📍 Lambs Event Centre, Abeokuta", canvas.width / 2, 490);
+        ctx.fillText("December 12, 2026 | 4:00 PM", canvas.width / 2, 460);
+        ctx.fillText("Lambs Event Centre, Abeokuta", canvas.width / 2, 490);
 
-        // Footer
         ctx.font = "12px Inter, sans-serif";
         ctx.fillStyle = "#6b7280";
-        ctx.fillText("Present this pass at the venue entrance", canvas.width / 2, 560);
+        ctx.fillText("Present this pass at the venue entrance", canvas.width / 2, 550);
+
+        if (passId) {
+          ctx.font = "10px Inter, sans-serif";
+          ctx.fillStyle = "#4b5563";
+          ctx.fillText(`Pass ID: ${passId.substring(0, 8)}...`, canvas.width / 2, 580);
+        }
       }
 
       const link = document.createElement("a");
-      link.download = `wedding-pass-${guestName.replace(/\s+/g, "-").toLowerCase()}.png`;
+      link.download = `wedding-pass-${guest.full_name.replace(/\s+/g, "-").toLowerCase()}.png`;
       link.href = canvas.toDataURL();
       link.click();
     };
 
     img.src = "data:image/svg+xml;base64," + btoa(svgData);
+  };
+
+  const handleStartOver = () => {
+    setStep("lookup");
+    setInviteCode("");
+    setPassId(null);
+    resetLookup();
   };
 
   return (
@@ -118,41 +171,118 @@ const QRCodePass = () => {
         </div>
 
         <div className="max-w-md mx-auto">
-          {!passGenerated ? (
+          {/* Step 1: Invite Code Lookup */}
+          {step === "lookup" && (
             <div className="glass-card p-8 animate-fade-in">
               <div className="flex items-center justify-center w-16 h-16 mx-auto mb-6 rounded-2xl bg-primary/10">
                 <Ticket className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="font-serif text-2xl text-foreground mb-6 text-center">
-                Generate Your Pass
+              <h3 className="font-serif text-2xl text-foreground mb-2 text-center">
+                Get Your Pass
               </h3>
+              <p className="text-muted-foreground text-sm text-center mb-6">
+                Enter your invite code to generate your digital pass
+              </p>
               <div className="space-y-4">
-                <div>
-                  <label className="text-sm text-muted-foreground mb-2 block">
-                    Your Full Name
-                  </label>
-                  <Input
-                    placeholder="Enter your name"
-                    value={guestName}
-                    onChange={(e) => setGuestName(e.target.value)}
-                    className="bg-background/50 border-border/50 rounded-xl text-center text-lg py-6"
-                  />
-                </div>
+                <Input
+                  placeholder="e.g. TP-ADEOLA-001"
+                  value={inviteCode}
+                  onChange={(e) => setInviteCode(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleLookup()}
+                  className="bg-background/50 border-border/50 rounded-xl text-center text-lg py-6 uppercase"
+                  autoFocus
+                />
+                {error && (
+                  <p className="text-destructive text-sm text-center">{error}</p>
+                )}
                 <Button
-                  onClick={handleGeneratePass}
-                  disabled={!guestName.trim()}
+                  onClick={handleLookup}
+                  disabled={!inviteCode.trim() || isLoading}
                   className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-6 rounded-xl text-sm uppercase tracking-wider font-sans"
                 >
-                  Generate Pass
+                  {isLoading ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    "Find My Pass"
+                  )}
                 </Button>
               </div>
             </div>
-          ) : (
+          )}
+
+          {/* Step 2: Generate or RSVP prompt */}
+          {step === "generate" && guest && (
+            <div className="glass-card p-8 animate-fade-in text-center">
+              {guest.rsvp_attending === "yes" ? (
+                <>
+                  <div className="flex items-center justify-center w-16 h-16 mx-auto mb-6 rounded-2xl bg-primary/10">
+                    <Ticket className="w-8 h-8 text-primary" />
+                  </div>
+                  <h3 className="font-serif text-2xl text-foreground mb-4">
+                    Welcome, {guest.full_name}!
+                  </h3>
+                  <p className="text-muted-foreground mb-6">
+                    Ready to generate your personalized wedding pass?
+                  </p>
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={handleGeneratePass}
+                      disabled={isGenerating}
+                      className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground py-6 rounded-xl text-sm uppercase tracking-wider font-sans"
+                    >
+                      {isGenerating ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : (
+                        "Generate Pass"
+                      )}
+                    </Button>
+                    <Button
+                      onClick={handleStartOver}
+                      variant="outline"
+                      className="py-6 rounded-xl border-border/50"
+                    >
+                      Back
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center justify-center w-16 h-16 mx-auto mb-6 rounded-2xl bg-secondary/10">
+                    <Search className="w-8 h-8 text-secondary" />
+                  </div>
+                  <h3 className="font-serif text-2xl text-foreground mb-4">
+                    RSVP Required
+                  </h3>
+                  <p className="text-muted-foreground mb-6">
+                    Hi {guest.full_name}! You need to RSVP and confirm your attendance before generating your pass.
+                  </p>
+                  <div className="flex flex-col gap-3">
+                    <a
+                      href="/rsvp"
+                      className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground py-4 rounded-xl text-sm uppercase tracking-wider font-sans transition-colors"
+                    >
+                      RSVP Now
+                      <ArrowRight className="w-4 h-4" />
+                    </a>
+                    <Button
+                      onClick={handleStartOver}
+                      variant="outline"
+                      className="rounded-xl border-border/50"
+                    >
+                      Back
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Step 3: Pass Display */}
+          {step === "display" && guest && passId && (
             <div className="animate-fade-in">
               <div className="glass-card p-8 relative overflow-hidden">
-                {/* Decorative elements */}
                 <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-primary via-secondary to-primary" />
-                
+
                 <div className="text-center mb-6">
                   <p className="text-primary font-sans uppercase tracking-widest text-xs mb-2">
                     Wedding Pass
@@ -162,7 +292,6 @@ const QRCodePass = () => {
                   </h3>
                 </div>
 
-                {/* QR Code */}
                 <div className="flex justify-center mb-8">
                   <div className="p-4 bg-white rounded-2xl">
                     <QRCodeSVG
@@ -177,20 +306,18 @@ const QRCodePass = () => {
                   </div>
                 </div>
 
-                {/* Guest Info */}
                 <div className="text-center mb-8 pb-8 border-b border-border/30">
                   <div className="flex items-center justify-center gap-2 text-muted-foreground mb-2">
                     <User className="w-4 h-4" />
                     <span className="text-sm uppercase tracking-wider">Guest</span>
                   </div>
-                  <p className="font-serif text-2xl text-foreground">{guestName}</p>
+                  <p className="font-serif text-2xl text-foreground">{guest.full_name}</p>
                 </div>
 
-                {/* Event Details */}
                 <div className="space-y-4 text-center">
                   <div className="flex items-center justify-center gap-3 text-muted-foreground">
                     <Calendar className="w-4 h-4 text-primary" />
-                    <span className="font-sans">December 12, 2026 • 4:00 PM</span>
+                    <span className="font-sans">December 12, 2026 | 4:00 PM</span>
                   </div>
                   <div className="flex items-center justify-center gap-3 text-muted-foreground">
                     <MapPin className="w-4 h-4 text-primary" />
@@ -198,13 +325,15 @@ const QRCodePass = () => {
                   </div>
                 </div>
 
-                {/* Instructions */}
-                <p className="text-center text-muted-foreground text-xs mt-8 font-sans">
+                <p className="text-center text-muted-foreground text-[10px] mt-6 font-mono">
+                  Pass ID: {passId.substring(0, 8)}
+                </p>
+
+                <p className="text-center text-muted-foreground text-xs mt-4 font-sans">
                   Present this QR code at the venue entrance
                 </p>
               </div>
 
-              {/* Actions */}
               <div className="flex gap-4 mt-6">
                 <Button
                   onClick={downloadPass}
@@ -214,10 +343,7 @@ const QRCodePass = () => {
                   Download Pass
                 </Button>
                 <Button
-                  onClick={() => {
-                    setPassGenerated(false);
-                    setGuestName("");
-                  }}
+                  onClick={handleStartOver}
                   variant="outline"
                   className="py-6 rounded-xl border-border/50"
                 >

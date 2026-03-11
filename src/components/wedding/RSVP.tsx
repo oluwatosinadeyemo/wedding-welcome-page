@@ -1,13 +1,13 @@
-import { Button } from "@/components/ui/button";
 import { Heart, Mail } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const RSVP = () => {
   return (
-    <section className="wedding-section relative overflow-hidden">
+    <section id="rsvp" className="wedding-section relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-b from-hydrangea-light/5 to-lavender-light/5" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-3xl" />
-      
+
       <div className="max-w-3xl mx-auto text-center relative z-10">
         <div className="mb-12">
           <div className="w-20 h-20 mx-auto mb-8 rounded-full bg-secondary/10 flex items-center justify-center">
@@ -21,16 +21,16 @@ const RSVP = () => {
         </div>
 
         <p className="text-muted-foreground mb-10 max-w-lg mx-auto text-lg font-sans leading-relaxed">
-          Please let us know if you'll be able to celebrate with us. 
+          Please let us know if you'll be able to celebrate with us.
           Kindly respond by October 1st, 2026.
         </p>
 
-        <Button
-          size="lg"
-          className="bg-primary hover:bg-primary/90 text-primary-foreground px-12 py-7 text-base font-sans tracking-wider uppercase rounded-full glow"
+        <Link
+          to="/rsvp"
+          className="inline-block bg-primary hover:bg-primary/90 text-primary-foreground px-12 py-7 text-base font-sans tracking-wider uppercase rounded-full glow transition-colors"
         >
           RSVP Now
-        </Button>
+        </Link>
 
         <div className="mt-12 glass-card inline-block px-8 py-4 rounded-full">
           <div className="flex items-center gap-3 text-muted-foreground">

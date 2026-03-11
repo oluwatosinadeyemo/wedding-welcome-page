@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { Heart, Menu, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Navigation = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -18,6 +20,15 @@ const Navigation = () => {
     const element = document.getElementById(id);
     element?.scrollIntoView({ behavior: "smooth" });
     setIsMobileMenuOpen(false);
+  };
+
+  const handleNavClick = (item: string) => {
+    if (item === "RSVP") {
+      navigate("/rsvp");
+      setIsMobileMenuOpen(false);
+    } else {
+      scrollToSection(item.toLowerCase().replace(" ", "-"));
+    }
   };
 
   const navItems = ["Our Story", "Details", "Gallery", "Pass", "RSVP"];
@@ -47,9 +58,7 @@ const Navigation = () => {
             {navItems.map((item) => (
               <button
                 key={item}
-                onClick={() =>
-                  scrollToSection(item.toLowerCase().replace(" ", "-"))
-                }
+                onClick={() => handleNavClick(item)}
                 className="px-4 py-2 rounded-full text-sm font-sans text-muted-foreground hover:text-foreground hover:bg-card/50 transition-all duration-300"
               >
                 {item}
@@ -78,9 +87,7 @@ const Navigation = () => {
             {navItems.map((item) => (
               <button
                 key={item}
-                onClick={() =>
-                  scrollToSection(item.toLowerCase().replace(" ", "-"))
-                }
+                onClick={() => handleNavClick(item)}
                 className="text-2xl font-serif text-foreground hover:text-primary transition-colors"
               >
                 {item}
