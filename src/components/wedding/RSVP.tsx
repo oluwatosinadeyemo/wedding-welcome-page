@@ -14,7 +14,7 @@ const RSVP = () => {
             <Heart className="w-10 h-10 text-secondary fill-secondary/20" />
           </div>
           <p className="wedding-subheading mb-4 text-primary">We Hope You Can Join Us</p>
-          <h2 className="wedding-heading text-5xl md:text-7xl mb-6">
+          <h2 className="wedding-heading text-3xl sm:text-5xl md:text-7xl mb-6">
             Kindly Respond
           </h2>
           <div className="wedding-divider mb-8 w-32" />
@@ -32,11 +32,13 @@ const RSVP = () => {
           RSVP Now
         </Link>
 
-        <div className="mt-12 glass-card inline-block px-8 py-4 rounded-full">
-          <div className="flex items-center gap-3 text-muted-foreground">
-            <Mail className="w-5 h-5 text-primary" />
-            <span className="font-sans">Questions?</span>
-            <a href="mailto:tosin.pelumi.wedding@email.com" className="text-primary hover:underline">
+        <div className="mt-12 glass-card inline-block px-4 sm:px-8 py-4 rounded-2xl sm:rounded-full">
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <Mail className="w-5 h-5 text-primary" />
+              <span className="font-sans">Questions?</span>
+            </div>
+            <a href="mailto:tosin.pelumi.wedding@email.com" className="text-primary hover:underline text-sm sm:text-base break-all sm:break-normal">
               tosin.pelumi.wedding@email.com
             </a>
           </div>

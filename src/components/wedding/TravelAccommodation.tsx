@@ -132,7 +132,7 @@ const TravelAccommodation = () => {
           <p className="text-primary font-sans uppercase tracking-[0.2em] text-sm mb-4 font-medium">
             Plan Your Visit
           </p>
-          <h2 className="font-serif text-5xl md:text-7xl text-foreground mb-4 font-medium">
+          <h2 className="font-serif text-3xl sm:text-5xl md:text-7xl text-foreground mb-4 font-medium">
             Travel & Stay
           </h2>
           <p className="text-muted-foreground font-sans max-w-2xl mx-auto mt-6">
@@ -194,12 +194,12 @@ const TravelAccommodation = () => {
 
         {/* Hotels */}
         <div className="animate-fade-in-up">
-          <div className="flex items-center justify-center gap-4 mb-12">
-            <div className="w-20 h-px bg-gradient-to-r from-transparent to-primary/50" />
-            <Hotel className="w-6 h-6 text-primary" />
-            <h3 className="font-serif text-3xl text-foreground">Recommended Hotels</h3>
-            <Hotel className="w-6 h-6 text-primary" />
-            <div className="w-20 h-px bg-gradient-to-l from-transparent to-primary/50" />
+          <div className="flex items-center justify-center gap-2 sm:gap-4 mb-12">
+            <div className="hidden sm:block w-20 h-px bg-gradient-to-r from-transparent to-primary/50" />
+            <Hotel className="w-5 h-5 sm:w-6 sm:h-6 text-primary flex-shrink-0" />
+            <h3 className="font-serif text-xl sm:text-3xl text-foreground">Recommended Hotels</h3>
+            <Hotel className="w-5 h-5 sm:w-6 sm:h-6 text-primary flex-shrink-0" />
+            <div className="hidden sm:block w-20 h-px bg-gradient-to-l from-transparent to-primary/50" />
           </div>
 
           {hotelGroups.map((group) => (
@@ -207,7 +207,7 @@ const TravelAccommodation = () => {
               <h4 className="font-serif text-xl text-foreground mb-6 text-center">
                 {group.label}
               </h4>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                 {group.hotels.map((hotel) => (
                   <div
                     key={hotel.name}
@@ -236,7 +236,7 @@ const TravelAccommodation = () => {
                       <div className="flex items-center gap-2 mt-3">
                         <a
                           href={`tel:${hotel.phone}`}
-                          className="flex-1 flex items-center justify-center gap-1 py-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-xs"
+                          className="flex-1 flex items-center justify-center gap-1 py-3 sm:py-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-xs"
                         >
                           <Phone className="w-3 h-3" />
                           <span>Call</span>
@@ -245,7 +245,7 @@ const TravelAccommodation = () => {
                           href={hotel.website}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex-1 flex items-center justify-center gap-1 py-2 rounded-lg bg-secondary/10 text-secondary hover:bg-secondary/20 transition-colors text-xs"
+                          className="flex-1 flex items-center justify-center gap-1 py-3 sm:py-2 rounded-lg bg-secondary/10 text-secondary hover:bg-secondary/20 transition-colors text-xs"
                         >
                           <ExternalLink className="w-3 h-3" />
                           <span>Book</span>

@@ -330,7 +330,7 @@ const DashboardPage = () => {
 
       <div className="container mx-auto px-4 py-8">
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 mb-8">
           {[
             { label: "Total Invited", value: totalGuests, icon: Users, color: "text-primary" },
             { label: "Attending", value: `${attending.length} (${totalAttending} guests)`, icon: CheckCircle, color: "text-green-500" },
