@@ -79,7 +79,7 @@ BEGIN
   v_pass_id := gen_random_uuid();
 
   UPDATE public.guests
-  SET pass_id = v_pass_id, pass_generated_at = now()
+  SET pass_id = v_pass_id
   WHERE id = p_guest_id;
 
   RETURN v_pass_id;
