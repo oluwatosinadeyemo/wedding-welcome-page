@@ -8,9 +8,31 @@ interface EnvelopeProps {
 const Envelope = ({ onOpen }: EnvelopeProps) => {
   const [isOpening, setIsOpening] = useState(false);
 
+  const playOpenSound = () => {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6 arpeggio
+      notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.15);
+        gain.gain.linearRampToValueAtTime(0.12, ctx.currentTime + i * 0.15 + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 0.8);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(ctx.currentTime + i * 0.15);
+        osc.stop(ctx.currentTime + i * 0.15 + 0.8);
+      });
+    } catch (e) {
+      // Audio not supported, silently continue
+    }
+  };
+
   const handleClick = () => {
     if (isOpening) return;
     setIsOpening(true);
+    playOpenSound();
     setTimeout(() => {
       onOpen();
     }, 1800);
