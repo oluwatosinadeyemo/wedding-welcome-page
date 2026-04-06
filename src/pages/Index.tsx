@@ -45,6 +45,12 @@ const Index = () => {
                 <p className="text-muted-foreground max-w-lg mx-auto text-base sm:text-lg font-sans leading-relaxed animate-fade-in-delay-2">
                   Please let us know if you'll be attending before viewing the wedding details.
                 </p>
+                <button
+                  onClick={() => setStage("details")}
+                  className="mt-4 text-sm text-muted-foreground/70 hover:text-primary underline underline-offset-4 transition-colors font-sans animate-fade-in-delay-3"
+                >
+                  Already RSVP'd? Skip to details →
+                </button>
               </div>
 
               <div className="animate-fade-in-delay-3">
