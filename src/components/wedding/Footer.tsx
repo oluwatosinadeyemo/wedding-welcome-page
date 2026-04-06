@@ -24,7 +24,7 @@ const Footer = () => {
         {/* Social Links */}
         <div className="flex items-center justify-center gap-4 mb-8">
           <a
-            href="https://www.instagram.com/explore/tags/TosinAndPelumi2026/"
+            href="https://www.instagram.com/explore/tags/TandP2026/"
             target="_blank"
             rel="noopener noreferrer"
             className="w-12 h-12 rounded-full bg-card/80 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
@@ -35,7 +35,7 @@ const Footer = () => {
         
         <div className="pt-8 border-t border-border/30">
           <p className="text-primary text-lg font-sans tracking-widest">
-            #TosinAndPelumi2026
+            #T&P2026
           </p>
         </div>
       </div>
