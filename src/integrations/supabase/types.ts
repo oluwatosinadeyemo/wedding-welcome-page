@@ -121,6 +121,10 @@ export type Database = {
         Args: { p_guest_id: string; p_invite_code: string }
         Returns: string
       }
+      generate_pass_by_guest_id: {
+        Args: { p_guest_id: string }
+        Returns: string
+      }
       lookup_guest_by_invite_code: {
         Args: { code: string }
         Returns: {
@@ -131,6 +135,26 @@ export type Database = {
           party_size: number
           rsvp_attending: string
         }[]
+      }
+      lookup_guest_by_name: {
+        Args: { guest_name: string }
+        Returns: {
+          full_name: string
+          has_pass: boolean
+          has_rsvp: boolean
+          id: string
+          party_size: number
+          rsvp_attending: string
+        }[]
+      }
+      submit_walkin_rsvp: {
+        Args: {
+          p_attending: string
+          p_full_name: string
+          p_message?: string
+          p_number_of_guests?: number
+        }
+        Returns: Json
       }
     }
     Enums: {

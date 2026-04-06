@@ -11,7 +11,11 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 
-const RSVPForm = () => {
+interface RSVPFormProps {
+  onSubmitSuccess?: () => void;
+}
+
+const RSVPForm = ({ onSubmitSuccess }: RSVPFormProps = {}) => {
   const [step, setStep] = useState<"form" | "confirmation">("form");
   const [submittedData, setSubmittedData] = useState<{ attending: string; number_of_guests: number; full_name: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -54,6 +58,7 @@ const RSVPForm = () => {
         title: "RSVP Submitted!",
         description: "Thank you for letting us know.",
       });
+      onSubmitSuccess?.();
     } catch (err: any) {
       toast({
         title: "Submission failed",
