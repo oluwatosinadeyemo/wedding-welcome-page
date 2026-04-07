@@ -11,44 +11,13 @@ import PhotoGallery from "@/components/wedding/PhotoGallery";
 import QRCodePass from "@/components/wedding/QRCodePass";
 import RSVP from "@/components/wedding/RSVP";
 import Footer from "@/components/wedding/Footer";
-import { Heart, ArrowRight, Loader2, KeyRound } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { Heart } from "lucide-react";
 
 type Stage = "envelope" | "rsvp" | "details";
 
 const Index = () => {
   const [stage, setStage] = useState<Stage>("envelope");
   const [rsvpDone, setRsvpDone] = useState(false);
-  const [showSkip, setShowSkip] = useState(false);
-  const [skipCode, setSkipCode] = useState("");
-  const [skipLoading, setSkipLoading] = useState(false);
-  const { toast } = useToast();
-
-  const handleSkipLookup = async () => {
-    if (!skipCode.trim()) return;
-    setSkipLoading(true);
-    try {
-      const { data, error } = await (supabase.rpc as any)("lookup_guest_by_invite_code", {
-        code: skipCode.trim(),
-      });
-      if (error) throw error;
-      const guest = data?.[0];
-      if (guest?.has_pass) {
-        setStage("details");
-      } else if (guest?.has_rsvp) {
-        toast({ title: "Pass not generated yet", description: "You've RSVP'd but haven't generated your pass yet. Please proceed with the RSVP flow." });
-      } else {
-        toast({ title: "Not found", description: "No pass found for this invite code. Please RSVP first.", variant: "destructive" });
-      }
-    } catch {
-      toast({ title: "Error", description: "Could not verify your code. Please try again.", variant: "destructive" });
-    } finally {
-      setSkipLoading(false);
-    }
-  };
 
   if (stage === "envelope") {
     return <Envelope onOpen={() => setStage("rsvp")} />;
@@ -74,48 +43,22 @@ const Index = () => {
                 </h1>
                 <div className="wedding-divider mb-8 w-32 animate-fade-in-delay-2" />
                 <p className="text-muted-foreground max-w-lg mx-auto text-base sm:text-lg font-sans leading-relaxed animate-fade-in-delay-2">
-                  Please let us know if you'll be attending before viewing the wedding details.
+                  Please let us know if you'll be attending.
                 </p>
 
-                {!showSkip ? (
-                  <button
-                    onClick={() => setShowSkip(true)}
-                    className="mt-4 text-sm text-muted-foreground/70 hover:text-primary underline underline-offset-4 transition-colors font-sans animate-fade-in-delay-3"
-                  >
-                    Already have your pass? Skip to details →
-                  </button>
-                ) : (
-                  <div className="mt-6 max-w-sm mx-auto animate-fade-in">
-                    <div className="glass-card p-4 flex flex-col gap-3">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground font-sans">
-                        <KeyRound className="w-4 h-4" />
-                        Enter your invite code
-                      </div>
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="e.g. TP-ADEOLA-001"
-                          value={skipCode}
-                          onChange={(e) => setSkipCode(e.target.value)}
-                          onKeyDown={(e) => e.key === "Enter" && handleSkipLookup()}
-                          className="text-sm"
-                        />
-                        <Button onClick={handleSkipLookup} disabled={skipLoading || !skipCode.trim()} size="sm">
-                          {skipLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Go"}
-                        </Button>
-                      </div>
-                      <button
-                        onClick={() => setShowSkip(false)}
-                        className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors font-sans"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                )}
+                <button
+                  onClick={() => setStage("details")}
+                  className="mt-4 text-sm text-muted-foreground/70 hover:text-primary underline underline-offset-4 transition-colors font-sans animate-fade-in-delay-3"
+                >
+                  Already RSVP'd? Skip to details →
+                </button>
               </div>
 
               <div className="animate-fade-in-delay-3">
-                <RSVPForm onSubmitSuccess={() => setRsvpDone(true)} />
+                <RSVPForm onSubmitSuccess={() => {
+                  setRsvpDone(true);
+                  setTimeout(() => setStage("details"), 2000);
+                }} />
               </div>
             </>
           ) : (
@@ -125,16 +68,9 @@ const Index = () => {
                   <Heart className="w-8 h-8 text-primary" />
                 </div>
                 <h3 className="font-serif text-3xl text-foreground mb-4">Thank You!</h3>
-                <p className="text-muted-foreground mb-8 font-sans">
-                  Your response has been recorded. You can now view all the wedding details.
+                <p className="text-muted-foreground mb-4 font-sans">
+                  Your response has been recorded. Taking you to the wedding details...
                 </p>
-                <button
-                  onClick={() => setStage("details")}
-                  className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-12 py-4 text-sm font-sans tracking-wider uppercase rounded-full glow transition-colors"
-                >
-                  View Wedding Details
-                  <ArrowRight className="w-4 h-4" />
-                </button>
               </div>
             </div>
           )}
