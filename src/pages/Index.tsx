@@ -11,9 +11,9 @@ import PhotoGallery from "@/components/wedding/PhotoGallery";
 import QRCodePass from "@/components/wedding/QRCodePass";
 import RSVP from "@/components/wedding/RSVP";
 import Footer from "@/components/wedding/Footer";
-import { Heart } from "lucide-react";
+import { Heart, HeartCrack } from "lucide-react";
 
-type Stage = "envelope" | "rsvp" | "details";
+type Stage = "envelope" | "rsvp" | "details" | "declined";
 
 const Index = () => {
   const [stage, setStage] = useState<Stage>("envelope");
@@ -55,9 +55,13 @@ const Index = () => {
               </div>
 
               <div className="animate-fade-in-delay-3">
-                <RSVPForm onSubmitSuccess={() => {
+                <RSVPForm onSubmitSuccess={(attending) => {
                   setRsvpDone(true);
-                  setTimeout(() => setStage("details"), 2000);
+                  if (attending === "no") {
+                    setTimeout(() => setStage("declined"), 2000);
+                  } else {
+                    setTimeout(() => setStage("details"), 2000);
+                  }
                 }} />
               </div>
             </>
@@ -74,6 +78,25 @@ const Index = () => {
               </div>
             </div>
           )}
+        </div>
+      </div>
+    );
+  }
+
+  if (stage === "declined") {
+    return (
+      <div className="min-h-screen bg-background relative overflow-hidden flex items-center justify-center">
+        <div className="absolute inset-0 bg-gradient-to-b from-hydrangea-light/5 to-lavender-light/5" />
+        <div className="relative z-10 max-w-lg mx-auto text-center px-4">
+          <div className="glass-card p-10">
+            <div className="flex items-center justify-center w-16 h-16 mx-auto mb-6 rounded-full bg-muted/20">
+              <HeartCrack className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h3 className="font-serif text-3xl text-foreground mb-4">We'll Miss You!</h3>
+            <p className="text-muted-foreground font-sans leading-relaxed">
+              Thank you for letting us know. You'll be in our thoughts on our special day. 💕
+            </p>
+          </div>
         </div>
       </div>
     );
