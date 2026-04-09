@@ -11,9 +11,9 @@ import PhotoGallery from "@/components/wedding/PhotoGallery";
 import QRCodePass from "@/components/wedding/QRCodePass";
 import RSVP from "@/components/wedding/RSVP";
 import Footer from "@/components/wedding/Footer";
-import { Heart } from "lucide-react";
+import { Heart, HeartCrack } from "lucide-react";
 
-type Stage = "envelope" | "rsvp" | "details";
+type Stage = "envelope" | "rsvp" | "details" | "declined";
 
 const Index = () => {
   const [stage, setStage] = useState<Stage>("envelope");
