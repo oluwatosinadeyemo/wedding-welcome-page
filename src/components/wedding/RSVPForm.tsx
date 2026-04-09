@@ -58,7 +58,7 @@ const RSVPForm = ({ onSubmitSuccess }: RSVPFormProps = {}) => {
         title: "RSVP Submitted!",
         description: "Thank you for letting us know.",
       });
-      onSubmitSuccess?.();
+      onSubmitSuccess?.(values.attending);
     } catch (err: any) {
       toast({
         title: "Submission failed",
