@@ -55,9 +55,13 @@ const Index = () => {
               </div>
 
               <div className="animate-fade-in-delay-3">
-                <RSVPForm onSubmitSuccess={() => {
+                <RSVPForm onSubmitSuccess={(attending) => {
                   setRsvpDone(true);
-                  setTimeout(() => setStage("details"), 2000);
+                  if (attending === "no") {
+                    setTimeout(() => setStage("declined"), 2000);
+                  } else {
+                    setTimeout(() => setStage("details"), 2000);
+                  }
                 }} />
               </div>
             </>
