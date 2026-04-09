@@ -83,6 +83,25 @@ const Index = () => {
     );
   }
 
+  if (stage === "declined") {
+    return (
+      <div className="min-h-screen bg-background relative overflow-hidden flex items-center justify-center">
+        <div className="absolute inset-0 bg-gradient-to-b from-hydrangea-light/5 to-lavender-light/5" />
+        <div className="relative z-10 max-w-lg mx-auto text-center px-4">
+          <div className="glass-card p-10">
+            <div className="flex items-center justify-center w-16 h-16 mx-auto mb-6 rounded-full bg-muted/20">
+              <HeartCrack className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h3 className="font-serif text-3xl text-foreground mb-4">We'll Miss You!</h3>
+            <p className="text-muted-foreground font-sans leading-relaxed">
+              Thank you for letting us know. You'll be in our thoughts on our special day. 💕
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
