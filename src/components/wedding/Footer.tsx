@@ -1,4 +1,5 @@
 import { Heart, Instagram } from "lucide-react";
+import tpLogo from "@/assets/tp-logo.png";
 
 const Footer = () => {
   return (
@@ -9,6 +10,11 @@ const Footer = () => {
       
       <div className="max-w-4xl mx-auto text-center relative z-10">
         <div className="mb-8">
+          <img
+            src={tpLogo}
+            alt="Tosin & Pelumi 2026"
+            className="w-24 h-24 sm:w-28 sm:h-28 mx-auto mb-4 object-contain"
+          />
           <h3 className="wedding-heading text-3xl sm:text-4xl md:text-5xl mb-2 bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent">
             Tosin & Pelumi
           </h3>

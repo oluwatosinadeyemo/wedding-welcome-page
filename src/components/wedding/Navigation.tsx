@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { Heart, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import tpLogo from "@/assets/tp-logo.png";
 
 const Navigation = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -47,10 +48,11 @@ const Navigation = () => {
             onClick={() => scrollToSection("home")}
             className="flex items-center gap-3 group"
           >
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-              <Heart className="w-5 h-5 text-primary group-hover:fill-primary/30 transition-all" />
-            </div>
-            <span className="wedding-heading text-2xl hidden sm:block">T & P</span>
+            <img
+              src={tpLogo}
+              alt="Tosin & Pelumi 2026"
+              className="w-12 h-12 object-contain transition-transform duration-300 group-hover:scale-110"
+            />
           </button>
 
           {/* Desktop Navigation */}

@@ -1,4 +1,5 @@
 import heroImage from "@/assets/hero-wedding.jpg";
+import tpLogo from "@/assets/tp-logo.png";
 import { motion } from "framer-motion";
 
 const Hero = () => {
@@ -21,6 +22,11 @@ const Hero = () => {
 
       {/* Content */}
       <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
+        <img
+          src={tpLogo}
+          alt="Tosin & Pelumi 2026"
+          className="w-28 h-28 sm:w-36 sm:h-36 md:w-44 md:h-44 mx-auto mb-6 object-contain animate-fade-in drop-shadow-[0_4px_20px_hsl(var(--primary)/0.4)]"
+        />
         <p className="wedding-subheading animate-fade-in-delay-1 mb-8 text-primary">
           We're Getting Married
         </p>
