@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import tpLogo from "@/assets/tp-logo.png";
 
 interface EnvelopeProps {
   onOpen: () => void;
@@ -115,33 +116,16 @@ const Envelope = ({ onOpen }: EnvelopeProps) => {
             transition={{ duration: 0.4, delay: 0.1 }}
           >
             <div
-              className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center relative"
+              className="w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center relative bg-background"
               style={{
-                background: `radial-gradient(circle at 35% 35%, hsl(0 70% 45%), hsl(0 60% 30%))`,
-                boxShadow: `0 4px 15px hsl(0 60% 20% / 0.5), inset 0 1px 2px hsl(0 70% 55% / 0.3)`,
+                boxShadow: `0 4px 20px hsl(var(--primary) / 0.3), 0 0 0 2px hsl(var(--primary) / 0.2)`,
               }}
             >
-              {/* Wax drip effects */}
-              <div className="absolute -top-1 left-3 w-3 h-4 rounded-full" style={{ background: `hsl(0 60% 35%)` }} />
-              <div className="absolute -top-0.5 right-4 w-2 h-3 rounded-full" style={{ background: `hsl(0 60% 33%)` }} />
-              <div className="absolute -bottom-1 left-5 w-2.5 h-3 rounded-full" style={{ background: `hsl(0 60% 32%)` }} />
-              <div className="absolute -right-1 top-4 w-3 h-2.5 rounded-full" style={{ background: `hsl(0 60% 34%)` }} />
-              
-              {/* Inner circle */}
-              <div
-                className="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center border"
-                style={{
-                  borderColor: `hsl(0 50% 50% / 0.4)`,
-                  background: `radial-gradient(circle at 40% 40%, hsl(0 65% 42%), hsl(0 55% 32%))`,
-                }}
-              >
-                <span
-                  className="font-serif text-sm sm:text-base font-bold tracking-wider select-none"
-                  style={{ color: `hsl(0 30% 70%)` }}
-                >
-                  T&P
-                </span>
-              </div>
+              <img
+                src={tpLogo}
+                alt="T&P 2026"
+                className="w-full h-full object-contain rounded-full p-1"
+              />
             </div>
           </motion.div>
         </div>
