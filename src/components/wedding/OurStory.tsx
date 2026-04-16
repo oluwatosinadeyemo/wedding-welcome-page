@@ -17,21 +17,18 @@ const OurStory = () => {
         <div className="grid lg:grid-cols-2 gap-16 md:gap-24 items-center">
           <div className="order-2 lg:order-1 space-y-8">
             <p className="text-muted-foreground leading-relaxed text-lg">
-              Our story began on a quiet morning train ride. Tosin and Pelumi happened 
-              to share the same carriage, exchanging a brief smile over a spilled cup 
-              of coffee and a borrowed napkin — a small moment neither of us forgot.
+              We met on the train — a brief, easy moment between strangers that 
+              somehow stayed with us both.
             </p>
             <p className="text-muted-foreground leading-relaxed text-lg">
-              Weeks later, fate nudged us again when we discovered we'd been hired at 
-              the same company. Shared projects turned into shared lunches, late-night 
-              deadlines into long conversations, and a familiar face from a train ride 
-              into the person we couldn't imagine life without. After years of building 
-              a life together, we're thrilled to celebrate our love with you.
+              Then we met again at work, and from that point everything unfolded 
+              naturally. Four years later, we're still choosing each other with 
+              the same love and excitement we felt at the start.
             </p>
             <div className="pt-8 glass-card p-8">
               <p className="wedding-subheading text-xs mb-4 text-primary">How We Met</p>
               <p className="text-foreground font-serif text-2xl italic leading-relaxed">
-                "A chance meeting on a train, a second chance at work — and a love that was always meant to be."
+                "A train ride, a second meeting, and four years of choosing each other — every single day."
               </p>
             </div>
           </div>
