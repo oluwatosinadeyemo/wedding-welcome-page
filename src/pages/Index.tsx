@@ -17,7 +17,6 @@ type Stage = "envelope" | "rsvp" | "details" | "declined";
 
 const Index = () => {
   const [stage, setStage] = useState<Stage>("envelope");
-  const [rsvpDone, setRsvpDone] = useState(false);
 
   if (stage === "envelope") {
     return <Envelope onOpen={() => setStage("rsvp")} />;
