@@ -31,53 +31,38 @@ const Index = () => {
         <div className="absolute bottom-1/4 right-1/4 w-40 h-40 sm:w-60 sm:h-60 md:w-80 md:h-80 bg-secondary/10 rounded-full blur-3xl" />
 
         <div className="relative z-10 container mx-auto px-4 py-12">
-          {!rsvpDone ? (
-            <>
-              <div className="text-center mb-12">
-                <div className="w-20 h-20 mx-auto mb-8 rounded-full bg-secondary/10 flex items-center justify-center animate-fade-in">
-                  <Heart className="w-10 h-10 text-secondary fill-secondary/20" />
-                </div>
-                <p className="wedding-subheading mb-4 text-primary animate-fade-in-delay-1">We Hope You Can Join Us</p>
-                <h1 className="wedding-heading text-3xl sm:text-5xl md:text-7xl mb-6 animate-fade-in-delay-1">
-                  Kindly Respond
-                </h1>
-                <div className="wedding-divider mb-8 w-32 animate-fade-in-delay-2" />
-                <p className="text-muted-foreground max-w-lg mx-auto text-base sm:text-lg font-sans leading-relaxed animate-fade-in-delay-2">
-                  Please let us know if you'll be attending.
-                </p>
+          <>
+            <div className="text-center mb-12">
+              <div className="w-20 h-20 mx-auto mb-8 rounded-full bg-secondary/10 flex items-center justify-center animate-fade-in">
+                <Heart className="w-10 h-10 text-secondary fill-secondary/20" />
+              </div>
+              <p className="wedding-subheading mb-4 text-primary animate-fade-in-delay-1">We Hope You Can Join Us</p>
+              <h1 className="wedding-heading text-3xl sm:text-5xl md:text-7xl mb-6 animate-fade-in-delay-1">
+                Kindly Respond
+              </h1>
+              <div className="wedding-divider mb-8 w-32 animate-fade-in-delay-2" />
+              <p className="text-muted-foreground max-w-lg mx-auto text-base sm:text-lg font-sans leading-relaxed animate-fade-in-delay-2">
+                Please let us know if you'll be attending.
+              </p>
 
-                <button
-                  onClick={() => setStage("details")}
-                  className="mt-4 text-sm text-muted-foreground/70 hover:text-primary underline underline-offset-4 transition-colors font-sans animate-fade-in-delay-3"
-                >
-                  Already RSVP'd? Skip to details →
-                </button>
-              </div>
-
-              <div className="animate-fade-in-delay-3">
-                <RSVPForm onSubmitSuccess={(attending) => {
-                  setRsvpDone(true);
-                  if (attending === "no") {
-                    setTimeout(() => setStage("declined"), 2000);
-                  } else {
-                    setTimeout(() => setStage("details"), 2000);
-                  }
-                }} />
-              </div>
-            </>
-          ) : (
-            <div className="max-w-lg mx-auto text-center animate-fade-in pt-20">
-              <div className="glass-card p-8">
-                <div className="flex items-center justify-center w-16 h-16 mx-auto mb-6 rounded-full bg-primary/10">
-                  <Heart className="w-8 h-8 text-primary" />
-                </div>
-                <h3 className="font-serif text-3xl text-foreground mb-4">Thank You!</h3>
-                <p className="text-muted-foreground mb-4 font-sans">
-                  Your response has been recorded. Taking you to the wedding details...
-                </p>
-              </div>
+              <button
+                onClick={() => setStage("details")}
+                className="mt-4 text-sm text-muted-foreground/70 hover:text-primary underline underline-offset-4 transition-colors font-sans animate-fade-in-delay-3"
+              >
+                Already RSVP'd? Skip to details →
+              </button>
             </div>
-          )}
+
+            <div className="animate-fade-in-delay-3">
+              <RSVPForm onSubmitSuccess={(attending) => {
+                if (attending === "no") {
+                  setStage("declined");
+                } else {
+                  setStage("details");
+                }
+              }} />
+            </div>
+          </>
         </div>
       </div>
     );
