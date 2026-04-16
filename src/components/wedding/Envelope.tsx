@@ -115,18 +115,11 @@ const Envelope = ({ onOpen }: EnvelopeProps) => {
             animate={isOpening ? { scale: 0, opacity: 0, y: -20 } : {}}
             transition={{ duration: 0.4, delay: 0.1 }}
           >
-            <div
-              className="w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center relative bg-background"
-              style={{
-                boxShadow: `0 4px 20px hsl(var(--primary) / 0.3), 0 0 0 2px hsl(var(--primary) / 0.2)`,
-              }}
-            >
-              <img
-                src={tpLogo}
-                alt="T&P 2026"
-                className="w-full h-full object-contain rounded-full p-1"
-              />
-            </div>
+            <img
+              src={tpLogo}
+              alt="T&P 2026"
+              className="w-24 h-24 sm:w-28 sm:h-28 object-contain drop-shadow-[0_4px_20px_hsl(var(--primary)/0.4)]"
+            />
           </motion.div>
         </div>
 
