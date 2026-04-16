@@ -136,7 +136,7 @@ const TravelAccommodation = () => {
             Travel & Stay
           </h2>
           <p className="text-muted-foreground font-sans max-w-2xl mx-auto mt-6">
-            We've curated the best accommodations in Abeokuta for our guests. Mention "Tosin & Pelumi Wedding" for special rates.
+            We've curated the best accommodations in Abeokuta for our guests.
           </p>
         </div>
 
