@@ -15,7 +15,7 @@ interface Photo {
   expires_at: string | null;
 }
 
-const MAX_FILE_SIZE_MB = 10;
+const MAX_FILE_SIZE_MB = 50;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 const GUEST_NAME_KEY = "wedding_guest_name";
 const GUEST_RSVPD_KEY = "wedding_guest_rsvpd";
@@ -201,19 +201,14 @@ const PhotoGallery = () => {
 
         {/* Guest Actions */}
         <div className="flex flex-col items-center gap-4 mb-12">
-          {hasRsvpd && hasEnteredName ? (
+          {hasEnteredName && (
             <p className="text-muted-foreground text-sm">
               Sharing as <span className="text-foreground font-medium">{guestName}</span>
-            </p>
-          ) : (
-            <p className="text-muted-foreground text-sm text-center max-w-md">
-              Only guests who have RSVP'd can upload photos.
             </p>
           )}
           <Button
             onClick={handleShareClick}
-            disabled={!hasRsvpd || !hasEnteredName}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 rounded-full text-sm uppercase tracking-wider font-sans disabled:opacity-50"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 rounded-full text-sm uppercase tracking-wider font-sans"
           >
             <Camera className="w-5 h-5 mr-2" />
             Share a Photo
@@ -221,7 +216,7 @@ const PhotoGallery = () => {
         </div>
 
         {/* Upload Form */}
-        {showUploadForm && hasEnteredName && (
+        {showUploadForm && (
           <div className="max-w-md mx-auto mb-16 animate-fade-in">
             <div className="glass-card p-8">
               <h3 className="font-serif text-2xl text-foreground mb-6 text-center">
