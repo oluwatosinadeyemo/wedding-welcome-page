@@ -18,6 +18,7 @@ interface Photo {
 const MAX_FILE_SIZE_MB = 10;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 const GUEST_NAME_KEY = "wedding_guest_name";
+const GUEST_RSVPD_KEY = "wedding_guest_rsvpd";
 
 function getTimeRemaining(expiresAt: string): string {
   const now = new Date().getTime();
@@ -40,8 +41,9 @@ const PhotoGallery = () => {
   const [guestName, setGuestName] = useState(() => {
     return localStorage.getItem(GUEST_NAME_KEY) || "";
   });
-  const [nameInput, setNameInput] = useState("");
-  const [showNamePrompt, setShowNamePrompt] = useState(false);
+  const [hasRsvpd, setHasRsvpd] = useState(() => {
+    return localStorage.getItem(GUEST_RSVPD_KEY) === "true";
+  });
   const { toast } = useToast();
 
   const hasEnteredName = guestName.trim().length > 0;
@@ -90,38 +92,26 @@ const PhotoGallery = () => {
     };
   }, [fetchPhotos]);
 
-  const handleSetName = () => {
-    if (!nameInput.trim()) return;
-    const name = nameInput.trim();
-    setGuestName(name);
-    localStorage.setItem(GUEST_NAME_KEY, name);
-    setShowNamePrompt(false);
-    setShowUploadForm(true);
-  };
-
-  const handleChangeName = () => {
-    setNameInput(guestName);
-    setShowNamePrompt(true);
-    setShowUploadForm(false);
-  };
-
   const handleShareClick = () => {
-    if (hasEnteredName) {
-      setShowUploadForm(!showUploadForm);
-    } else {
-      setNameInput("");
-      setShowNamePrompt(true);
+    if (!hasRsvpd || !hasEnteredName) {
+      toast({
+        title: "RSVP required",
+        description: "Only guests who have RSVP'd can upload photos.",
+        variant: "destructive",
+      });
+      return;
     }
+    setShowUploadForm(!showUploadForm);
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!hasEnteredName) {
+    if (!hasRsvpd || !hasEnteredName) {
       toast({
-        title: "Name required",
-        description: "Please enter your name to upload photos",
+        title: "RSVP required",
+        description: "Only guests who have RSVP'd can upload photos.",
         variant: "destructive",
       });
       return;
@@ -158,14 +148,14 @@ const PhotoGallery = () => {
 
       if (uploadError) throw uploadError;
 
-      const { error: dbError } = await supabase.from("wedding_photos").insert({
-        file_path: filePath,
-        file_name: file.name,
-        uploaded_by: guestName,
-        caption: caption || null,
+      const { error: rpcError } = await (supabase.rpc as any)("submit_guest_photo", {
+        p_full_name: guestName,
+        p_file_path: filePath,
+        p_file_name: file.name,
+        p_caption: caption || null,
       });
 
-      if (dbError) throw dbError;
+      if (rpcError) throw rpcError;
 
       toast({
         title: "Photo uploaded!",
@@ -174,6 +164,7 @@ const PhotoGallery = () => {
 
       setCaption("");
       setShowUploadForm(false);
+      fetchPhotos();
     } catch (error: any) {
       console.error("Upload error:", error);
       toast({
@@ -210,62 +201,24 @@ const PhotoGallery = () => {
 
         {/* Guest Actions */}
         <div className="flex flex-col items-center gap-4 mb-12">
-          {hasEnteredName && (
+          {hasRsvpd && hasEnteredName ? (
             <p className="text-muted-foreground text-sm">
               Sharing as <span className="text-foreground font-medium">{guestName}</span>
-              <button
-                onClick={handleChangeName}
-                className="ml-2 text-primary hover:underline text-xs"
-              >
-                Change
-              </button>
+            </p>
+          ) : (
+            <p className="text-muted-foreground text-sm text-center max-w-md">
+              Only guests who have RSVP'd can upload photos.
             </p>
           )}
           <Button
             onClick={handleShareClick}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 rounded-full text-sm uppercase tracking-wider font-sans"
+            disabled={!hasRsvpd || !hasEnteredName}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 rounded-full text-sm uppercase tracking-wider font-sans disabled:opacity-50"
           >
             <Camera className="w-5 h-5 mr-2" />
             Share a Photo
           </Button>
         </div>
-
-        {/* Name Prompt */}
-        {showNamePrompt && (
-          <div className="max-w-md mx-auto mb-16 animate-fade-in">
-            <div className="glass-card p-8">
-              <h3 className="font-serif text-2xl text-foreground mb-6 text-center">
-                Enter Your Name
-              </h3>
-              <div className="space-y-4">
-                <Input
-                  placeholder="Your full name"
-                  value={nameInput}
-                  onChange={(e) => setNameInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSetName()}
-                  className="bg-background/50 border-border/50 rounded-xl text-center text-lg py-6"
-                  autoFocus
-                />
-                <div className="flex gap-3">
-                  <Button
-                    onClick={handleSetName}
-                    disabled={!nameInput.trim()}
-                    className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl py-6"
-                  >
-                    Continue
-                  </Button>
-                  <Button
-                    onClick={() => setShowNamePrompt(false)}
-                    variant="outline"
-                    className="rounded-xl py-6 border-border/50"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Upload Form */}
         {showUploadForm && hasEnteredName && (

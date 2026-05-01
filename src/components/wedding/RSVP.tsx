@@ -1,4 +1,4 @@
-import { Heart, Mail } from "lucide-react";
+import { Heart, Phone } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const RSVP = () => {
@@ -32,15 +32,24 @@ const RSVP = () => {
           RSVP Now
         </Link>
 
-        <div className="mt-12 glass-card inline-block px-4 sm:px-8 py-4 rounded-2xl sm:rounded-full">
-          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Mail className="w-5 h-5 text-primary" />
-              <span className="font-sans">Questions?</span>
+        <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="glass-card px-6 py-4 rounded-2xl flex items-center gap-3">
+            <Phone className="w-5 h-5 text-primary" />
+            <div className="text-left">
+              <p className="font-sans text-xs text-muted-foreground uppercase tracking-wider">Bayo</p>
+              <a href="tel:+2348118079253" className="text-primary hover:underline font-sans text-sm">
+                +234 811 807 9253
+              </a>
             </div>
-            <a href="mailto:oluwatosinadeyemo50@gmail.com" className="text-primary hover:underline text-sm sm:text-base break-all sm:break-normal">
-              oluwatosinadeyemo50@gmail.com
-            </a>
+          </div>
+          <div className="glass-card px-6 py-4 rounded-2xl flex items-center gap-3">
+            <Phone className="w-5 h-5 text-primary" />
+            <div className="text-left">
+              <p className="font-sans text-xs text-muted-foreground uppercase tracking-wider">Deji</p>
+              <a href="tel:+2347065582596" className="text-primary hover:underline font-sans text-sm">
+                +234 706 558 2596
+              </a>
+            </div>
           </div>
         </div>
       </div>

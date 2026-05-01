@@ -48,6 +48,12 @@ const RSVPForm = ({ onSubmitSuccess }: RSVPFormProps = {}) => {
 
       if (rpcError) throw rpcError;
 
+      // Persist RSVP'd guest name so they can upload to the gallery
+      if (values.attending !== "no") {
+        localStorage.setItem("wedding_guest_name", values.full_name.trim());
+        localStorage.setItem("wedding_guest_rsvpd", "true");
+      }
+
       setSubmittedData({
         attending: values.attending,
         number_of_guests: values.number_of_guests,
