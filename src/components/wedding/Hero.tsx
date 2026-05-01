@@ -45,7 +45,7 @@ const Hero = () => {
           The Lamb's Events
         </p>
         <p className="text-muted-foreground mt-2 animate-fade-in-delay-3 font-sans text-sm md:text-base max-w-xl mx-auto">
-          KM 3, Olabisi Onabanjo Way, After Chrisland University, Ilugun, Abeokuta
+          KM 3, Olabisi Onabanjo Way, After Chrisland University, Ilugun, Abeokuta, Ogun State, Nigeria
         </p>
 
         {/* Scroll CTA */}
@@ -57,12 +57,6 @@ const Hero = () => {
             Explore Our Story
           </button>
         </div>
-      </div>
-
-      {/* Scroll Indicator */}
-      <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
-        <span className="text-muted-foreground text-xs uppercase tracking-widest">Scroll</span>
-        <div className="w-px h-16 bg-gradient-to-b from-primary/50 to-transparent animate-pulse" />
       </div>
     </section>
   );
