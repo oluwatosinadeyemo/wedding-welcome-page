@@ -4,22 +4,15 @@ import venueImage from "@/assets/venue.jpg";
 const EventDetails = () => {
   const events = [
     {
-      title: "Nikkai",
-      time: "10:00 AM",
-      location: "Main Hall",
-      description: "Join us as we exchange our vows in an intimate Islamic ceremony",
-      icon: "💍",
-    },
-    {
       title: "Traditional Wedding",
-      time: "12:00 PM",
+      time: "10:00 AM",
       location: "Main Hall",
       description: "Celebrate with us as we honour our cultural heritage",
       icon: "🎊",
     },
     {
       title: "Reception",
-      time: "2:00 PM",
+      time: "12:00 PM",
       location: "Main Hall",
       description: "Dinner, dancing, and celebration into the night",
       icon: "🎉",
@@ -64,7 +57,7 @@ const EventDetails = () => {
         </div>
 
         {/* Timeline */}
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {events.map((event, index) => (
             <div
               key={event.title}

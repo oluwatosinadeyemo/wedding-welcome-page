@@ -1,4 +1,4 @@
-import { Heart, Instagram } from "lucide-react";
+import { Heart } from "lucide-react";
 import tpLogo from "@/assets/tp-logo.png";
 
 const Footer = () => {
@@ -27,18 +27,6 @@ const Footer = () => {
           <span className="font-sans">for our special day</span>
         </div>
 
-        {/* Social Links */}
-        <div className="flex items-center justify-center gap-4 mb-8">
-          <a
-            href="https://www.instagram.com/explore/tags/TandP2026/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-12 h-12 rounded-full bg-card/80 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
-          >
-            <Instagram className="w-5 h-5" />
-          </a>
-        </div>
-        
         <div className="pt-8 border-t border-border/30">
           <p className="text-primary text-lg font-sans tracking-widest">
             #T&P2026

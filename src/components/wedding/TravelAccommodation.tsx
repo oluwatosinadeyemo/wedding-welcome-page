@@ -172,7 +172,7 @@ const TravelAccommodation = () => {
           <div className="glass-card p-2 overflow-hidden">
             <div className="aspect-[16/9] md:aspect-[21/9] rounded-xl overflow-hidden">
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126846.42774998516!2d3.2819444!3d7.1475!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103a4c5430c0f159%3A0x91b25bd7a8c90c59!2sAbeokuta%2C%20Ogun%20State%2C%20Nigeria!5e0!3m2!1sen!2sng!4v1700000000000!5m2!1sen!2sng"
+                src="https://www.google.com/maps?q=KM%203%20Olabisi%20Onabanjo%20Way%2C%20Ilugun%2C%20Abeokuta%2C%20Nigeria&output=embed"
                 width="100%"
                 height="100%"
                 style={{ border: 0 }}
@@ -185,8 +185,8 @@ const TravelAccommodation = () => {
             </div>
             <div className="flex items-center justify-center gap-2 py-4 text-primary">
               <MapPin className="w-4 h-4" />
-              <span className="font-sans text-sm">
-                Lambs Event Centre, Abeokuta, Ogun State, Nigeria
+              <span className="font-sans text-sm text-center">
+                Lambs Event Centre — KM 3, Olabisi Onabanjo Way, After Chrisland University, Ilugun, Abeokuta, Nigeria
               </span>
             </div>
           </div>
