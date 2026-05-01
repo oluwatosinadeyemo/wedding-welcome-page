@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Envelope from "@/components/wedding/Envelope";
 import RSVPForm from "@/components/wedding/RSVPForm";
 import Navigation from "@/components/wedding/Navigation";
@@ -17,6 +17,12 @@ type Stage = "envelope" | "rsvp" | "details" | "declined";
 
 const Index = () => {
   const [stage, setStage] = useState<Stage>("envelope");
+
+  useEffect(() => {
+    if (stage === "details") {
+      window.scrollTo({ top: 0, behavior: "auto" });
+    }
+  }, [stage]);
 
   if (stage === "envelope") {
     return <Envelope onOpen={() => setStage("rsvp")} />;
