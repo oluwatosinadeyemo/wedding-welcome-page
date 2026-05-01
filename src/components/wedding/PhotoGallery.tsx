@@ -93,14 +93,6 @@ const PhotoGallery = () => {
   }, [fetchPhotos]);
 
   const handleShareClick = () => {
-    if (!hasRsvpd || !hasEnteredName) {
-      toast({
-        title: "RSVP required",
-        description: "Only guests who have RSVP'd can upload photos.",
-        variant: "destructive",
-      });
-      return;
-    }
     setShowUploadForm(!showUploadForm);
   };
 
@@ -108,14 +100,15 @@ const PhotoGallery = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!hasRsvpd || !hasEnteredName) {
+    if (!hasEnteredName) {
       toast({
-        title: "RSVP required",
-        description: "Only guests who have RSVP'd can upload photos.",
+        title: "Name required",
+        description: "Please enter your name before uploading.",
         variant: "destructive",
       });
       return;
     }
+
 
     if (!file.type.startsWith("image/")) {
       toast({
