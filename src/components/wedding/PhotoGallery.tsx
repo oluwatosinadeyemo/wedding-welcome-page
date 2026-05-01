@@ -217,6 +217,15 @@ const PhotoGallery = () => {
               </h3>
               <div className="space-y-4">
                 <Input
+                  placeholder="Your name"
+                  value={guestName}
+                  onChange={(e) => {
+                    setGuestName(e.target.value);
+                    localStorage.setItem(GUEST_NAME_KEY, e.target.value);
+                  }}
+                  className="bg-background/50 border-border/50 rounded-xl"
+                />
+                <Input
                   placeholder="Caption (optional)"
                   value={caption}
                   onChange={(e) => setCaption(e.target.value)}
@@ -234,7 +243,7 @@ const PhotoGallery = () => {
                         <Upload className="w-8 h-8 text-primary" />
                         <span className="text-foreground">Click to upload</span>
                         <span className="text-muted-foreground text-sm">
-                          JPG, PNG, GIF up to 10MB
+                          JPG, PNG, GIF up to 50MB
                         </span>
                       </div>
                     )}
