@@ -201,62 +201,24 @@ const PhotoGallery = () => {
 
         {/* Guest Actions */}
         <div className="flex flex-col items-center gap-4 mb-12">
-          {hasEnteredName && (
+          {hasRsvpd && hasEnteredName ? (
             <p className="text-muted-foreground text-sm">
               Sharing as <span className="text-foreground font-medium">{guestName}</span>
-              <button
-                onClick={handleChangeName}
-                className="ml-2 text-primary hover:underline text-xs"
-              >
-                Change
-              </button>
+            </p>
+          ) : (
+            <p className="text-muted-foreground text-sm text-center max-w-md">
+              Only guests who have RSVP'd can upload photos.
             </p>
           )}
           <Button
             onClick={handleShareClick}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 rounded-full text-sm uppercase tracking-wider font-sans"
+            disabled={!hasRsvpd || !hasEnteredName}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 rounded-full text-sm uppercase tracking-wider font-sans disabled:opacity-50"
           >
             <Camera className="w-5 h-5 mr-2" />
             Share a Photo
           </Button>
         </div>
-
-        {/* Name Prompt */}
-        {showNamePrompt && (
-          <div className="max-w-md mx-auto mb-16 animate-fade-in">
-            <div className="glass-card p-8">
-              <h3 className="font-serif text-2xl text-foreground mb-6 text-center">
-                Enter Your Name
-              </h3>
-              <div className="space-y-4">
-                <Input
-                  placeholder="Your full name"
-                  value={nameInput}
-                  onChange={(e) => setNameInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSetName()}
-                  className="bg-background/50 border-border/50 rounded-xl text-center text-lg py-6"
-                  autoFocus
-                />
-                <div className="flex gap-3">
-                  <Button
-                    onClick={handleSetName}
-                    disabled={!nameInput.trim()}
-                    className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl py-6"
-                  >
-                    Continue
-                  </Button>
-                  <Button
-                    onClick={() => setShowNamePrompt(false)}
-                    variant="outline"
-                    className="rounded-xl py-6 border-border/50"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Upload Form */}
         {showUploadForm && hasEnteredName && (
