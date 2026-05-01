@@ -18,6 +18,7 @@ interface Photo {
 const MAX_FILE_SIZE_MB = 10;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 const GUEST_NAME_KEY = "wedding_guest_name";
+const GUEST_RSVPD_KEY = "wedding_guest_rsvpd";
 
 function getTimeRemaining(expiresAt: string): string {
   const now = new Date().getTime();
@@ -40,8 +41,9 @@ const PhotoGallery = () => {
   const [guestName, setGuestName] = useState(() => {
     return localStorage.getItem(GUEST_NAME_KEY) || "";
   });
-  const [nameInput, setNameInput] = useState("");
-  const [showNamePrompt, setShowNamePrompt] = useState(false);
+  const [hasRsvpd, setHasRsvpd] = useState(() => {
+    return localStorage.getItem(GUEST_RSVPD_KEY) === "true";
+  });
   const { toast } = useToast();
 
   const hasEnteredName = guestName.trim().length > 0;
