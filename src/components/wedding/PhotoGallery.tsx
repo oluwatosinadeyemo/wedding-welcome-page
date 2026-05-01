@@ -92,38 +92,26 @@ const PhotoGallery = () => {
     };
   }, [fetchPhotos]);
 
-  const handleSetName = () => {
-    if (!nameInput.trim()) return;
-    const name = nameInput.trim();
-    setGuestName(name);
-    localStorage.setItem(GUEST_NAME_KEY, name);
-    setShowNamePrompt(false);
-    setShowUploadForm(true);
-  };
-
-  const handleChangeName = () => {
-    setNameInput(guestName);
-    setShowNamePrompt(true);
-    setShowUploadForm(false);
-  };
-
   const handleShareClick = () => {
-    if (hasEnteredName) {
-      setShowUploadForm(!showUploadForm);
-    } else {
-      setNameInput("");
-      setShowNamePrompt(true);
+    if (!hasRsvpd || !hasEnteredName) {
+      toast({
+        title: "RSVP required",
+        description: "Only guests who have RSVP'd can upload photos.",
+        variant: "destructive",
+      });
+      return;
     }
+    setShowUploadForm(!showUploadForm);
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!hasEnteredName) {
+    if (!hasRsvpd || !hasEnteredName) {
       toast({
-        title: "Name required",
-        description: "Please enter your name to upload photos",
+        title: "RSVP required",
+        description: "Only guests who have RSVP'd can upload photos.",
         variant: "destructive",
       });
       return;
@@ -160,14 +148,14 @@ const PhotoGallery = () => {
 
       if (uploadError) throw uploadError;
 
-      const { error: dbError } = await supabase.from("wedding_photos").insert({
-        file_path: filePath,
-        file_name: file.name,
-        uploaded_by: guestName,
-        caption: caption || null,
+      const { error: rpcError } = await (supabase.rpc as any)("submit_guest_photo", {
+        p_full_name: guestName,
+        p_file_path: filePath,
+        p_file_name: file.name,
+        p_caption: caption || null,
       });
 
-      if (dbError) throw dbError;
+      if (rpcError) throw rpcError;
 
       toast({
         title: "Photo uploaded!",
@@ -176,6 +164,7 @@ const PhotoGallery = () => {
 
       setCaption("");
       setShowUploadForm(false);
+      fetchPhotos();
     } catch (error: any) {
       console.error("Upload error:", error);
       toast({
