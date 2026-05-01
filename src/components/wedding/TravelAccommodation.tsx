@@ -172,7 +172,7 @@ const TravelAccommodation = () => {
           <div className="glass-card p-2 overflow-hidden">
             <div className="aspect-[16/9] md:aspect-[21/9] rounded-xl overflow-hidden">
               <iframe
-                src="https://www.google.com/maps?q=KM%203%20Olabisi%20Onabanjo%20Way%2C%20Ilugun%2C%20Abeokuta%2C%20Nigeria&output=embed"
+                src="https://www.google.com/maps?q=The+Lamb's+Events,+4CR2%2BHH,+Ilugun+110118,+Ogun+State,+Nigeria&output=embed"
                 width="100%"
                 height="100%"
                 style={{ border: 0 }}
@@ -186,7 +186,7 @@ const TravelAccommodation = () => {
             <div className="flex items-center justify-center gap-2 py-4 text-primary">
               <MapPin className="w-4 h-4" />
               <span className="font-sans text-sm text-center">
-                Lambs Event Centre — KM 3, Olabisi Onabanjo Way, After Chrisland University, Ilugun, Abeokuta, Nigeria
+                The Lamb's Events — KM 3, Olabisi Onabanjo Way, After Chrisland University, Ilugun, Abeokuta
               </span>
             </div>
           </div>

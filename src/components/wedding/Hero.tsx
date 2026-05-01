@@ -42,7 +42,10 @@ const Hero = () => {
         </p>
         
         <p className="text-muted-foreground mt-4 animate-fade-in-delay-3 font-sans text-base md:text-lg">
-          Lambs Event Centre, Abeokuta, Nigeria
+          The Lamb's Events
+        </p>
+        <p className="text-muted-foreground mt-2 animate-fade-in-delay-3 font-sans text-sm md:text-base max-w-xl mx-auto">
+          KM 3, Olabisi Onabanjo Way, After Chrisland University, Ilugun, Abeokuta
         </p>
 
         {/* Scroll CTA */}
