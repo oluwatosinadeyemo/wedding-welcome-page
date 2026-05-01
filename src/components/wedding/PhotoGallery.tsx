@@ -15,7 +15,7 @@ interface Photo {
   expires_at: string | null;
 }
 
-const MAX_FILE_SIZE_MB = 10;
+const MAX_FILE_SIZE_MB = 50;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 const GUEST_NAME_KEY = "wedding_guest_name";
 const GUEST_RSVPD_KEY = "wedding_guest_rsvpd";
@@ -93,14 +93,6 @@ const PhotoGallery = () => {
   }, [fetchPhotos]);
 
   const handleShareClick = () => {
-    if (!hasRsvpd || !hasEnteredName) {
-      toast({
-        title: "RSVP required",
-        description: "Only guests who have RSVP'd can upload photos.",
-        variant: "destructive",
-      });
-      return;
-    }
     setShowUploadForm(!showUploadForm);
   };
 
@@ -108,14 +100,15 @@ const PhotoGallery = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!hasRsvpd || !hasEnteredName) {
+    if (!hasEnteredName) {
       toast({
-        title: "RSVP required",
-        description: "Only guests who have RSVP'd can upload photos.",
+        title: "Name required",
+        description: "Please enter your name before uploading.",
         variant: "destructive",
       });
       return;
     }
+
 
     if (!file.type.startsWith("image/")) {
       toast({
@@ -201,19 +194,14 @@ const PhotoGallery = () => {
 
         {/* Guest Actions */}
         <div className="flex flex-col items-center gap-4 mb-12">
-          {hasRsvpd && hasEnteredName ? (
+          {hasEnteredName && (
             <p className="text-muted-foreground text-sm">
               Sharing as <span className="text-foreground font-medium">{guestName}</span>
-            </p>
-          ) : (
-            <p className="text-muted-foreground text-sm text-center max-w-md">
-              Only guests who have RSVP'd can upload photos.
             </p>
           )}
           <Button
             onClick={handleShareClick}
-            disabled={!hasRsvpd || !hasEnteredName}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 rounded-full text-sm uppercase tracking-wider font-sans disabled:opacity-50"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 rounded-full text-sm uppercase tracking-wider font-sans"
           >
             <Camera className="w-5 h-5 mr-2" />
             Share a Photo
@@ -221,13 +209,22 @@ const PhotoGallery = () => {
         </div>
 
         {/* Upload Form */}
-        {showUploadForm && hasEnteredName && (
+        {showUploadForm && (
           <div className="max-w-md mx-auto mb-16 animate-fade-in">
             <div className="glass-card p-8">
               <h3 className="font-serif text-2xl text-foreground mb-6 text-center">
                 Upload Your Photo
               </h3>
               <div className="space-y-4">
+                <Input
+                  placeholder="Your name"
+                  value={guestName}
+                  onChange={(e) => {
+                    setGuestName(e.target.value);
+                    localStorage.setItem(GUEST_NAME_KEY, e.target.value);
+                  }}
+                  className="bg-background/50 border-border/50 rounded-xl"
+                />
                 <Input
                   placeholder="Caption (optional)"
                   value={caption}
@@ -246,7 +243,7 @@ const PhotoGallery = () => {
                         <Upload className="w-8 h-8 text-primary" />
                         <span className="text-foreground">Click to upload</span>
                         <span className="text-muted-foreground text-sm">
-                          JPG, PNG, GIF up to 10MB
+                          JPG, PNG, GIF up to 50MB
                         </span>
                       </div>
                     )}
