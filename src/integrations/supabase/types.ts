@@ -147,6 +147,15 @@ export type Database = {
           rsvp_attending: string
         }[]
       }
+      submit_guest_photo: {
+        Args: {
+          p_caption?: string
+          p_file_name: string
+          p_file_path: string
+          p_full_name: string
+        }
+        Returns: string
+      }
       submit_walkin_rsvp: {
         Args: {
           p_attending: string
