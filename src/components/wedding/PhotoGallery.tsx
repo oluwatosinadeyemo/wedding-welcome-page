@@ -164,6 +164,23 @@ const PhotoGallery = () => {
     return photoUrls[photoId] || "";
   };
 
+  const handleDeletePhoto = async (photo: Photo) => {
+    if (!window.confirm("Delete this photo? This cannot be undone.")) return;
+    try {
+      await supabase.storage.from("wedding-photos").remove([photo.file_path]);
+      const { error } = await supabase.from("wedding_photos").delete().eq("id", photo.id);
+      if (error) throw error;
+      toast({ title: "Photo deleted" });
+      fetchPhotos();
+    } catch (err: any) {
+      toast({
+        title: "Could not delete photo",
+        description: err.message || "Please try again",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <section id="gallery" className="py-24 relative overflow-hidden">
       {/* Background */}
