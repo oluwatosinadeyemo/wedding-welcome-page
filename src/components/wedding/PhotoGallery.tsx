@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { Camera, Upload, X, Image as ImageIcon, Loader2, Clock } from "lucide-react";
+import { Camera, Upload, X, Image as ImageIcon, Loader2, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,7 +52,6 @@ const PhotoGallery = () => {
     const { data, error } = await supabase
       .from("wedding_photos")
       .select("*")
-      .gt("expires_at", new Date().toISOString())
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -188,7 +187,7 @@ const PhotoGallery = () => {
             Photo Gallery
           </h2>
           <p className="text-muted-foreground font-sans max-w-2xl mx-auto mt-6">
-            Browse our wedding memories or share your own photos. Photos are visible for 48 hours.
+            Browse our wedding memories or share your own photos.
           </p>
         </div>
 
