@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { Camera, Upload, X, Image as ImageIcon, Loader2, Clock } from "lucide-react";
+import { Camera, Upload, X, Image as ImageIcon, Loader2, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,16 +20,7 @@ const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 const GUEST_NAME_KEY = "wedding_guest_name";
 const GUEST_RSVPD_KEY = "wedding_guest_rsvpd";
 
-function getTimeRemaining(expiresAt: string): string {
-  const now = new Date().getTime();
-  const expiry = new Date(expiresAt).getTime();
-  const diff = expiry - now;
-  if (diff <= 0) return "Expired";
-  const hours = Math.floor(diff / (1000 * 60 * 60));
-  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  if (hours > 0) return `${hours}h ${minutes}m left`;
-  return `${minutes}m left`;
-}
+
 
 const PhotoGallery = () => {
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -52,7 +43,6 @@ const PhotoGallery = () => {
     const { data, error } = await supabase
       .from("wedding_photos")
       .select("*")
-      .gt("expires_at", new Date().toISOString())
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -174,6 +164,23 @@ const PhotoGallery = () => {
     return photoUrls[photoId] || "";
   };
 
+  const handleDeletePhoto = async (photo: Photo) => {
+    if (!window.confirm("Delete this photo? This cannot be undone.")) return;
+    try {
+      await supabase.storage.from("wedding-photos").remove([photo.file_path]);
+      const { error } = await supabase.from("wedding_photos").delete().eq("id", photo.id);
+      if (error) throw error;
+      toast({ title: "Photo deleted" });
+      fetchPhotos();
+    } catch (err: any) {
+      toast({
+        title: "Could not delete photo",
+        description: err.message || "Please try again",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <section id="gallery" className="py-24 relative overflow-hidden">
       {/* Background */}
@@ -188,7 +195,7 @@ const PhotoGallery = () => {
             Photo Gallery
           </h2>
           <p className="text-muted-foreground font-sans max-w-2xl mx-auto mt-6">
-            Browse our wedding memories or share your own photos. Photos are visible for 48 hours.
+            Browse our wedding memories or share your own photos.
           </p>
         </div>
 
@@ -286,15 +293,17 @@ const PhotoGallery = () => {
                     </p>
                   )}
                 </div>
-                {/* Expiry timer */}
-                {photo.expires_at && (
-                  <div className="absolute top-2 right-2">
-                    <span className="flex items-center gap-1 px-2 py-1 bg-background/70 backdrop-blur-sm rounded-full text-xs text-muted-foreground">
-                      <Clock className="w-3 h-3" />
-                      {getTimeRemaining(photo.expires_at)}
-                    </span>
-                  </div>
-                )}
+                {/* Delete button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeletePhoto(photo);
+                  }}
+                  className="absolute top-2 right-2 w-8 h-8 rounded-full bg-background/70 backdrop-blur-sm flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-background transition-colors opacity-0 group-hover:opacity-100"
+                  aria-label="Delete photo"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
             ))}
           </div>
@@ -336,12 +345,16 @@ const PhotoGallery = () => {
                     {selectedPhoto.caption}
                   </p>
                 )}
-                {selectedPhoto.expires_at && (
-                  <p className="text-muted-foreground text-xs mt-2 flex items-center justify-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {getTimeRemaining(selectedPhoto.expires_at)}
-                  </p>
-                )}
+                <button
+                  onClick={() => {
+                    handleDeletePhoto(selectedPhoto);
+                    setSelectedPhoto(null);
+                  }}
+                  className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors text-xs uppercase tracking-wider"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete photo
+                </button>
               </div>
             </div>
           </div>

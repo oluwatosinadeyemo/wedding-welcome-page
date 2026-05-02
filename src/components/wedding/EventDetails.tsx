@@ -17,6 +17,13 @@ const EventDetails = () => {
       description: "Dinner, dancing, and celebration into the night",
       icon: "🎉",
     },
+    {
+      title: "After Party",
+      time: "6:00 PM",
+      location: "Main Hall",
+      description: "Keep the celebration going — drinks, music, and dancing",
+      icon: "🪩",
+    },
   ];
 
   return (
@@ -57,7 +64,7 @@ const EventDetails = () => {
         </div>
 
         {/* Timeline */}
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
           {events.map((event, index) => (
             <div
               key={event.title}
