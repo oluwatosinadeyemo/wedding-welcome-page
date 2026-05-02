@@ -155,7 +155,7 @@ const QRCodePass = () => {
 
         ctx.fillStyle = "#a1a1aa";
         ctx.font = "14px Inter, sans-serif";
-        ctx.fillText("December 12, 2026 | 4:00 PM", canvas.width / 2, 460);
+        ctx.fillText("December 12, 2026 | 10:00 AM", canvas.width / 2, 460);
         ctx.fillText("Lambs Event Centre, Abeokuta", canvas.width / 2, 490);
 
         ctx.font = "12px Inter, sans-serif";
@@ -353,7 +353,7 @@ const QRCodePass = () => {
                 <div className="space-y-4 text-center">
                   <div className="flex items-center justify-center gap-3 text-muted-foreground">
                     <Calendar className="w-4 h-4 text-primary" />
-                    <span className="font-sans">December 12, 2026 | 4:00 PM</span>
+                    <span className="font-sans">December 12, 2026 | 10:00 AM</span>
                   </div>
                   <div className="flex items-center justify-center gap-3 text-muted-foreground">
                     <MapPin className="w-4 h-4 text-primary" />
