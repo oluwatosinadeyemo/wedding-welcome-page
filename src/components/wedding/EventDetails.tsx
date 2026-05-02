@@ -64,7 +64,7 @@ const EventDetails = () => {
         </div>
 
         {/* Timeline */}
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
           {events.map((event, index) => (
             <div
               key={event.title}
