@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { Camera, Upload, X, Image as ImageIcon, Loader2, Trash2 } from "lucide-react";
+import { Camera, Upload, X, Image as ImageIcon, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -164,22 +164,6 @@ const PhotoGallery = () => {
     return photoUrls[photoId] || "";
   };
 
-  const handleDeletePhoto = async (photo: Photo) => {
-    if (!window.confirm("Delete this photo? This cannot be undone.")) return;
-    try {
-      await supabase.storage.from("wedding-photos").remove([photo.file_path]);
-      const { error } = await supabase.from("wedding_photos").delete().eq("id", photo.id);
-      if (error) throw error;
-      toast({ title: "Photo deleted" });
-      fetchPhotos();
-    } catch (err: any) {
-      toast({
-        title: "Could not delete photo",
-        description: err.message || "Please try again",
-        variant: "destructive",
-      });
-    }
-  };
 
   return (
     <section id="gallery" className="py-24 relative overflow-hidden">
@@ -293,17 +277,6 @@ const PhotoGallery = () => {
                     </p>
                   )}
                 </div>
-                {/* Delete button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeletePhoto(photo);
-                  }}
-                  className="absolute top-2 right-2 w-8 h-8 rounded-full bg-background/70 backdrop-blur-sm flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-background transition-colors opacity-0 group-hover:opacity-100"
-                  aria-label="Delete photo"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
               </div>
             ))}
           </div>
@@ -345,16 +318,6 @@ const PhotoGallery = () => {
                     {selectedPhoto.caption}
                   </p>
                 )}
-                <button
-                  onClick={() => {
-                    handleDeletePhoto(selectedPhoto);
-                    setSelectedPhoto(null);
-                  }}
-                  className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors text-xs uppercase tracking-wider"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Delete photo
-                </button>
               </div>
             </div>
           </div>
