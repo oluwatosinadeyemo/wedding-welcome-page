@@ -92,7 +92,7 @@ const RSVPForm = ({ onSubmitSuccess }: RSVPFormProps = {}) => {
               Kindly Respond
             </h3>
             <p className="text-muted-foreground text-sm">
-              Please let us know if you'll be able to celebrate with us. Kindly respond by October 1st, 2026.
+              Please let us know if you'll be able to celebrate with us. Kindly respond by May 30th, 2026.
             </p>
           </div>
 
