@@ -133,6 +133,7 @@ export type Database = {
         Args: { p_guest_id: string }
         Returns: string
       }
+      get_guest_pass_id: { Args: { p_guest_id: string }; Returns: string }
       lookup_guest_by_invite_code: {
         Args: { code: string }
         Returns: {
@@ -153,6 +154,17 @@ export type Database = {
           id: string
           party_size: number
           rsvp_attending: string
+        }[]
+      }
+      search_guests_for_checkin: {
+        Args: { p_query: string }
+        Returns: {
+          checked_in: boolean
+          checked_in_at: string
+          full_name: string
+          id: string
+          invite_code: string
+          party_size: number
         }[]
       }
       submit_guest_photo: {
