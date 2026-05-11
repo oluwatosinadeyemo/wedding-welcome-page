@@ -30,7 +30,9 @@ import {
 import type { User } from "@supabase/supabase-js";
 import JSZip from "jszip";
 
-const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || "oluwatosinadeyemo50@gmail.com";
+const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAIL || "oluwatosinadeyemo50@gmail.com")
+  .split(",")
+  .map((e: string) => e.trim().toLowerCase());
 
 interface RSVPEntry {
   id: string;
@@ -79,7 +81,7 @@ const DashboardPage = () => {
 
   const { toast } = useToast();
 
-  const isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+  const isAdmin = ADMIN_EMAILS.includes(user?.email?.toLowerCase() ?? "");
 
   useEffect(() => {
     const {

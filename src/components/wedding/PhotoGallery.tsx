@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { Camera, Upload, X, Image as ImageIcon, Loader2, Trash2 } from "lucide-react";
+import { Camera, Upload, X, Image as ImageIcon, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +24,6 @@ const GUEST_RSVPD_KEY = "wedding_guest_rsvpd";
 
 const PhotoGallery = () => {
   const [photos, setPhotos] = useState<Photo[]>([]);
-  const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
   const [isUploading, setIsUploading] = useState(false);
   const [caption, setCaption] = useState("");
   const [showUploadForm, setShowUploadForm] = useState(false);
@@ -43,6 +42,7 @@ const PhotoGallery = () => {
     const { data, error } = await supabase
       .from("wedding_photos")
       .select("*")
+      .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -51,18 +51,6 @@ const PhotoGallery = () => {
     }
 
     setPhotos((data as unknown as Photo[]) || []);
-
-    const urls: Record<string, string> = {};
-    for (const photo of data || []) {
-      const { data: signedData, error: signedError } = await supabase.storage
-        .from("wedding-photos")
-        .createSignedUrl(photo.file_path, 3600);
-
-      if (!signedError && signedData?.signedUrl) {
-        urls[photo.id] = signedData.signedUrl;
-      }
-    }
-    setPhotoUrls(urls);
   }, []);
 
   useEffect(() => {
@@ -160,26 +148,10 @@ const PhotoGallery = () => {
     }
   };
 
-  const getPhotoUrl = (photoId: string) => {
-    return photoUrls[photoId] || "";
+  const getPhotoUrl = (filePath: string) => {
+    return supabase.storage.from("wedding-photos").getPublicUrl(filePath).data.publicUrl;
   };
 
-  const handleDeletePhoto = async (photo: Photo) => {
-    if (!window.confirm("Delete this photo? This cannot be undone.")) return;
-    try {
-      await supabase.storage.from("wedding-photos").remove([photo.file_path]);
-      const { error } = await supabase.from("wedding_photos").delete().eq("id", photo.id);
-      if (error) throw error;
-      toast({ title: "Photo deleted" });
-      fetchPhotos();
-    } catch (err: any) {
-      toast({
-        title: "Could not delete photo",
-        description: err.message || "Please try again",
-        variant: "destructive",
-      });
-    }
-  };
 
   return (
     <section id="gallery" className="py-24 relative overflow-hidden">
@@ -278,7 +250,7 @@ const PhotoGallery = () => {
                 className="group relative aspect-square rounded-2xl overflow-hidden cursor-pointer"
               >
                 <img
-                  src={getPhotoUrl(photo.id)}
+                  src={getPhotoUrl(photo.file_path)}
                   alt={photo.caption || "Wedding photo"}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
@@ -293,17 +265,6 @@ const PhotoGallery = () => {
                     </p>
                   )}
                 </div>
-                {/* Delete button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeletePhoto(photo);
-                  }}
-                  className="absolute top-2 right-2 w-8 h-8 rounded-full bg-background/70 backdrop-blur-sm flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-background transition-colors opacity-0 group-hover:opacity-100"
-                  aria-label="Delete photo"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
               </div>
             ))}
           </div>
@@ -332,7 +293,7 @@ const PhotoGallery = () => {
             </button>
             <div className="max-w-4xl max-h-[80vh]" onClick={(e) => e.stopPropagation()}>
               <img
-                src={getPhotoUrl(selectedPhoto.id)}
+                src={getPhotoUrl(selectedPhoto.file_path)}
                 alt={selectedPhoto.caption || "Wedding photo"}
                 className="max-w-full max-h-[70vh] object-contain rounded-2xl"
               />
@@ -345,16 +306,6 @@ const PhotoGallery = () => {
                     {selectedPhoto.caption}
                   </p>
                 )}
-                <button
-                  onClick={() => {
-                    handleDeletePhoto(selectedPhoto);
-                    setSelectedPhoto(null);
-                  }}
-                  className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors text-xs uppercase tracking-wider"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Delete photo
-                </button>
               </div>
             </div>
           </div>
