@@ -19,7 +19,33 @@ const SlideshowPage = () => {
   const [newIds, setNewIds] = useState<Set<string>>(new Set());
   const knownIds = useRef<Set<string>>(new Set());
 
-  const fetchPhotos = useCallback(async () => {
+  // Prevent screen from sleeping while slideshow is open
+  useEffect(() => {
+    let wakeLock: WakeLockSentinel | null = null;
+
+    const acquire = async () => {
+      try {
+        wakeLock = await navigator.wakeLock.request("screen");
+      } catch {
+        // Wake Lock not supported or denied — user must manage power settings manually
+      }
+    };
+
+    acquire();
+
+    // Re-acquire if tab becomes visible again (e.g. after alt-tab)
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") acquire();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      wakeLock?.release();
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, []);
+
+
     const { data, error } = await supabase
       .from("wedding_photos")
       .select("id, file_path, uploaded_by, caption, created_at")
