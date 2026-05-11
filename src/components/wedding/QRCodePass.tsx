@@ -237,6 +237,7 @@ const QRCodePass = () => {
                   value={guestName}
                   onChange={(e) => setGuestName(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleLookup()}
+                  maxLength={50}
                   className="bg-background/50 border-border/50 rounded-xl text-center text-lg py-6"
                   autoFocus
                 />
