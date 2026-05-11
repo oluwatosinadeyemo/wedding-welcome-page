@@ -66,14 +66,13 @@ const QRCodePass = () => {
       if (result.rsvp_attending !== "yes") {
         setStep("generate");
       } else if (result.has_pass) {
-        const { data: guestRow } = await (supabase
-          .from("guests" as any) as any)
-          .select("pass_id")
-          .eq("id", result.id)
-          .single();
+        const { data: passData } = await (supabase.rpc as any)(
+          "get_guest_pass_id",
+          { p_guest_id: result.id }
+        );
 
-        if (guestRow?.pass_id) {
-          setPassId(guestRow.pass_id);
+        if (passData) {
+          setPassId(passData as string);
           setStep("display");
         } else {
           setStep("generate");

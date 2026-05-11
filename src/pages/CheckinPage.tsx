@@ -69,11 +69,9 @@ const CheckinPage = () => {
       return;
     }
     searchDebounceRef.current = window.setTimeout(async () => {
-      const { data } = await (supabase.from("guests" as any) as any)
-        .select("id, full_name, party_size, checked_in, checked_in_at, invite_code")
-        .ilike("full_name", `%${searchQuery}%`)
-        .order("full_name")
-        .limit(6);
+      const { data } = await (supabase.rpc as any)("search_guests_for_checkin", {
+        p_query: searchQuery,
+      });
       setSearchResults((data as GuestResult[]) || []);
     }, 300);
   }, [searchQuery]);
