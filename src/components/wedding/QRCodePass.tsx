@@ -26,9 +26,21 @@ const QRCodePass = () => {
 
   const [step, setStep] = useState<"lookup" | "generate" | "display">("lookup");
 
+  const validateGuestName = (name: string): string => {
+    const trimmed = name.trim();
+    if (trimmed.length === 0) throw new Error("Please enter your name");
+    if (trimmed.length > 50) throw new Error("Name must be 50 characters or less");
+    if (!/^[a-zA-Z\s'-]+$/.test(trimmed))
+      throw new Error("Name can only contain letters, spaces, hyphens, and apostrophes");
+    return trimmed;
+  };
+
   const handleLookup = async () => {
-    if (!guestName.trim()) {
-      setError("Please enter your name");
+    let validName: string;
+    try {
+      validName = validateGuestName(guestName);
+    } catch (err: any) {
+      setError(err.message);
       return;
     }
 
