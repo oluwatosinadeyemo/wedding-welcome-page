@@ -50,7 +50,7 @@ const QRCodePass = () => {
     try {
       const { data, error: rpcError } = await (supabase.rpc as any)(
         "lookup_guest_by_name",
-        { guest_name: guestName.trim() }
+        { guest_name: validName }
       );
 
       if (rpcError) throw rpcError;
