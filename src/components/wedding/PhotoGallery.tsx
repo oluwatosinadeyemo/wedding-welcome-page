@@ -46,7 +46,7 @@ const PhotoGallery = () => {
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Error fetching photos:", error);
+      if (import.meta.env.DEV) console.error("Error fetching photos:", error);
       return;
     }
 
@@ -149,7 +149,7 @@ const PhotoGallery = () => {
       setShowUploadForm(false);
       fetchPhotos();
     } catch (error: any) {
-      console.error("Upload error:", error);
+      if (import.meta.env.DEV) console.error("Upload error:", error);
       toast({
         title: "Upload failed",
         description: error.message || "Please try again later",

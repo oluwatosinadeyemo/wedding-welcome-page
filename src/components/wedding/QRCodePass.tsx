@@ -26,9 +26,21 @@ const QRCodePass = () => {
 
   const [step, setStep] = useState<"lookup" | "generate" | "display">("lookup");
 
+  const validateGuestName = (name: string): string => {
+    const trimmed = name.trim();
+    if (trimmed.length === 0) throw new Error("Please enter your name");
+    if (trimmed.length > 50) throw new Error("Name must be 50 characters or less");
+    if (!/^[a-zA-Z\s'-]+$/.test(trimmed))
+      throw new Error("Name can only contain letters, spaces, hyphens, and apostrophes");
+    return trimmed;
+  };
+
   const handleLookup = async () => {
-    if (!guestName.trim()) {
-      setError("Please enter your name");
+    let validName: string;
+    try {
+      validName = validateGuestName(guestName);
+    } catch (err: any) {
+      setError(err.message);
       return;
     }
 
@@ -38,7 +50,7 @@ const QRCodePass = () => {
     try {
       const { data, error: rpcError } = await (supabase.rpc as any)(
         "lookup_guest_by_name",
-        { guest_name: guestName.trim() }
+        { guest_name: validName }
       );
 
       if (rpcError) throw rpcError;
@@ -225,6 +237,7 @@ const QRCodePass = () => {
                   value={guestName}
                   onChange={(e) => setGuestName(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleLookup()}
+                  maxLength={50}
                   className="bg-background/50 border-border/50 rounded-xl text-center text-lg py-6"
                   autoFocus
                 />

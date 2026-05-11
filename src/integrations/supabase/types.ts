@@ -16,6 +16,8 @@ export type Database = {
     Tables: {
       guests: {
         Row: {
+          checked_in: boolean
+          checked_in_at: string | null
           created_at: string
           full_name: string
           id: string
@@ -25,6 +27,8 @@ export type Database = {
           side: string | null
         }
         Insert: {
+          checked_in?: boolean
+          checked_in_at?: string | null
           created_at?: string
           full_name: string
           id?: string
@@ -34,6 +38,8 @@ export type Database = {
           side?: string | null
         }
         Update: {
+          checked_in?: boolean
+          checked_in_at?: string | null
           created_at?: string
           full_name?: string
           id?: string
@@ -117,6 +123,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      checkin_by_guest_id: { Args: { p_guest_id: string }; Returns: Json }
+      checkin_by_pass_id: { Args: { p_pass_id: string }; Returns: Json }
       generate_guest_pass: {
         Args: { p_guest_id: string; p_invite_code: string }
         Returns: string
