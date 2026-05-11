@@ -149,7 +149,7 @@ const PhotoGallery = () => {
       setShowUploadForm(false);
       fetchPhotos();
     } catch (error: any) {
-      console.error("Upload error:", error);
+      if (import.meta.env.DEV) console.error("Upload error:", error);
       toast({
         title: "Upload failed",
         description: error.message || "Please try again later",
