@@ -46,7 +46,7 @@ const PhotoGallery = () => {
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Error fetching photos:", error);
+      if (import.meta.env.DEV) console.error("Error fetching photos:", error);
       return;
     }
 
