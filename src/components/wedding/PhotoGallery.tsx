@@ -42,6 +42,7 @@ const PhotoGallery = () => {
     const { data, error } = await supabase
       .from("wedding_photos")
       .select("*")
+      .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
       .order("created_at", { ascending: false });
 
     if (error) {

@@ -21,6 +21,7 @@ const SlideshowPage = () => {
     const { data } = await supabase
       .from("wedding_photos")
       .select("id, file_path, uploaded_by, caption, created_at")
+      .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
       .order("created_at", { ascending: false });
 
     if (!data) return;
