@@ -24,7 +24,6 @@ const GUEST_RSVPD_KEY = "wedding_guest_rsvpd";
 
 const PhotoGallery = () => {
   const [photos, setPhotos] = useState<Photo[]>([]);
-  const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
   const [isUploading, setIsUploading] = useState(false);
   const [caption, setCaption] = useState("");
   const [showUploadForm, setShowUploadForm] = useState(false);
@@ -51,18 +50,6 @@ const PhotoGallery = () => {
     }
 
     setPhotos((data as unknown as Photo[]) || []);
-
-    const urls: Record<string, string> = {};
-    for (const photo of data || []) {
-      const { data: signedData, error: signedError } = await supabase.storage
-        .from("wedding-photos")
-        .createSignedUrl(photo.file_path, 3600);
-
-      if (!signedError && signedData?.signedUrl) {
-        urls[photo.id] = signedData.signedUrl;
-      }
-    }
-    setPhotoUrls(urls);
   }, []);
 
   useEffect(() => {
@@ -160,8 +147,8 @@ const PhotoGallery = () => {
     }
   };
 
-  const getPhotoUrl = (photoId: string) => {
-    return photoUrls[photoId] || "";
+  const getPhotoUrl = (filePath: string) => {
+    return supabase.storage.from("wedding-photos").getPublicUrl(filePath).data.publicUrl;
   };
 
 
@@ -262,7 +249,7 @@ const PhotoGallery = () => {
                 className="group relative aspect-square rounded-2xl overflow-hidden cursor-pointer"
               >
                 <img
-                  src={getPhotoUrl(photo.id)}
+                  src={getPhotoUrl(photo.file_path)}
                   alt={photo.caption || "Wedding photo"}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
@@ -305,7 +292,7 @@ const PhotoGallery = () => {
             </button>
             <div className="max-w-4xl max-h-[80vh]" onClick={(e) => e.stopPropagation()}>
               <img
-                src={getPhotoUrl(selectedPhoto.id)}
+                src={getPhotoUrl(selectedPhoto.file_path)}
                 alt={selectedPhoto.caption || "Wedding photo"}
                 className="max-w-full max-h-[70vh] object-contain rounded-2xl"
               />

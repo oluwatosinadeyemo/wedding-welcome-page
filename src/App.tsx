@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import RSVPPage from "./pages/RSVPPage";
 import DashboardPage from "./pages/DashboardPage";
 import CheckinPage from "./pages/CheckinPage";
+import SlideshowPage from "./pages/SlideshowPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/rsvp" element={<RSVPPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/checkin" element={<CheckinPage />} />
+          <Route path="/slideshow" element={<SlideshowPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
