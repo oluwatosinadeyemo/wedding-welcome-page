@@ -120,8 +120,9 @@ const STATIC_PREWEDDING: Photo[] = [
   },
 ];
 
-type FilterKey = "prewedding" | "weddingday";
+type FilterKey = "engagement" | "prewedding" | "weddingday";
 const FILTERS: { key: FilterKey; label: string }[] = [
+  { key: "engagement", label: "Engagement" },
   { key: "prewedding", label: "Pre-wedding" },
   { key: "weddingday", label: "Wedding day" },
 ];
@@ -209,11 +210,15 @@ const PhotoGallery = () => {
         (p) => (p.category || "").toLowerCase() === "prewedding"
       );
       list = [...STATIC_PREWEDDING, ...dbPrewedding];
-    } else {
+    } else if (activeFilter === "weddingday") {
       list = photos.filter((p) => {
         const cat = (p.category || "").toLowerCase();
         return cat === "weddingday" || cat === "";
       });
+    } else {
+      list = photos.filter(
+        (p) => (p.category || "").toLowerCase() === activeFilter
+      );
     }
     const seen = new Set<string>();
     return list.filter((p) => {
