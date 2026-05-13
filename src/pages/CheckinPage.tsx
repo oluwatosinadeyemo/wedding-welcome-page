@@ -50,23 +50,20 @@ const CheckinPage = () => {
       });
   }, []);
 
-  const recordScan = useCallback(
-    async (rawValue: string, overrideLabel?: string, passId?: string): Promise<ScanEntry> => {
-      const resolvedLabel = (overrideLabel ?? label.trim()) || null;
-      const { data, error } = await (supabase.rpc as any)("insert_scan_log", {
-        p_raw_value: rawValue,
-        p_label: resolvedLabel,
-        p_pass_id: passId ?? null,
-      });
-      if (error) throw error;
-      const entry = data as ScanEntry;
-      setLog((prev) => [entry, ...prev]);
-      setLabel("");
-      setManualInput("");
-      return entry;
-    },
-    [label]
-  );
+  const recordScan = useCallback(async (rawValue: string, overrideLabel?: string) => {
+    const entry = {
+      raw_value: rawValue,
+      label: overrideLabel ?? (label.trim() || null),
+    };
+    const { data, error } = await (supabase.from("scan_log" as any) as any)
+      .insert(entry)
+      .select()
+      .single();
+    if (error) throw error;
+    setLog((prev) => [data as ScanEntry, ...prev]);
+    setLabel("");
+    setManualInput("");
+  }, [label]);
 
   const handleQRScan = useCallback(
     async (rawValue: string) => {
