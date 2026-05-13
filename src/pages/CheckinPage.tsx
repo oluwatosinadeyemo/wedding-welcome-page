@@ -19,6 +19,8 @@ interface ScanEntry {
   scanned_at: string;
   label: string | null;
   raw_value: string;
+  pass_id?: string | null;
+  already_checked_in?: boolean;
 }
 
 const CheckinPage = () => {
@@ -50,20 +52,26 @@ const CheckinPage = () => {
       });
   }, []);
 
-  const recordScan = useCallback(async (rawValue: string, overrideLabel?: string) => {
-    const entry = {
-      raw_value: rawValue,
-      label: overrideLabel ?? (label.trim() || null),
-    };
-    const { data, error } = await (supabase.from("scan_log" as any) as any)
-      .insert(entry)
-      .select()
-      .single();
-    if (error) throw error;
-    setLog((prev) => [data as ScanEntry, ...prev]);
-    setLabel("");
-    setManualInput("");
-  }, [label]);
+  const recordScan = useCallback(
+    async (rawValue: string, overrideLabel?: string, passId?: string): Promise<ScanEntry> => {
+      const resolvedLabel = (overrideLabel ?? label.trim()) || null;
+      const { data, error } = await (supabase.rpc as any)("insert_scan_log", {
+        p_raw_value: rawValue,
+        p_label: resolvedLabel,
+        p_pass_id: passId ?? null,
+      });
+      if (error) throw error;
+      const entry = data as ScanEntry;
+      // Only add to log if it's a new scan
+      if (!entry.already_checked_in) {
+        setLog((prev) => [entry, ...prev]);
+      }
+      setLabel("");
+      setManualInput("");
+      return entry;
+    },
+    [label]
+  );
 
   const handleQRScan = useCallback(
     async (rawValue: string) => {
@@ -82,10 +90,18 @@ const CheckinPage = () => {
       setIsLoading(true);
       try {
         const entry = await recordScan(rawValue, displayLabel, passId);
-        toast({
-          title: "✓ Checked in",
-          description: entry.label || rawValue.slice(0, 50),
-        });
+        if (entry.already_checked_in) {
+          toast({
+            title: "⚠️ Already checked in",
+            description: `${entry.label || "This guest"} was already scanned at ${new Date(entry.scanned_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`,
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "✓ Checked in",
+            description: entry.label || rawValue.slice(0, 50),
+          });
+        }
       } catch (err: any) {
         toast({
           title: "Scan failed",

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,7 @@ import {
   QrCode,
   UserCheck,
   KeyRound,
+  AlertCircle,
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import JSZip from "jszip";
@@ -68,7 +69,19 @@ interface PhotoEntry {
   expires_at: string | null;
   status?: string | null;
   category?: string | null;
+  isStatic?: boolean;
 }
+
+const STATIC_PREWEDDING: PhotoEntry[] = [
+  { id: "static-1", file_path: "/prewedding/DAP_8980.jpg", file_name: "DAP_8980.jpg", uploaded_by: "Pre-wedding shoot", caption: null, created_at: "", expires_at: null, status: "approved", category: "prewedding", isStatic: true },
+  { id: "static-2", file_path: "/prewedding/DAP_9007.jpg", file_name: "DAP_9007.jpg", uploaded_by: "Pre-wedding shoot", caption: null, created_at: "", expires_at: null, status: "approved", category: "prewedding", isStatic: true },
+  { id: "static-3", file_path: "/prewedding/DAP_9213.jpg", file_name: "DAP_9213.jpg", uploaded_by: "Pre-wedding shoot", caption: null, created_at: "", expires_at: null, status: "approved", category: "prewedding", isStatic: true },
+  { id: "static-4", file_path: "/prewedding/DAP_9459.jpg", file_name: "DAP_9459.jpg", uploaded_by: "Pre-wedding shoot", caption: null, created_at: "", expires_at: null, status: "approved", category: "prewedding", isStatic: true },
+  { id: "static-5", file_path: "/prewedding/DAP_9153.jpg", file_name: "DAP_9153.jpg", uploaded_by: "Pre-wedding shoot", caption: null, created_at: "", expires_at: null, status: "approved", category: "prewedding", isStatic: true },
+  { id: "static-6", file_path: "/prewedding/DAP_9195.jpg", file_name: "DAP_9195.jpg", uploaded_by: "Pre-wedding shoot", caption: null, created_at: "", expires_at: null, status: "approved", category: "prewedding", isStatic: true },
+  { id: "static-7", file_path: "/prewedding/DAP_9392.jpg", file_name: "DAP_9392.jpg", uploaded_by: "Pre-wedding shoot", caption: null, created_at: "", expires_at: null, status: "approved", category: "prewedding", isStatic: true },
+  { id: "static-8", file_path: "/prewedding/DAP_9451.jpg", file_name: "DAP_9451.jpg", uploaded_by: "Pre-wedding shoot", caption: null, created_at: "", expires_at: null, status: "approved", category: "prewedding", isStatic: true },
+];
 
 const isWalkIn = (inviteCode: string) =>
   inviteCode?.toUpperCase().startsWith("WALK-IN-");
@@ -87,6 +100,7 @@ const DashboardPage = () => {
   const [totalGuests, setTotalGuests] = useState(0);
   const [checkedInCount, setCheckedInCount] = useState(0);
   const [photos, setPhotos] = useState<PhotoEntry[]>([]);
+  const [failedImageIds, setFailedImageIds] = useState<Set<string>>(new Set());
   const [isDownloading, setIsDownloading] = useState(false);
   const [isDeletingPhoto, setIsDeletingPhoto] = useState<string | null>(null);
   const [isExportingCSV, setIsExportingCSV] = useState(false);
@@ -99,6 +113,12 @@ const DashboardPage = () => {
   const { toast } = useToast();
 
   const isAdmin = ADMIN_EMAILS.includes(user?.email?.toLowerCase() ?? "");
+
+  const allPhotos = useMemo<PhotoEntry[]>(() => {
+    const dbIds = new Set(photos.map((p) => p.file_path));
+    const staticFiltered = STATIC_PREWEDDING.filter((s) => !dbIds.has(s.file_path));
+    return [...staticFiltered, ...photos];
+  }, [photos]);
 
   useEffect(() => {
     const {
@@ -233,7 +253,8 @@ const DashboardPage = () => {
     try {
       const zip = new JSZip();
       let downloaded = 0;
-      for (const photo of photos) {
+      for (const photo of allPhotos) {
+        if (photo.isStatic || failedImageIds.has(photo.id)) continue;
         const { data: signedData } = await supabase.storage
           .from("wedding-photos")
           .createSignedUrl(photo.file_path, 3600);
@@ -329,7 +350,7 @@ const DashboardPage = () => {
             g.party_size,
             g.side || "",
             isWalkIn(g.invite_code) ? "Yes" : "No",
-            rsvp?.attending || "pending",
+            rsvp?.attending === "yes" ? "Attending" : rsvp?.attending === "no" ? "Declined" : rsvp?.attending === "maybe" ? "Maybe" : "Pending",
             rsvp?.number_of_guests || "",
             g.checked_in ? "Yes" : "No",
             g.checked_in_at
@@ -588,7 +609,7 @@ const DashboardPage = () => {
         <Tabs defaultValue="rsvps">
           <TabsList className="bg-card/50 border border-border/50 mb-6">
             <TabsTrigger value="rsvps">RSVPs ({rsvps.length})</TabsTrigger>
-            <TabsTrigger value="photos">Photos ({photos.length})</TabsTrigger>
+            <TabsTrigger value="photos">Photos ({allPhotos.length})</TabsTrigger>
           </TabsList>
 
           {/* RSVPs Tab */}
@@ -722,7 +743,7 @@ const DashboardPage = () => {
                 ) : (
                   <>
                     <Download className="w-4 h-4 mr-2" />
-                    Download All Photos ({photos.length})
+                    Download Guest Photos ({photos.filter((p) => !failedImageIds.has(p.id)).length})
                   </>
                 )}
               </Button>
@@ -741,7 +762,8 @@ const DashboardPage = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {photos.map((photo) => {
+                  {allPhotos.map((photo) => {
+                    const isBroken = failedImageIds.has(photo.id);
                     const status = photo.status || "pending";
                     const statusClasses =
                       status === "approved"
@@ -749,21 +771,45 @@ const DashboardPage = () => {
                         : status === "rejected"
                           ? "bg-red-500/10 text-red-500"
                           : "bg-yellow-500/10 text-yellow-500";
+                    const imgSrc = photo.isStatic
+                      ? photo.file_path
+                      : supabase.storage.from("wedding-photos").getPublicUrl(photo.file_path).data.publicUrl;
                     return (
-                      <TableRow key={photo.id} className="border-border/20">
+                      <TableRow
+                        key={photo.id}
+                        className={`border-border/20 ${isBroken ? "opacity-50" : ""}`}
+                      >
                         <TableCell>
-                          <img
-                            src={
-                              supabase.storage
-                                .from("wedding-photos")
-                                .getPublicUrl(photo.file_path).data.publicUrl
-                            }
-                            alt={photo.caption || "Photo"}
-                            className="w-12 h-12 rounded-lg object-cover"
-                          />
+                          {isBroken ? (
+                            <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center" title="Image missing from storage">
+                              <AlertCircle className="w-5 h-5 text-destructive" />
+                            </div>
+                          ) : (
+                            <img
+                              src={imgSrc}
+                              alt={photo.caption || "Photo"}
+                              loading="lazy"
+                              className="w-12 h-12 rounded-lg object-cover"
+                              onError={() =>
+                                setFailedImageIds((prev) => new Set([...prev, photo.id]))
+                              }
+                            />
+                          )}
                         </TableCell>
                         <TableCell className="text-foreground">
-                          {photo.uploaded_by || "Guest"}
+                          <div>
+                            <p>
+                              {photo.category === "weddingday"
+                                ? photo.uploaded_by || "Guest"
+                                : "—"}
+                            </p>
+                            {photo.isStatic && (
+                              <span className="text-xs text-muted-foreground">Static file</span>
+                            )}
+                            {isBroken && (
+                              <span className="text-xs text-destructive">Missing from storage</span>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell className="hidden md:table-cell text-muted-foreground max-w-[150px] truncate">
                           {photo.caption || "-"}
@@ -783,57 +829,68 @@ const DashboardPage = () => {
                           </select>
                         </TableCell>
                         <TableCell>
-                          <span className={`text-xs px-2 py-1 rounded-full ${statusClasses}`}>
-                            {status}
-                          </span>
+                          {photo.isStatic ? (
+                            <span className="text-xs px-2 py-1 rounded-full bg-green-500/10 text-green-500">
+                              approved
+                            </span>
+                          ) : (
+                            <span className={`text-xs px-2 py-1 rounded-full ${statusClasses}`}>
+                              {status}
+                            </span>
+                          )}
                         </TableCell>
                         <TableCell>
-                          <div className="flex gap-1">
-                            {status !== "approved" && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleSetPhotoStatus(photo, "approved")}
-                                className="text-green-500 hover:text-green-500 hover:bg-green-500/10"
-                              >
-                                <CheckCircle className="w-4 h-4" />
-                              </Button>
-                            )}
-                            {status !== "rejected" && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleSetPhotoStatus(photo, "rejected")}
-                                className="text-yellow-500 hover:text-yellow-500 hover:bg-yellow-500/10"
-                              >
-                                <XCircle className="w-4 h-4" />
-                              </Button>
-                            )}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeletePhoto(photo)}
-                              disabled={isDeletingPhoto === photo.id}
-                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                            >
-                              {isDeletingPhoto === photo.id ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : (
-                                <Trash2 className="w-4 h-4" />
+                          {photo.isStatic ? (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          ) : (
+                            <div className="flex gap-1">
+                              {status !== "approved" && !isBroken && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleSetPhotoStatus(photo, "approved")}
+                                  className="text-green-500 hover:text-green-500 hover:bg-green-500/10"
+                                >
+                                  <CheckCircle className="w-4 h-4" />
+                                </Button>
                               )}
-                            </Button>
-                          </div>
+                              {status !== "rejected" && !isBroken && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleSetPhotoStatus(photo, "rejected")}
+                                  className="text-yellow-500 hover:text-yellow-500 hover:bg-yellow-500/10"
+                                >
+                                  <XCircle className="w-4 h-4" />
+                                </Button>
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeletePhoto(photo)}
+                                disabled={isDeletingPhoto === photo.id}
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                title={isBroken ? "Delete DB record" : "Delete photo"}
+                              >
+                                {isDeletingPhoto === photo.id ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Trash2 className="w-4 h-4" />
+                                )}
+                              </Button>
+                            </div>
+                          )}
                         </TableCell>
                       </TableRow>
                     );
                   })}
-                  {photos.length === 0 && (
+                  {allPhotos.length === 0 && (
                     <TableRow>
                       <TableCell
                         colSpan={6}
                         className="text-center py-8 text-muted-foreground"
                       >
-                        No photos uploaded yet
+                        No photos yet
                       </TableCell>
                     </TableRow>
                   )}
