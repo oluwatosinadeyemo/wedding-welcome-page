@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
-import { Camera, Upload, X, Image as ImageIcon, Loader2, Trash2 } from "lucide-react";
+import { Camera, Upload, X, Image as ImageIcon, Loader2, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -90,6 +90,7 @@ const PhotoGallery = () => {
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
   const [activeFilter, setActiveFilter] = useState<FilterKey>("engagement");
+  const [currentPage, setCurrentPage] = useState(1);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isDeletingPhoto, setIsDeletingPhoto] = useState<string | null>(null);
   const [guestUploads, setGuestUploads] = useState<string[]>(() =>
@@ -155,6 +156,8 @@ const PhotoGallery = () => {
     };
   }, [fetchPhotos]);
 
+  const PHOTOS_PER_PAGE = 12;
+
   const filteredPhotos = useMemo(() => {
     if (activeFilter === "prewedding") {
       const dbPrewedding = photos.filter(
@@ -172,6 +175,12 @@ const PhotoGallery = () => {
       (p) => (p.category || "").toLowerCase() === activeFilter
     );
   }, [photos, activeFilter]);
+
+  const totalPages = Math.ceil(filteredPhotos.length / PHOTOS_PER_PAGE);
+  const paginatedPhotos = filteredPhotos.slice(
+    (currentPage - 1) * PHOTOS_PER_PAGE,
+    currentPage * PHOTOS_PER_PAGE
+  );
 
   const canDeletePhoto = (photo: Photo) => {
     if (photo.isStatic) return false;
@@ -315,6 +324,7 @@ const PhotoGallery = () => {
               key={f.key}
               onClick={() => {
                 setActiveFilter(f.key);
+                setCurrentPage(1);
                 setShowUploadForm(false);
               }}
               className={cn(
@@ -385,13 +395,13 @@ const PhotoGallery = () => {
           </div>
         )}
 
-        {/* Photo Gallery — horizontally scrollable */}
+        {/* Photo Grid */}
         {filteredPhotos.length > 0 ? (
-          <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scroll-smooth [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {filteredPhotos.map((photo) => (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {paginatedPhotos.map((photo) => (
               <div
                 key={photo.id}
-                className="group relative flex-none w-64 h-64 sm:w-72 sm:h-72 md:w-80 md:h-80 rounded-2xl overflow-hidden snap-start"
+                className="group relative aspect-square rounded-2xl overflow-hidden"
               >
                 <img
                   src={getPhotoUrl(photo)}
@@ -439,6 +449,41 @@ const PhotoGallery = () => {
                 ? "No photos yet. Be the first to share a memory!"
                 : "No photos yet."}
             </p>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-3 mt-10">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="w-10 h-10 rounded-full border border-border/50 flex items-center justify-center text-muted-foreground hover:border-primary/40 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`w-10 h-10 rounded-full text-sm font-sans transition-all ${
+                  page === currentPage
+                    ? "bg-primary text-primary-foreground shadow-lg"
+                    : "border border-border/50 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="w-10 h-10 rounded-full border border-border/50 flex items-center justify-center text-muted-foreground hover:border-primary/40 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
           </div>
         )}
 
