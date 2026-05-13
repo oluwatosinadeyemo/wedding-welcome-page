@@ -52,14 +52,11 @@ const CheckinPage = () => {
 
   const recordScan = useCallback(
     async (rawValue: string, overrideLabel?: string) => {
-      const entry = {
-        raw_value: rawValue,
-        label: (overrideLabel ?? label.trim()) || null,
-      };
-      const { data, error } = await (supabase.from("scan_log" as any) as any)
-        .insert(entry)
-        .select()
-        .single();
+      const resolvedLabel = (overrideLabel ?? label.trim()) || null;
+      const { data, error } = await (supabase.rpc as any)("insert_scan_log", {
+        p_raw_value: rawValue,
+        p_label: resolvedLabel,
+      });
       if (error) throw error;
       setLog((prev) => [data as ScanEntry, ...prev]);
       setLabel("");
