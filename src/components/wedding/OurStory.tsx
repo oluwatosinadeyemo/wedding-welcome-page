@@ -16,15 +16,6 @@ const OurStory = () => {
 
         <div className="grid lg:grid-cols-2 gap-16 md:gap-24 items-center">
           <div className="order-2 lg:order-1 space-y-8">
-            <p className="text-muted-foreground leading-relaxed text-lg">
-              We met on the train, a brief, easy moment between strangers that
-              somehow stayed with us both.
-            </p>
-            <p className="text-muted-foreground leading-relaxed text-lg">
-              Then we met again at work, and from that point everything unfolded 
-              naturally. Four years later, we're still choosing each other with 
-              the same love and excitement we felt at the start.
-            </p>
             <div className="pt-8 glass-card p-8">
               <p className="wedding-subheading text-xs mb-4 text-primary">How We Met</p>
               <p className="text-foreground font-serif text-2xl italic leading-relaxed">
