@@ -58,6 +58,8 @@ interface PhotoEntry {
   caption: string | null;
   created_at: string;
   expires_at: string | null;
+  status?: string | null;
+  category?: string | null;
 }
 
 const isWalkIn = (inviteCode: string) =>
@@ -210,6 +212,31 @@ const DashboardPage = () => {
       toast({ title: "Delete failed", description: err.message, variant: "destructive" });
     } finally {
       setIsDeletingPhoto(null);
+    }
+  };
+
+  const handleSetPhotoStatus = async (photo: PhotoEntry, status: "approved" | "rejected") => {
+    try {
+      const { error } = await (supabase.from("wedding_photos") as any)
+        .update({ status })
+        .eq("id", photo.id);
+      if (error) throw error;
+      setPhotos((prev) => prev.map((p) => (p.id === photo.id ? { ...p, status } : p)));
+      toast({ title: status === "approved" ? "Photo approved" : "Photo rejected" });
+    } catch (err: any) {
+      toast({ title: "Update failed", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const handleSetPhotoCategory = async (photo: PhotoEntry, category: string | null) => {
+    try {
+      const { error } = await (supabase.from("wedding_photos") as any)
+        .update({ category })
+        .eq("id", photo.id);
+      if (error) throw error;
+      setPhotos((prev) => prev.map((p) => (p.id === photo.id ? { ...p, category } : p)));
+    } catch (err: any) {
+      toast({ title: "Update failed", description: err.message, variant: "destructive" });
     }
   };
 
@@ -582,25 +609,32 @@ const DashboardPage = () => {
                     <TableHead>Photo</TableHead>
                     <TableHead>Uploaded By</TableHead>
                     <TableHead className="hidden md:table-cell">Caption</TableHead>
-                    <TableHead className="hidden md:table-cell">Uploaded</TableHead>
-                    <TableHead className="hidden md:table-cell">Status</TableHead>
+                    <TableHead className="hidden md:table-cell">Category</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {photos.map((photo) => {
-                    const isExpired = photo.expires_at
-                      ? new Date(photo.expires_at) < new Date()
-                      : false;
+                    const status = photo.status || "pending";
+                    const statusClasses =
+                      status === "approved"
+                        ? "bg-green-500/10 text-green-500"
+                        : status === "rejected"
+                          ? "bg-red-500/10 text-red-500"
+                          : "bg-yellow-500/10 text-yellow-500";
                     return (
-                      <TableRow
-                        key={photo.id}
-                        className={`border-border/20 ${isExpired ? "opacity-50" : ""}`}
-                      >
+                      <TableRow key={photo.id} className="border-border/20">
                         <TableCell>
-                          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <ImageIcon className="w-5 h-5 text-primary" />
-                          </div>
+                          <img
+                            src={
+                              supabase.storage
+                                .from("wedding-photos")
+                                .getPublicUrl(photo.file_path).data.publicUrl
+                            }
+                            alt={photo.caption || "Photo"}
+                            className="w-12 h-12 rounded-lg object-cover"
+                          />
                         </TableCell>
                         <TableCell className="text-foreground">
                           {photo.uploaded_by || "Guest"}
@@ -608,34 +642,60 @@ const DashboardPage = () => {
                         <TableCell className="hidden md:table-cell text-muted-foreground max-w-[150px] truncate">
                           {photo.caption || "-"}
                         </TableCell>
-                        <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
-                          {new Date(photo.created_at).toLocaleDateString()}
-                        </TableCell>
                         <TableCell className="hidden md:table-cell">
-                          <span
-                            className={`text-xs px-2 py-1 rounded-full ${
-                              isExpired
-                                ? "bg-red-500/10 text-red-500"
-                                : "bg-green-500/10 text-green-500"
-                            }`}
+                          <select
+                            value={photo.category || ""}
+                            onChange={(e) =>
+                              handleSetPhotoCategory(photo, e.target.value || null)
+                            }
+                            className="bg-background/50 border border-border/50 rounded-md px-2 py-1 text-xs"
                           >
-                            {isExpired ? "Expired" : "Visible"}
+                            <option value="">—</option>
+                            <option value="engagement">Engagement</option>
+                            <option value="prewedding">Pre-wedding</option>
+                          </select>
+                        </TableCell>
+                        <TableCell>
+                          <span className={`text-xs px-2 py-1 rounded-full ${statusClasses}`}>
+                            {status}
                           </span>
                         </TableCell>
                         <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeletePhoto(photo)}
-                            disabled={isDeletingPhoto === photo.id}
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                          >
-                            {isDeletingPhoto === photo.id ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <Trash2 className="w-4 h-4" />
+                          <div className="flex gap-1">
+                            {status !== "approved" && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleSetPhotoStatus(photo, "approved")}
+                                className="text-green-500 hover:text-green-500 hover:bg-green-500/10"
+                              >
+                                <CheckCircle className="w-4 h-4" />
+                              </Button>
                             )}
-                          </Button>
+                            {status !== "rejected" && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleSetPhotoStatus(photo, "rejected")}
+                                className="text-yellow-500 hover:text-yellow-500 hover:bg-yellow-500/10"
+                              >
+                                <XCircle className="w-4 h-4" />
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeletePhoto(photo)}
+                              disabled={isDeletingPhoto === photo.id}
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            >
+                              {isDeletingPhoto === photo.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="w-4 h-4" />
+                              )}
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );

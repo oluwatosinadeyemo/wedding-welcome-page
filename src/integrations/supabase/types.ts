@@ -88,31 +88,37 @@ export type Database = {
       wedding_photos: {
         Row: {
           caption: string | null
+          category: string | null
           created_at: string
           expires_at: string | null
           file_name: string
           file_path: string
           id: string
+          status: string
           uploaded_by: string | null
           user_id: string | null
         }
         Insert: {
           caption?: string | null
+          category?: string | null
           created_at?: string
           expires_at?: string | null
           file_name: string
           file_path: string
           id?: string
+          status?: string
           uploaded_by?: string | null
           user_id?: string | null
         }
         Update: {
           caption?: string | null
+          category?: string | null
           created_at?: string
           expires_at?: string | null
           file_name?: string
           file_path?: string
           id?: string
+          status?: string
           uploaded_by?: string | null
           user_id?: string | null
         }
