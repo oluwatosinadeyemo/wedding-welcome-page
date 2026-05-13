@@ -80,6 +80,8 @@ const DashboardPage = () => {
   const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
 
   const [rsvps, setRsvps] = useState<RSVPEntry[]>([]);
   const [totalGuests, setTotalGuests] = useState(0);
@@ -172,6 +174,22 @@ const DashboardPage = () => {
         description: err.message || "Please try again",
         variant: "destructive",
       });
+    } finally {
+      setIsAuthLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsAuthLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(authEmail, {
+        redirectTo: `${window.location.origin}/dashboard`,
+      });
+      if (error) throw error;
+      setResetEmailSent(true);
+    } catch (err: any) {
+      toast({ title: "Failed to send reset email", description: err.message, variant: "destructive" });
     } finally {
       setIsAuthLoading(false);
     }
@@ -357,7 +375,9 @@ const DashboardPage = () => {
               Couple Dashboard
             </h2>
             <p className="text-muted-foreground text-sm text-center mb-6">
-              {isSignUp
+              {isForgotPassword
+                ? "Enter your email to receive a reset link"
+                : isSignUp
                 ? "Create your admin account"
                 : "Sign in with your admin account to manage your wedding"}
             </p>
@@ -369,56 +389,113 @@ const DashboardPage = () => {
                 </button>
               </div>
             )}
-            <form onSubmit={handleLogin} className="space-y-4">
-              <Input
-                type="email"
-                placeholder="Email"
-                value={authEmail}
-                onChange={(e) => setAuthEmail(e.target.value)}
-                required
-                className="bg-background/50 border-border/50 rounded-xl"
-              />
-              <Input
-                type="password"
-                placeholder="Password"
-                value={authPassword}
-                onChange={(e) => setAuthPassword(e.target.value)}
-                required
-                minLength={6}
-                className="bg-background/50 border-border/50 rounded-xl"
-              />
-              <Button
-                type="submit"
-                disabled={isAuthLoading}
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl py-6"
-              >
-                {isAuthLoading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : isSignUp ? (
-                  "Create Account"
-                ) : (
-                  "Sign In"
-                )}
-              </Button>
-            </form>
-            <div className="mt-4 text-center space-y-2">
-              <button
-                onClick={() => setIsSignUp(!isSignUp)}
-                className="text-primary hover:text-primary/80 text-sm"
-              >
-                {isSignUp
-                  ? "Already have an account? Sign in"
-                  : "First time? Create an account"}
-              </button>
-              <div>
-                <Link
-                  to="/"
-                  className="text-muted-foreground hover:text-foreground text-sm"
-                >
-                  Back to Wedding Site
-                </Link>
-              </div>
-            </div>
+
+            {isForgotPassword ? (
+              resetEmailSent ? (
+                <div className="text-center space-y-4">
+                  <div className="p-4 rounded-xl bg-green-500/10 text-green-600 text-sm">
+                    Reset link sent! Check your email and click the link to set a new password.
+                  </div>
+                  <button
+                    onClick={() => { setIsForgotPassword(false); setResetEmailSent(false); }}
+                    className="text-primary hover:text-primary/80 text-sm"
+                  >
+                    Back to sign in
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleForgotPassword} className="space-y-4">
+                  <Input
+                    type="email"
+                    placeholder="Email"
+                    value={authEmail}
+                    onChange={(e) => setAuthEmail(e.target.value)}
+                    required
+                    className="bg-background/50 border-border/50 rounded-xl"
+                    autoFocus
+                  />
+                  <Button
+                    type="submit"
+                    disabled={isAuthLoading}
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl py-6"
+                  >
+                    {isAuthLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Send Reset Link"}
+                  </Button>
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      onClick={() => setIsForgotPassword(false)}
+                      className="text-muted-foreground hover:text-foreground text-sm"
+                    >
+                      Back to sign in
+                    </button>
+                  </div>
+                </form>
+              )
+            ) : (
+              <>
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <Input
+                    type="email"
+                    placeholder="Email"
+                    value={authEmail}
+                    onChange={(e) => setAuthEmail(e.target.value)}
+                    required
+                    className="bg-background/50 border-border/50 rounded-xl"
+                  />
+                  <Input
+                    type="password"
+                    placeholder="Password"
+                    value={authPassword}
+                    onChange={(e) => setAuthPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    className="bg-background/50 border-border/50 rounded-xl"
+                  />
+                  <Button
+                    type="submit"
+                    disabled={isAuthLoading}
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl py-6"
+                  >
+                    {isAuthLoading ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : isSignUp ? (
+                      "Create Account"
+                    ) : (
+                      "Sign In"
+                    )}
+                  </Button>
+                </form>
+                <div className="mt-4 text-center space-y-2">
+                  <button
+                    onClick={() => setIsSignUp(!isSignUp)}
+                    className="text-primary hover:text-primary/80 text-sm"
+                  >
+                    {isSignUp
+                      ? "Already have an account? Sign in"
+                      : "First time? Create an account"}
+                  </button>
+                  {!isSignUp && (
+                    <div>
+                      <button
+                        onClick={() => setIsForgotPassword(true)}
+                        className="text-muted-foreground hover:text-foreground text-sm"
+                      >
+                        Forgot password?
+                      </button>
+                    </div>
+                  )}
+                  <div>
+                    <Link
+                      to="/"
+                      className="text-muted-foreground hover:text-foreground text-sm"
+                    >
+                      Back to Wedding Site
+                    </Link>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
