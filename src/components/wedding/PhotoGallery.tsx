@@ -1,9 +1,10 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { Camera, Upload, X, Image as ImageIcon, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 interface Photo {
   id: string;
@@ -13,6 +14,7 @@ interface Photo {
   caption: string | null;
   created_at: string;
   expires_at: string | null;
+  category: string | null;
 }
 
 const MAX_FILE_SIZE_MB = 50;
@@ -20,7 +22,12 @@ const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 const GUEST_NAME_KEY = "wedding_guest_name";
 const GUEST_RSVPD_KEY = "wedding_guest_rsvpd";
 
-
+type FilterKey = "all" | "engagement" | "prewedding";
+const FILTERS: { key: FilterKey; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "engagement", label: "Engagement" },
+  { key: "prewedding", label: "Pre-wedding" },
+];
 
 const PhotoGallery = () => {
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -28,10 +35,11 @@ const PhotoGallery = () => {
   const [caption, setCaption] = useState("");
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
+  const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
   const [guestName, setGuestName] = useState(() => {
     return localStorage.getItem(GUEST_NAME_KEY) || "";
   });
-  const [hasRsvpd, setHasRsvpd] = useState(() => {
+  const [hasRsvpd] = useState(() => {
     return localStorage.getItem(GUEST_RSVPD_KEY) === "true";
   });
   const { toast } = useToast();
@@ -70,6 +78,11 @@ const PhotoGallery = () => {
     };
   }, [fetchPhotos]);
 
+  const filteredPhotos = useMemo(() => {
+    if (activeFilter === "all") return photos;
+    return photos.filter((p) => (p.category || "").toLowerCase() === activeFilter);
+  }, [photos, activeFilter]);
+
   const handleShareClick = () => {
     setShowUploadForm(!showUploadForm);
   };
@@ -86,7 +99,6 @@ const PhotoGallery = () => {
       });
       return;
     }
-
 
     if (!file.type.startsWith("image/")) {
       toast({
@@ -129,8 +141,8 @@ const PhotoGallery = () => {
       if (rpcError) throw rpcError;
 
       toast({
-        title: "Photo uploaded!",
-        description: "Thank you for sharing your memories with us.",
+        title: "Photo submitted!",
+        description: "Thanks! Your photo will appear once the couple approves it.",
       });
 
       setCaption("");
@@ -152,14 +164,13 @@ const PhotoGallery = () => {
     return supabase.storage.from("wedding-photos").getPublicUrl(filePath).data.publicUrl;
   };
 
-
   return (
     <section id="gallery" className="py-24 relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-b from-card/50 via-background to-card/50" />
 
       <div className="container mx-auto px-4 relative z-10">
-        <div className="text-center mb-16">
+        <div className="text-center mb-12">
           <p className="text-primary font-sans uppercase tracking-[0.2em] text-sm mb-4 font-medium">
             Memories
           </p>
@@ -171,25 +182,27 @@ const PhotoGallery = () => {
           </p>
         </div>
 
-        {/* Guest Actions */}
-        <div className="flex flex-col items-center gap-4 mb-12">
-          {hasEnteredName && (
-            <p className="text-muted-foreground text-sm">
-              Sharing as <span className="text-foreground font-medium">{guestName}</span>
-            </p>
-          )}
-          <Button
-            onClick={handleShareClick}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 rounded-full text-sm uppercase tracking-wider font-sans"
-          >
-            <Camera className="w-5 h-5 mr-2" />
-            Share a Photo
-          </Button>
+        {/* Filter Pills */}
+        <div className="flex flex-wrap justify-center gap-2 mb-10">
+          {FILTERS.map((f) => (
+            <button
+              key={f.key}
+              onClick={() => setActiveFilter(f.key)}
+              className={cn(
+                "px-5 py-2 rounded-full text-sm uppercase tracking-wider font-sans border transition-all duration-300",
+                activeFilter === f.key
+                  ? "bg-primary text-primary-foreground border-primary shadow-lg"
+                  : "bg-background/40 text-muted-foreground border-border/50 hover:border-primary/40 hover:text-foreground"
+              )}
+            >
+              {f.label}
+            </button>
+          ))}
         </div>
 
         {/* Upload Form */}
         {showUploadForm && (
-          <div className="max-w-md mx-auto mb-16 animate-fade-in">
+          <div className="max-w-md mx-auto mb-12 animate-fade-in">
             <div className="glass-card p-8">
               <h3 className="font-serif text-2xl text-foreground mb-6 text-center">
                 Upload Your Photo
@@ -235,15 +248,18 @@ const PhotoGallery = () => {
                     className="hidden"
                   />
                 </label>
+                <p className="text-xs text-muted-foreground text-center">
+                  Submitted photos appear after the couple approves them.
+                </p>
               </div>
             </div>
           </div>
         )}
 
         {/* Photo Grid */}
-        {photos.length > 0 ? (
+        {filteredPhotos.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {photos.map((photo) => (
+            {filteredPhotos.map((photo) => (
               <div
                 key={photo.id}
                 onClick={() => setSelectedPhoto(photo)}
@@ -278,6 +294,22 @@ const PhotoGallery = () => {
             </p>
           </div>
         )}
+
+        {/* Share a Photo button — below the grid */}
+        <div className="flex flex-col items-center gap-4 mt-12">
+          {hasEnteredName && (
+            <p className="text-muted-foreground text-sm">
+              Sharing as <span className="text-foreground font-medium">{guestName}</span>
+            </p>
+          )}
+          <Button
+            onClick={handleShareClick}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 rounded-full text-sm uppercase tracking-wider font-sans"
+          >
+            <Camera className="w-5 h-5 mr-2" />
+            Share a Photo
+          </Button>
+        </div>
 
         {/* Lightbox */}
         {selectedPhoto && (
