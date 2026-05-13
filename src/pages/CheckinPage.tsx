@@ -19,6 +19,8 @@ interface ScanEntry {
   scanned_at: string;
   label: string | null;
   raw_value: string;
+  pass_id?: string | null;
+  already_checked_in?: boolean;
 }
 
 const CheckinPage = () => {
@@ -60,7 +62,10 @@ const CheckinPage = () => {
       });
       if (error) throw error;
       const entry = data as ScanEntry;
-      setLog((prev) => [entry, ...prev]);
+      // Only add to log if it's a new scan
+      if (!entry.already_checked_in) {
+        setLog((prev) => [entry, ...prev]);
+      }
       setLabel("");
       setManualInput("");
       return entry;
@@ -85,10 +90,18 @@ const CheckinPage = () => {
       setIsLoading(true);
       try {
         const entry = await recordScan(rawValue, displayLabel, passId);
-        toast({
-          title: "✓ Checked in",
-          description: entry.label || rawValue.slice(0, 50),
-        });
+        if (entry.already_checked_in) {
+          toast({
+            title: "⚠️ Already checked in",
+            description: `${entry.label || "This guest"} was already scanned at ${new Date(entry.scanned_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`,
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "✓ Checked in",
+            description: entry.label || rawValue.slice(0, 50),
+          });
+        }
       } catch (err: any) {
         toast({
           title: "Scan failed",
