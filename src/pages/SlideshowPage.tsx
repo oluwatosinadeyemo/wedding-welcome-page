@@ -8,12 +8,27 @@ interface Photo {
   uploaded_by: string | null;
   caption: string | null;
   created_at: string;
+  isStatic?: boolean;
 }
 
 const NUM_COLS = 4;
 
+const STATIC_PREWEDDING: Photo[] = [
+  { id: "static-1", file_path: "/prewedding/DAP_8980.jpg", uploaded_by: null, caption: null, created_at: "", isStatic: true },
+  { id: "static-2", file_path: "/prewedding/DAP_9007.jpg", uploaded_by: null, caption: null, created_at: "", isStatic: true },
+  { id: "static-3", file_path: "/prewedding/DAP_9213.jpg", uploaded_by: null, caption: null, created_at: "", isStatic: true },
+  { id: "static-4", file_path: "/prewedding/DAP_9459.jpg", uploaded_by: null, caption: null, created_at: "", isStatic: true },
+  { id: "static-5", file_path: "/prewedding/DAP_9153.jpg", uploaded_by: null, caption: null, created_at: "", isStatic: true },
+  { id: "static-6", file_path: "/prewedding/DAP_9195.jpg", uploaded_by: null, caption: null, created_at: "", isStatic: true },
+  { id: "static-7", file_path: "/prewedding/DAP_9392.jpg", uploaded_by: null, caption: null, created_at: "", isStatic: true },
+  { id: "static-8", file_path: "/prewedding/DAP_9451.jpg", uploaded_by: null, caption: null, created_at: "", isStatic: true },
+];
+
 const getPublicUrl = (filePath: string) =>
   supabase.storage.from("wedding-photos").getPublicUrl(filePath).data.publicUrl;
+
+const getPhotoUrl = (photo: Photo) =>
+  photo.isStatic ? photo.file_path : getPublicUrl(photo.file_path);
 
 const SlideshowPage = () => {
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -107,11 +122,11 @@ const SlideshowPage = () => {
       return;
     }
 
-    const incoming = (data as Photo[]) || [];
-    const fresh = incoming
+    const dbPhotos = (data as Photo[]) || [];
+    const fresh = dbPhotos
       .filter((p) => !knownIds.current.has(p.id))
       .map((p) => p.id);
-    incoming.forEach((p) => knownIds.current.add(p.id));
+    dbPhotos.forEach((p) => knownIds.current.add(p.id));
 
     // Only flag as "new" after initial load
     if (fresh.length > 0 && knownIds.current.size > fresh.length) {
@@ -119,7 +134,14 @@ const SlideshowPage = () => {
       setTimeout(() => setNewIds(new Set()), 5000);
     }
 
-    setPhotos(incoming);
+    // Merge static prewedding + DB guest photos, deduplicate by file_path
+    const seen = new Set<string>();
+    const merged = [...STATIC_PREWEDDING, ...dbPhotos].filter((p) => {
+      if (seen.has(p.file_path)) return false;
+      seen.add(p.file_path);
+      return true;
+    });
+    setPhotos(merged);
     setIsLoading(false);
   }, []);
 
@@ -227,7 +249,7 @@ const SlideshowPage = () => {
                     }}
                   >
                     <img
-                      src={getPublicUrl(photo.file_path)}
+                      src={getPhotoUrl(photo)}
                       alt={photo.caption || "Wedding photo"}
                       style={{ width: "100%", height: "auto", display: "block" }}
                       loading="lazy"
