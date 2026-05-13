@@ -1,24 +1,19 @@
 import { useState, useEffect } from "react";
 
-const Countdown = () => {
-  const weddingDate = new Date("2026-12-12T00:00:00");
-  
-  const calculateTimeLeft = () => {
-    const now = new Date();
-    const difference = weddingDate.getTime() - now.getTime();
-    
-    if (difference <= 0) {
-      return { days: 0, hours: 0, minutes: 0, seconds: 0 };
-    }
-    
-    return {
-      days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-      hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-      minutes: Math.floor((difference / (1000 * 60)) % 60),
-      seconds: Math.floor((difference / 1000) % 60),
-    };
-  };
+const WEDDING_DATE = new Date("2026-12-12T00:00:00");
 
+const calculateTimeLeft = () => {
+  const difference = WEDDING_DATE.getTime() - Date.now();
+  if (difference <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+  return {
+    days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+    hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+    minutes: Math.floor((difference / (1000 * 60)) % 60),
+    seconds: Math.floor((difference / 1000) % 60),
+  };
+};
+
+const Countdown = () => {
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
 
   useEffect(() => {

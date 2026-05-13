@@ -29,7 +29,7 @@ const SlideshowPage = () => {
     const acquire = async () => {
       try {
         wakeLock = await navigator.wakeLock.request("screen");
-      } catch {}
+      } catch { /* wake lock not supported */ }
     };
     acquire();
     const onVisibility = () => {
