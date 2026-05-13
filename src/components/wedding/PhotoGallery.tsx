@@ -651,7 +651,7 @@ const PhotoGallery = () => {
         {/* Lightbox */}
         {selectedPhoto && selectedIndex !== null && (
           <div
-            className="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl flex items-center justify-center"
+            className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex items-center justify-center"
             onClick={() => { setSelectedIndex(null); }}
           >
             {/* Slideshow progress bar */}
