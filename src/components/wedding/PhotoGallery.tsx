@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo, TouchEvent } from "react";
 import { createPortal } from "react-dom";
 import { Camera, Upload, X, Image as ImageIcon, Loader2, Trash2, ChevronLeft, ChevronRight, Play, Pause, Tv } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -143,6 +143,7 @@ const PhotoGallery = () => {
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
   const slideshowTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const progressTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const touchStartX = useRef<number | null>(null);
   const [guestUploads, setGuestUploads] = useState<string[]>(() =>
     JSON.parse(localStorage.getItem(GUEST_UPLOADS_KEY) || "[]")
   );
@@ -313,6 +314,27 @@ const PhotoGallery = () => {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [selectedIndex, navigateLightbox, toggleSlideshow]);
+
+  useEffect(() => {
+    if (selectedIndex !== null) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [selectedIndex]);
+
+  const handleTouchStart = useCallback((e: TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  }, []);
+
+  const handleTouchEnd = useCallback((e: TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    touchStartX.current = null;
+    if (Math.abs(dx) < 50) return;
+    navigateLightbox(dx < 0 ? 1 : -1);
+  }, [navigateLightbox]);
 
   const canDeletePhoto = (photo: Photo) => {
     if (photo.isStatic) return false;
@@ -549,6 +571,8 @@ const PhotoGallery = () => {
                 <img
                   src={getPhotoUrl(photo)}
                   alt={photo.caption || "Wedding photo"}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   onError={() => setFailedImages((prev) => new Set([...prev, photo.file_path]))}
                 />
@@ -703,32 +727,34 @@ const PhotoGallery = () => {
 
             {/* Prev arrow */}
             <button
-              className="absolute left-4 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors disabled:opacity-20 disabled:cursor-not-allowed z-10"
+              className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors disabled:opacity-20 disabled:cursor-not-allowed z-10"
               onClick={(e) => { e.stopPropagation(); navigateLightbox(-1); }}
               disabled={selectedIndex === 0}
             >
-              <ChevronLeft className="w-7 h-7" />
+              <ChevronLeft className="w-5 h-5 sm:w-7 sm:h-7" />
             </button>
 
             {/* Next arrow */}
             <button
-              className="absolute right-4 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors disabled:opacity-20 disabled:cursor-not-allowed z-10"
+              className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors disabled:opacity-20 disabled:cursor-not-allowed z-10"
               onClick={(e) => { e.stopPropagation(); navigateLightbox(1); }}
               disabled={selectedIndex === filteredPhotos.length - 1}
             >
-              <ChevronRight className="w-7 h-7" />
+              <ChevronRight className="w-5 h-5 sm:w-7 sm:h-7" />
             </button>
 
             {/* Image */}
             <div
-              className="flex flex-col items-center max-w-5xl w-full px-20 py-16"
+              className="flex flex-col items-center max-w-5xl w-full px-12 pt-16 pb-14 sm:px-20 sm:py-16"
               onClick={(e) => e.stopPropagation()}
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
             >
               <img
                 key={selectedPhoto.id}
                 src={getPhotoUrl(selectedPhoto)}
                 alt={selectedPhoto.caption || "Wedding photo"}
-                className="max-w-full max-h-[75vh] object-contain rounded-2xl shadow-2xl"
+                className="max-w-full max-h-[calc(100svh-140px)] sm:max-h-[75vh] object-contain rounded-xl sm:rounded-2xl shadow-2xl"
                 onError={() => setFailedImages((prev) => new Set([...prev, selectedPhoto.file_path]))}
               />
               {(selectedPhoto.uploaded_by || selectedPhoto.caption) && (
