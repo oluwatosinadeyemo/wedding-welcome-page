@@ -121,9 +121,8 @@ const STATIC_PREWEDDING: Photo[] = [
   },
 ];
 
-type FilterKey = "engagement" | "prewedding" | "weddingday";
+type FilterKey = "prewedding" | "weddingday";
 const FILTERS: { key: FilterKey; label: string }[] = [
-  { key: "engagement", label: "Engagement" },
   { key: "prewedding", label: "Pre-wedding" },
   { key: "weddingday", label: "Wedding day" },
 ];
