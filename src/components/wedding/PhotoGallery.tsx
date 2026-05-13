@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { Camera, Upload, X, Image as ImageIcon, Loader2, Trash2, ChevronLeft, ChevronRight, Play, Pause, Tv } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -648,8 +649,8 @@ const PhotoGallery = () => {
           </div>
         )}
 
-        {/* Lightbox */}
-        {selectedPhoto && selectedIndex !== null && (
+        {/* Lightbox — rendered via portal to avoid stacking context issues */}
+        {selectedPhoto && selectedIndex !== null && createPortal(
           <div
             className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex items-center justify-center"
             onClick={() => { setSelectedIndex(null); }}
@@ -764,7 +765,8 @@ const PhotoGallery = () => {
                 ))}
               </div>
             )}
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     </section>

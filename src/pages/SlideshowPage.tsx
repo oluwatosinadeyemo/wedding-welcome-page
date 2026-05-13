@@ -35,6 +35,7 @@ const SlideshowPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [newIds, setNewIds] = useState<Set<string>>(new Set());
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
   const knownIds = useRef<Set<string>>(new Set());
   const scrollTimer = useRef<number | null>(null);
 
@@ -161,8 +162,9 @@ const SlideshowPage = () => {
   }, [fetchPhotos]);
 
   // ── Fix 2: Masonry columns (full photo height) ────────────────────────────
+  const visiblePhotos = photos.filter((p) => !failedImages.has(p.file_path));
   const columns = Array.from({ length: NUM_COLS }, (_, i) =>
-    photos.filter((_, j) => j % NUM_COLS === i)
+    visiblePhotos.filter((_, j) => j % NUM_COLS === i)
   );
 
   return (
@@ -253,27 +255,30 @@ const SlideshowPage = () => {
                       alt={photo.caption || "Wedding photo"}
                       style={{ width: "100%", height: "auto", display: "block" }}
                       loading="lazy"
+                      onError={() => setFailedImages((prev) => new Set([...prev, photo.file_path]))}
                     />
-                    {/* Name overlay */}
-                    <div
-                      style={{
-                        position: "absolute",
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        padding: "20px 10px 8px",
-                        background: "linear-gradient(to top, rgba(0,0,0,0.65), transparent)",
-                      }}
-                    >
-                      <p style={{ margin: 0, color: "white", fontSize: 11, fontFamily: "sans-serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                        {photo.uploaded_by || "Guest"}
-                      </p>
-                      {photo.caption && (
-                        <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.6)", fontSize: 10, fontFamily: "sans-serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                          {photo.caption}
+                    {/* Name overlay — only for guest uploads */}
+                    {!photo.isStatic && photo.uploaded_by && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          padding: "20px 10px 8px",
+                          background: "linear-gradient(to top, rgba(0,0,0,0.65), transparent)",
+                        }}
+                      >
+                        <p style={{ margin: 0, color: "white", fontSize: 11, fontFamily: "sans-serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {photo.uploaded_by}
                         </p>
-                      )}
-                    </div>
+                        {photo.caption && (
+                          <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.6)", fontSize: 10, fontFamily: "sans-serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                            {photo.caption}
+                          </p>
+                        )}
+                      </div>
+                    )}
 
                     {/* NEW badge */}
                     {isNew && (
@@ -318,7 +323,7 @@ const SlideshowPage = () => {
         }}
       >
         <p style={{ margin: 0, color: "rgba(255,255,255,0.2)", fontSize: 11, fontFamily: "sans-serif", letterSpacing: "0.2em", textTransform: "uppercase" }}>
-          {photos.length} {photos.length === 1 ? "memory" : "memories"} shared
+          {visiblePhotos.length} {visiblePhotos.length === 1 ? "memory" : "memories"} shared
         </p>
       </div>
     </div>
