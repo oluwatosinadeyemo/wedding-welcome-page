@@ -21,7 +21,7 @@ const EventDetails = () => {
       title: "After Party",
       time: "6:00 PM",
       location: "Main Hall",
-      description: "Keep the celebration going — drinks, music, and dancing",
+      description: "Keep the celebration going: drinks, music, and dancing",
       icon: "🪩",
     },
   ];

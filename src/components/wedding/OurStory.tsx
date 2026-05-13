@@ -17,7 +17,7 @@ const OurStory = () => {
         <div className="grid lg:grid-cols-2 gap-16 md:gap-24 items-center">
           <div className="order-2 lg:order-1 space-y-8">
             <p className="text-muted-foreground leading-relaxed text-lg">
-              We met on the train — a brief, easy moment between strangers that 
+              We met on the train, a brief, easy moment between strangers that
               somehow stayed with us both.
             </p>
             <p className="text-muted-foreground leading-relaxed text-lg">
@@ -28,7 +28,7 @@ const OurStory = () => {
             <div className="pt-8 glass-card p-8">
               <p className="wedding-subheading text-xs mb-4 text-primary">How We Met</p>
               <p className="text-foreground font-serif text-2xl italic leading-relaxed">
-                "A train ride, a second meeting, and four years of choosing each other — every single day."
+                "A train ride, a second meeting, and four years of choosing each other, every single day."
               </p>
             </div>
           </div>

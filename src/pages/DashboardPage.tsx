@@ -680,7 +680,7 @@ const DashboardPage = () => {
                               : "Yes"}
                           </span>
                         ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
+                          <span className="text-xs text-muted-foreground">-</span>
                         )}
                       </TableCell>
                       <TableCell className="hidden lg:table-cell max-w-[200px] truncate">
@@ -776,7 +776,7 @@ const DashboardPage = () => {
                             }
                             className="bg-background/50 border border-border/50 rounded-md px-2 py-1 text-xs"
                           >
-                            <option value="">—</option>
+                            <option value="">None</option>
                             <option value="engagement">Engagement</option>
                             <option value="prewedding">Pre-wedding</option>
                             <option value="weddingday">Wedding day</option>

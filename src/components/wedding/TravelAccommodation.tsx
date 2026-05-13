@@ -186,7 +186,7 @@ const TravelAccommodation = () => {
             <div className="flex items-center justify-center gap-2 py-4 text-primary">
               <MapPin className="w-4 h-4" />
               <span className="font-sans text-sm text-center">
-                The Lamb's Events — KM 3, Olabisi Onabanjo Way, After Chrisland University, Ilugun, Abeokuta
+                The Lamb's Events, KM 3, Olabisi Onabanjo Way, After Chrisland University, Ilugun, Abeokuta
               </span>
             </div>
           </div>
