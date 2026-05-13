@@ -139,6 +139,7 @@ const PhotoGallery = () => {
   const [isDeletingPhoto, setIsDeletingPhoto] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [slideProgress, setSlideProgress] = useState(0);
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
   const slideshowTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const progressTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const [guestUploads, setGuestUploads] = useState<string[]>(() =>
@@ -224,9 +225,10 @@ const PhotoGallery = () => {
     return list.filter((p) => {
       if (seen.has(p.file_path)) return false;
       seen.add(p.file_path);
+      if (failedImages.has(p.file_path)) return false;
       return true;
     });
-  }, [photos, activeFilter]);
+  }, [photos, activeFilter, failedImages]);
 
   const totalPages = Math.ceil(filteredPhotos.length / PHOTOS_PER_PAGE);
   const paginatedPhotos = filteredPhotos.slice(
@@ -547,6 +549,7 @@ const PhotoGallery = () => {
                   src={getPhotoUrl(photo)}
                   alt={photo.caption || "Wedding photo"}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  onError={() => setFailedImages((prev) => new Set([...prev, photo.file_path]))}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
@@ -730,6 +733,7 @@ const PhotoGallery = () => {
                 src={getPhotoUrl(selectedPhoto)}
                 alt={selectedPhoto.caption || "Wedding photo"}
                 className="max-w-full max-h-[75vh] object-contain rounded-2xl shadow-2xl"
+                onError={() => setFailedImages((prev) => new Set([...prev, selectedPhoto.file_path]))}
               />
               {(selectedPhoto.uploaded_by || selectedPhoto.caption) && (
                 <div className="text-center mt-5">
