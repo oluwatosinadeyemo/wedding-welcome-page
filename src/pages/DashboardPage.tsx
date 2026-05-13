@@ -58,6 +58,8 @@ interface PhotoEntry {
   caption: string | null;
   created_at: string;
   expires_at: string | null;
+  status?: string | null;
+  category?: string | null;
 }
 
 const isWalkIn = (inviteCode: string) =>
