@@ -4,6 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   Table,
   TableBody,
   TableCell,
@@ -26,6 +33,7 @@ import {
   Image as ImageIcon,
   QrCode,
   UserCheck,
+  KeyRound,
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import JSZip from "jszip";
@@ -80,6 +88,10 @@ const DashboardPage = () => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isDeletingPhoto, setIsDeletingPhoto] = useState<string | null>(null);
   const [isExportingCSV, setIsExportingCSV] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   const { toast } = useToast();
 
@@ -162,6 +174,27 @@ const DashboardPage = () => {
       });
     } finally {
       setIsAuthLoading(false);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      toast({ title: "Passwords don't match", variant: "destructive" });
+      return;
+    }
+    setIsChangingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      toast({ title: "Password updated successfully" });
+      setShowChangePassword(false);
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err: any) {
+      toast({ title: "Failed to update password", description: err.message, variant: "destructive" });
+    } finally {
+      setIsChangingPassword(false);
     }
   };
 
@@ -417,6 +450,15 @@ const DashboardPage = () => {
                 View Site
               </Button>
             </Link>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowChangePassword(true)}
+              className="border-border/50"
+            >
+              <KeyRound className="w-4 h-4 mr-1" />
+              Change Password
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -717,6 +759,56 @@ const DashboardPage = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      <Dialog open={showChangePassword} onOpenChange={setShowChangePassword}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Change Password</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleChangePassword} className="space-y-4 pt-2">
+            <Input
+              type="password"
+              placeholder="New password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              required
+              minLength={6}
+              className="bg-background/50 border-border/50 rounded-xl"
+              autoFocus
+            />
+            <Input
+              type="password"
+              placeholder="Confirm new password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              minLength={6}
+              className="bg-background/50 border-border/50 rounded-xl"
+            />
+            <DialogFooter className="pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowChangePassword(false)}
+                className="border-border/50"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isChangingPassword}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              >
+                {isChangingPassword ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  "Update Password"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
