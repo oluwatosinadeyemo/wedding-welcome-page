@@ -188,7 +188,7 @@ const DashboardPage = () => {
     e.preventDefault();
     setIsAuthLoading(true);
     try {
-      const siteUrl = import.meta.env.VITE_SITE_URL || window.location.origin;
+      const siteUrl = import.meta.env.VITE_SITE_URL || "https://www.tandp2026.com";
       const { error } = await supabase.auth.resetPasswordForEmail(authEmail, {
         redirectTo: `${siteUrl}/dashboard`,
       });
