@@ -299,10 +299,16 @@ const QRCodePass = () => {
                     <User className="w-8 h-8 text-secondary" />
                   </div>
                   <h3 className="font-serif text-2xl text-foreground mb-4">
-                    RSVP Required
+                    {guest.rsvp_attending === "maybe"
+                      ? "Please Confirm Attendance"
+                      : "RSVP Required"}
                   </h3>
                   <p className="text-muted-foreground mb-6">
-                    Hi {guest.full_name}! You need to RSVP and confirm your attendance before generating your pass.
+                    {guest.rsvp_attending === "maybe"
+                      ? `Hi ${guest.full_name}! You currently RSVP'd as "Not Sure Yet". Please update your RSVP to "Joyfully Accept" to receive your digital pass.`
+                      : guest.rsvp_attending === "no"
+                      ? `Hi ${guest.full_name}, you've declined the invitation. If your plans have changed, please update your RSVP to receive a pass.`
+                      : `Hi ${guest.full_name}! You need to RSVP and confirm your attendance before generating your pass.`}
                   </p>
                   <div className="flex flex-col gap-3">
                     <a
