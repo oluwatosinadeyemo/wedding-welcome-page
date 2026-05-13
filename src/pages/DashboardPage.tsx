@@ -94,6 +94,7 @@ const DashboardPage = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
 
   const { toast } = useToast();
 
@@ -102,9 +103,13 @@ const DashboardPage = () => {
   useEffect(() => {
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       setIsCheckingAuth(false);
+      if (event === "PASSWORD_RECOVERY") {
+        setIsPasswordRecovery(true);
+        setShowChangePassword(true);
+      }
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -183,8 +188,9 @@ const DashboardPage = () => {
     e.preventDefault();
     setIsAuthLoading(true);
     try {
+      const siteUrl = import.meta.env.VITE_SITE_URL || window.location.origin;
       const { error } = await supabase.auth.resetPasswordForEmail(authEmail, {
-        redirectTo: `${window.location.origin}/dashboard`,
+        redirectTo: `${siteUrl}/dashboard`,
       });
       if (error) throw error;
       setResetEmailSent(true);
@@ -207,6 +213,7 @@ const DashboardPage = () => {
       if (error) throw error;
       toast({ title: "Password updated successfully" });
       setShowChangePassword(false);
+      setIsPasswordRecovery(false);
       setNewPassword("");
       setConfirmPassword("");
     } catch (err: any) {
@@ -837,10 +844,20 @@ const DashboardPage = () => {
         </Tabs>
       </div>
 
-      <Dialog open={showChangePassword} onOpenChange={setShowChangePassword}>
+      <Dialog
+        open={showChangePassword}
+        onOpenChange={isPasswordRecovery ? undefined : setShowChangePassword}
+      >
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Change Password</DialogTitle>
+            <DialogTitle>
+              {isPasswordRecovery ? "Set New Password" : "Change Password"}
+            </DialogTitle>
+            {isPasswordRecovery && (
+              <p className="text-sm text-muted-foreground pt-1">
+                Enter and confirm your new password below.
+              </p>
+            )}
           </DialogHeader>
           <form onSubmit={handleChangePassword} className="space-y-4 pt-2">
             <Input
@@ -863,14 +880,16 @@ const DashboardPage = () => {
               className="bg-background/50 border-border/50 rounded-xl"
             />
             <DialogFooter className="pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowChangePassword(false)}
-                className="border-border/50"
-              >
-                Cancel
-              </Button>
+              {!isPasswordRecovery && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowChangePassword(false)}
+                  className="border-border/50"
+                >
+                  Cancel
+                </Button>
+              )}
               <Button
                 type="submit"
                 disabled={isChangingPassword}
