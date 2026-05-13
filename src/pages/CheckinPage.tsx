@@ -51,16 +51,19 @@ const CheckinPage = () => {
   }, []);
 
   const recordScan = useCallback(
-    async (rawValue: string, overrideLabel?: string) => {
+    async (rawValue: string, overrideLabel?: string, passId?: string): Promise<ScanEntry> => {
       const resolvedLabel = (overrideLabel ?? label.trim()) || null;
       const { data, error } = await (supabase.rpc as any)("insert_scan_log", {
         p_raw_value: rawValue,
         p_label: resolvedLabel,
+        p_pass_id: passId ?? null,
       });
       if (error) throw error;
-      setLog((prev) => [data as ScanEntry, ...prev]);
+      const entry = data as ScanEntry;
+      setLog((prev) => [entry, ...prev]);
       setLabel("");
       setManualInput("");
+      return entry;
     },
     [label]
   );
@@ -71,18 +74,20 @@ const CheckinPage = () => {
       cooldownRef.current = true;
 
       let displayLabel: string | undefined;
+      let passId: string | undefined;
       try {
         const parsed = JSON.parse(rawValue);
-        displayLabel =
-          parsed.name || parsed.guest_name || parsed.pass_id || undefined;
-      } catch { /* raw string */ }
+        passId = parsed.pass_id || undefined;
+        // fallback label from QR data if available
+        displayLabel = parsed.name || parsed.guest_name || undefined;
+      } catch { /* raw string — not a pass QR */ }
 
       setIsLoading(true);
       try {
-        await recordScan(rawValue, displayLabel);
+        const entry = await recordScan(rawValue, displayLabel, passId);
         toast({
-          title: "✓ Scanned",
-          description: displayLabel || rawValue.slice(0, 50),
+          title: "✓ Checked in",
+          description: entry.label || rawValue.slice(0, 50),
         });
       } catch (err: any) {
         toast({
@@ -169,8 +174,8 @@ const CheckinPage = () => {
     if (!manualInput.trim()) return;
     setIsLoading(true);
     try {
-      await recordScan(manualInput.trim());
-      toast({ title: "Logged", description: manualInput.trim().slice(0, 50) });
+      const entry = await recordScan(manualInput.trim());
+      toast({ title: "Logged", description: entry.label || manualInput.trim().slice(0, 50) });
     } catch (err: any) {
       toast({
         title: "Failed",
