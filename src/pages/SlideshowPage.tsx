@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Maximize, Minimize } from "lucide-react";
+import { Loader2, Maximize, Minimize, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Photo {
   id: string;
@@ -11,7 +11,7 @@ interface Photo {
   isStatic?: boolean;
 }
 
-const NUM_COLS = 4;
+const SLIDE_DURATION_MS = 5000;
 
 const STATIC_PREWEDDING: Photo[] = [
   { id: "static-1", file_path: "/prewedding/DAP_8980.jpg", uploaded_by: null, caption: null, created_at: "", isStatic: true },
@@ -33,32 +33,29 @@ const getPhotoUrl = (photo: Photo) =>
 const SlideshowPage = () => {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [newIds, setNewIds] = useState<Set<string>>(new Set());
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [visible, setVisible] = useState(true); // for fade transition
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [newIds, setNewIds] = useState<Set<string>>(new Set());
+  const [progress, setProgress] = useState(0);
   const knownIds = useRef<Set<string>>(new Set());
-  const scrollTimer = useRef<number | null>(null);
+  const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const progressTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // ── Fix 4: Wake Lock — keep screen on ────────────────────────────────────
+  // Wake lock — keep screen on
   useEffect(() => {
     let wakeLock: WakeLockSentinel | null = null;
     const acquire = async () => {
-      try {
-        wakeLock = await navigator.wakeLock.request("screen");
-      } catch { /* wake lock not supported */ }
+      try { wakeLock = await navigator.wakeLock.request("screen"); } catch { /* unsupported */ }
     };
     acquire();
-    const onVisibility = () => {
-      if (document.visibilityState === "visible") acquire();
-    };
+    const onVisibility = () => { if (document.visibilityState === "visible") acquire(); };
     document.addEventListener("visibilitychange", onVisibility);
-    return () => {
-      wakeLock?.release();
-      document.removeEventListener("visibilitychange", onVisibility);
-    };
+    return () => { wakeLock?.release(); document.removeEventListener("visibilitychange", onVisibility); };
   }, []);
 
-  // ── Fix 1: Fullscreen API ─────────────────────────────────────────────────
+  // Fullscreen API
   useEffect(() => {
     const onChange = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener("fullscreenchange", onChange);
@@ -66,76 +63,28 @@ const SlideshowPage = () => {
   }, []);
 
   const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen();
-    } else {
-      document.exitFullscreen();
-    }
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+    else document.exitFullscreen();
   };
 
-  // ── Fix 3: Auto-scroll ────────────────────────────────────────────────────
-  const stopScroll = useCallback(() => {
-    if (scrollTimer.current) {
-      clearInterval(scrollTimer.current);
-      scrollTimer.current = null;
-    }
-  }, []);
-
-  const startScroll = useCallback(() => {
-    stopScroll();
-    scrollTimer.current = window.setInterval(() => {
-      const atBottom =
-        window.scrollY + window.innerHeight >=
-        document.documentElement.scrollHeight - 10;
-      if (atBottom) {
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      } else {
-        window.scrollTo({ top: window.scrollY + 1 });
-      }
-    }, 40); // ~25px per second
-  }, [stopScroll]);
-
-  // Start scrolling once photos arrive
-  useEffect(() => {
-    if (photos.length > 0) startScroll();
-    return stopScroll;
-  }, [photos.length > 0]); // eslint-disable-line
-
-  // When a new photo comes in: jump to top, pause, then resume scrolling
-  useEffect(() => {
-    if (newIds.size === 0) return;
-    stopScroll();
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    const t = window.setTimeout(() => startScroll(), 5000);
-    return () => clearTimeout(t);
-  }, [newIds]); // eslint-disable-line
-
-  // ── Data fetching + realtime ──────────────────────────────────────────────
+  // Data fetching + realtime
   const fetchPhotos = useCallback(async () => {
     const { data, error } = await supabase
       .from("wedding_photos")
       .select("id, file_path, uploaded_by, caption, created_at")
       .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error("Slideshow fetch error:", error);
-      setIsLoading(false);
-      return;
-    }
+    if (error) { setIsLoading(false); return; }
 
     const dbPhotos = (data as Photo[]) || [];
-    const fresh = dbPhotos
-      .filter((p) => !knownIds.current.has(p.id))
-      .map((p) => p.id);
+    const fresh = dbPhotos.filter((p) => !knownIds.current.has(p.id)).map((p) => p.id);
     dbPhotos.forEach((p) => knownIds.current.add(p.id));
 
-    // Only flag as "new" after initial load
     if (fresh.length > 0 && knownIds.current.size > fresh.length) {
       setNewIds(new Set(fresh));
-      setTimeout(() => setNewIds(new Set()), 5000);
+      setTimeout(() => setNewIds(new Set()), 6000);
     }
 
-    // Merge static prewedding + DB guest photos, deduplicate by file_path
     const seen = new Set<string>();
     const merged = [...STATIC_PREWEDDING, ...dbPhotos].filter((p) => {
       if (seen.has(p.file_path)) return false;
@@ -150,182 +99,218 @@ const SlideshowPage = () => {
     fetchPhotos();
     const channel = supabase
       .channel("slideshow-realtime")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "wedding_photos" },
-        () => fetchPhotos()
-      )
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "wedding_photos" }, () => fetchPhotos())
       .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [fetchPhotos]);
 
-  // ── Fix 2: Masonry columns (full photo height) ────────────────────────────
   const visiblePhotos = photos.filter((p) => !failedImages.has(p.file_path));
-  const columns = Array.from({ length: NUM_COLS }, (_, i) =>
-    visiblePhotos.filter((_, j) => j % NUM_COLS === i)
-  );
+
+  // When a new photo arrives, jump to it (it's at index 8 after static)
+  useEffect(() => {
+    if (newIds.size === 0 || visiblePhotos.length === 0) return;
+    const newIdx = visiblePhotos.findIndex((p) => newIds.has(p.id));
+    if (newIdx !== -1) goTo(newIdx);
+  }, [newIds]); // eslint-disable-line
+
+  const stopTimers = useCallback(() => {
+    if (advanceTimer.current) { clearTimeout(advanceTimer.current); advanceTimer.current = null; }
+    if (progressTimer.current) { clearInterval(progressTimer.current); progressTimer.current = null; }
+  }, []);
+
+  const goTo = useCallback((idx: number) => {
+    stopTimers();
+    setVisible(false);
+    setTimeout(() => {
+      setCurrentIndex(idx);
+      setProgress(0);
+      setVisible(true);
+    }, 300); // fade out then in
+  }, [stopTimers]);
+
+  const goNext = useCallback(() => {
+    setCurrentIndex((i) => {
+      const next = visiblePhotos.length === 0 ? 0 : (i + 1) % visiblePhotos.length;
+      return next;
+    });
+    setProgress(0);
+    setVisible(false);
+    setTimeout(() => setVisible(true), 300);
+  }, [visiblePhotos.length]);
+
+  const goPrev = useCallback(() => {
+    setCurrentIndex((i) => {
+      const prev = visiblePhotos.length === 0 ? 0 : (i - 1 + visiblePhotos.length) % visiblePhotos.length;
+      return prev;
+    });
+    setProgress(0);
+    setVisible(false);
+    setTimeout(() => setVisible(true), 300);
+  }, [visiblePhotos.length]);
+
+  // Auto-advance + progress bar
+  useEffect(() => {
+    if (visiblePhotos.length === 0) return;
+    stopTimers();
+    setProgress(0);
+
+    const tickMs = 50;
+    const steps = SLIDE_DURATION_MS / tickMs;
+    let step = 0;
+
+    progressTimer.current = setInterval(() => {
+      step += 1;
+      setProgress((step / steps) * 100);
+    }, tickMs);
+
+    advanceTimer.current = setTimeout(() => {
+      setVisible(false);
+      setTimeout(() => {
+        setCurrentIndex((i) => (i + 1) % visiblePhotos.length);
+        setProgress(0);
+        setVisible(true);
+      }, 300);
+    }, SLIDE_DURATION_MS);
+
+    return stopTimers;
+  }, [currentIndex, visiblePhotos.length, stopTimers]);
+
+  // Clamp index when photos change
+  useEffect(() => {
+    if (visiblePhotos.length > 0 && currentIndex >= visiblePhotos.length) {
+      setCurrentIndex(0);
+    }
+  }, [visiblePhotos.length, currentIndex]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") goNext();
+      else if (e.key === "ArrowLeft") goPrev();
+      else if (e.key === "f") toggleFullscreen();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [goNext, goPrev]);
+
+  const photo = visiblePhotos[currentIndex] ?? null;
+  const isNew = photo ? newIds.has(photo.id) : false;
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0a0a0a", color: "white" }}>
+    <div style={{ position: "fixed", inset: 0, background: "#000", color: "white", overflow: "hidden", userSelect: "none" }}>
+
+      {/* Full-screen photo */}
+      {photo && (
+        <img
+          key={photo.id}
+          src={getPhotoUrl(photo)}
+          alt={photo.caption || "Wedding photo"}
+          onError={() => setFailedImages((prev) => new Set([...prev, photo.file_path]))}
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "contain",
+            transition: "opacity 0.3s ease",
+            opacity: visible ? 1 : 0,
+            background: "#000",
+          }}
+        />
+      )}
+
+      {/* Dark gradient overlays */}
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, transparent 20%, transparent 70%, rgba(0,0,0,0.7) 100%)", pointerEvents: "none" }} />
+
+      {/* Progress bar */}
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: "rgba(255,255,255,0.1)", zIndex: 10 }}>
+        <div style={{ height: "100%", background: "rgba(255,255,255,0.7)", width: `${progress}%`, transition: "width 0.05s linear" }} />
+      </div>
 
       {/* Header */}
-      <div
-        style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "12px 24px",
-          background: "rgba(10,10,10,0.96)",
-          backdropFilter: "blur(8px)",
-        }}
-      >
-        <span style={{ fontFamily: "serif", fontSize: 20, letterSpacing: "0.15em", color: "rgba(255,255,255,0.7)" }}>
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 24px", zIndex: 10 }}>
+        <span style={{ fontFamily: "serif", fontSize: 20, letterSpacing: "0.15em", color: "rgba(255,255,255,0.8)" }}>
           T &amp; P
         </span>
-        <span style={{ fontFamily: "sans-serif", fontSize: 13, letterSpacing: "0.25em", color: "rgba(255,255,255,0.3)", textTransform: "uppercase" }}>
+        <span style={{ fontFamily: "sans-serif", fontSize: 13, letterSpacing: "0.25em", color: "rgba(255,255,255,0.35)", textTransform: "uppercase" }}>
           #T&amp;P2026
         </span>
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <span style={{ fontFamily: "sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)" }}>
-            December 12, 2026
-          </span>
-          {/* Fix 1: Fullscreen button */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {visiblePhotos.length > 0 && (
+            <span style={{ fontFamily: "sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)" }}>
+              {currentIndex + 1} / {visiblePhotos.length}
+            </span>
+          )}
           <button
             onClick={toggleFullscreen}
-            title={isFullscreen ? "Exit fullscreen" : "Go fullscreen"}
-            style={{
-              width: 34,
-              height: 34,
-              borderRadius: 8,
-              border: "none",
-              background: "rgba(255,255,255,0.1)",
-              color: "rgba(255,255,255,0.6)",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
+            title={isFullscreen ? "Exit fullscreen (F)" : "Fullscreen (F)"}
+            style={{ width: 34, height: 34, borderRadius: 8, border: "none", background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
           >
             {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
           </button>
         </div>
       </div>
 
-      {/* Body */}
-      {isLoading ? (
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "80vh" }}>
-          <Loader2 size={32} className="animate-spin" style={{ color: "rgba(255,255,255,0.3)" }} />
-        </div>
-      ) : photos.length === 0 ? (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "80vh", gap: 12, textAlign: "center", padding: "0 32px" }}>
-          <p style={{ fontFamily: "serif", fontSize: 36, color: "rgba(255,255,255,0.15)", margin: 0 }}>
-            Waiting for photos…
-          </p>
-          <p style={{ fontFamily: "sans-serif", fontSize: 14, color: "rgba(255,255,255,0.15)", margin: 0 }}>
-            Guests will share their memories here
-          </p>
-        </div>
-      ) : (
-        /* Fix 2: Masonry — photos display at their natural height */
-        <div style={{ display: "flex", gap: 8, padding: "8px 8px 56px" }}>
-          {columns.map((col, ci) => (
-            <div key={ci} style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
-              {col.map((photo) => {
-                const isNew = newIds.has(photo.id);
-                return (
-                  <div
-                    key={photo.id}
-                    style={{
-                      position: "relative",
-                      borderRadius: 10,
-                      overflow: "hidden",
-                      boxShadow: isNew
-                        ? "0 0 0 2px rgba(255,255,255,0.75), 0 0 40px rgba(255,255,255,0.2)"
-                        : "none",
-                      transition: "box-shadow 0.6s ease",
-                    }}
-                  >
-                    <img
-                      src={getPhotoUrl(photo)}
-                      alt={photo.caption || "Wedding photo"}
-                      style={{ width: "100%", height: "auto", display: "block" }}
-                      loading="lazy"
-                      onError={() => setFailedImages((prev) => new Set([...prev, photo.file_path]))}
-                    />
-                    {/* Name overlay — only for guest uploads */}
-                    {!photo.isStatic && photo.uploaded_by && (
-                      <div
-                        style={{
-                          position: "absolute",
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          padding: "20px 10px 8px",
-                          background: "linear-gradient(to top, rgba(0,0,0,0.65), transparent)",
-                        }}
-                      >
-                        <p style={{ margin: 0, color: "white", fontSize: 11, fontFamily: "sans-serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                          {photo.uploaded_by}
-                        </p>
-                        {photo.caption && (
-                          <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.6)", fontSize: 10, fontFamily: "sans-serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                            {photo.caption}
-                          </p>
-                        )}
-                      </div>
-                    )}
+      {/* Prev / Next arrows */}
+      {visiblePhotos.length > 1 && (
+        <>
+          <button
+            onClick={goPrev}
+            style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", width: 48, height: 48, borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.12)", color: "white", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10, transition: "background 0.2s" }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.25)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.12)")}
+          >
+            <ChevronLeft size={24} />
+          </button>
+          <button
+            onClick={goNext}
+            style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", width: 48, height: 48, borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.12)", color: "white", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10, transition: "background 0.2s" }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.25)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.12)")}
+          >
+            <ChevronRight size={24} />
+          </button>
+        </>
+      )}
 
-                    {/* NEW badge */}
-                    {isNew && (
-                      <div
-                        style={{
-                          position: "absolute",
-                          top: 8,
-                          left: 8,
-                          background: "white",
-                          color: "black",
-                          fontSize: 10,
-                          fontWeight: "bold",
-                          fontFamily: "sans-serif",
-                          padding: "2px 8px",
-                          borderRadius: 999,
-                        }}
-                      >
-                        NEW
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ))}
+      {/* Caption overlay — bottom */}
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "24px 32px 20px", zIndex: 10 }}>
+        {photo && !photo.isStatic && photo.uploaded_by && (
+          <div style={{ marginBottom: 8 }}>
+            <p style={{ margin: 0, fontFamily: "sans-serif", fontSize: 14, color: "rgba(255,255,255,0.85)", fontWeight: 500 }}>
+              {photo.uploaded_by}
+            </p>
+            {photo.caption && (
+              <p style={{ margin: "2px 0 0", fontFamily: "sans-serif", fontSize: 12, color: "rgba(255,255,255,0.5)" }}>
+                {photo.caption}
+              </p>
+            )}
+          </div>
+        )}
+        <p style={{ margin: 0, fontFamily: "sans-serif", fontSize: 11, color: "rgba(255,255,255,0.2)", letterSpacing: "0.2em", textTransform: "uppercase" }}>
+          {visiblePhotos.length} {visiblePhotos.length === 1 ? "memory" : "memories"} · December 12, 2026
+        </p>
+      </div>
+
+      {/* NEW badge */}
+      {isNew && (
+        <div style={{ position: "absolute", top: 64, left: 24, background: "white", color: "black", fontSize: 11, fontWeight: "bold", fontFamily: "sans-serif", padding: "3px 10px", borderRadius: 999, zIndex: 10 }}>
+          NEW
         </div>
       )}
 
-      {/* Footer */}
-      <div
-        style={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: 12,
-          background: "linear-gradient(to top, rgba(10,10,10,0.9), transparent)",
-          pointerEvents: "none",
-        }}
-      >
-        <p style={{ margin: 0, color: "rgba(255,255,255,0.2)", fontSize: 11, fontFamily: "sans-serif", letterSpacing: "0.2em", textTransform: "uppercase" }}>
-          {visiblePhotos.length} {visiblePhotos.length === 1 ? "memory" : "memories"} shared
-        </p>
-      </div>
+      {/* Loading / empty states */}
+      {isLoading && (
+        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 20 }}>
+          <Loader2 size={32} className="animate-spin" style={{ color: "rgba(255,255,255,0.3)" }} />
+        </div>
+      )}
+      {!isLoading && visiblePhotos.length === 0 && (
+        <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, zIndex: 20 }}>
+          <p style={{ fontFamily: "serif", fontSize: 36, color: "rgba(255,255,255,0.15)", margin: 0 }}>Waiting for photos…</p>
+          <p style={{ fontFamily: "sans-serif", fontSize: 14, color: "rgba(255,255,255,0.15)", margin: 0 }}>Guests will share their memories here</p>
+        </div>
+      )}
     </div>
   );
 };
