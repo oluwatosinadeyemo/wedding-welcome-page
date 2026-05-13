@@ -350,7 +350,7 @@ const DashboardPage = () => {
             g.party_size,
             g.side || "",
             isWalkIn(g.invite_code) ? "Yes" : "No",
-            rsvp?.attending || "pending",
+            rsvp?.attending === "yes" ? "Attending" : rsvp?.attending === "no" ? "Declined" : rsvp?.attending === "maybe" ? "Maybe" : "Pending",
             rsvp?.number_of_guests || "",
             g.checked_in ? "Yes" : "No",
             g.checked_in_at
