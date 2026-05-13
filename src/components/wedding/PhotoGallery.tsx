@@ -651,7 +651,7 @@ const PhotoGallery = () => {
         {/* Lightbox */}
         {selectedPhoto && selectedIndex !== null && (
           <div
-            className="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl flex items-center justify-center"
+            className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex items-center justify-center"
             onClick={() => { setSelectedIndex(null); }}
           >
             {/* Slideshow progress bar */}
@@ -664,45 +664,40 @@ const PhotoGallery = () => {
               </div>
             )}
 
-            {/* Top toolbar */}
+            {/* Dedicated close button — top right */}
+            <button
+              className="absolute top-4 right-4 z-20 w-12 h-12 rounded-full bg-white/15 hover:bg-white/30 flex items-center justify-center text-white transition-colors shadow-lg"
+              onClick={(e) => { e.stopPropagation(); setSelectedIndex(null); }}
+              title="Close (Esc)"
+            >
+              <X className="w-6 h-6" />
+            </button>
+
+            {/* Top-left controls: counter + play/pause + TV */}
             <div
-              className="absolute top-0 left-0 right-0 flex items-center justify-between px-6 py-4 z-10"
+              className="absolute top-4 left-4 z-20 flex items-center gap-2"
               onClick={(e) => e.stopPropagation()}
             >
-              <span className="text-white/50 text-sm font-sans tabular-nums">
+              <span className="text-white/50 text-sm font-sans tabular-nums px-2">
                 {selectedIndex + 1} / {filteredPhotos.length}
               </span>
-
-              <div className="flex items-center gap-2">
-                {/* Slideshow play/pause */}
-                <button
-                  className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
-                  onClick={toggleSlideshow}
-                  title={isPlaying ? "Pause slideshow (Space)" : "Play slideshow (Space)"}
-                >
-                  {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                </button>
-
-                {/* TV Mode */}
-                <a
-                  href="/slideshow"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
-                  title="Open TV / HDMI mode"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Tv className="w-4 h-4" />
-                </a>
-
-                {/* Close */}
-                <button
-                  className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
-                  onClick={() => setSelectedIndex(null)}
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
+              <button
+                className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+                onClick={toggleSlideshow}
+                title={isPlaying ? "Pause slideshow (Space)" : "Play slideshow (Space)"}
+              >
+                {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+              </button>
+              <a
+                href="/slideshow"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+                title="Open TV / HDMI mode"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Tv className="w-4 h-4" />
+              </a>
             </div>
 
             {/* Prev arrow */}
