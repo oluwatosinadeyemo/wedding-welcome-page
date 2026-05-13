@@ -653,6 +653,7 @@ const DashboardPage = () => {
                             <option value="">—</option>
                             <option value="engagement">Engagement</option>
                             <option value="prewedding">Pre-wedding</option>
+                            <option value="weddingday">Wedding day</option>
                           </select>
                         </TableCell>
                         <TableCell>
