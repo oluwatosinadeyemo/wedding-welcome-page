@@ -215,6 +215,31 @@ const DashboardPage = () => {
     }
   };
 
+  const handleSetPhotoStatus = async (photo: PhotoEntry, status: "approved" | "rejected") => {
+    try {
+      const { error } = await (supabase.from("wedding_photos") as any)
+        .update({ status })
+        .eq("id", photo.id);
+      if (error) throw error;
+      setPhotos((prev) => prev.map((p) => (p.id === photo.id ? { ...p, status } : p)));
+      toast({ title: status === "approved" ? "Photo approved" : "Photo rejected" });
+    } catch (err: any) {
+      toast({ title: "Update failed", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const handleSetPhotoCategory = async (photo: PhotoEntry, category: string | null) => {
+    try {
+      const { error } = await (supabase.from("wedding_photos") as any)
+        .update({ category })
+        .eq("id", photo.id);
+      if (error) throw error;
+      setPhotos((prev) => prev.map((p) => (p.id === photo.id ? { ...p, category } : p)));
+    } catch (err: any) {
+      toast({ title: "Update failed", description: err.message, variant: "destructive" });
+    }
+  };
+
   const handleExportCSV = async () => {
     setIsExportingCSV(true);
     try {
