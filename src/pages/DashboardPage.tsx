@@ -701,7 +701,7 @@ const DashboardPage = () => {
                               : "Yes"}
                           </span>
                         ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
+                          <span className="text-xs text-muted-foreground">-</span>
                         )}
                       </TableCell>
                       <TableCell className="hidden lg:table-cell max-w-[200px] truncate">
@@ -815,24 +815,18 @@ const DashboardPage = () => {
                           {photo.caption || "-"}
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
-                          {photo.isStatic ? (
-                            <span className="text-xs text-muted-foreground px-2 py-1 rounded-full bg-muted">
-                              {photo.category}
-                            </span>
-                          ) : (
-                            <select
-                              value={photo.category || ""}
-                              onChange={(e) =>
-                                handleSetPhotoCategory(photo, e.target.value || null)
-                              }
-                              className="bg-background/50 border border-border/50 rounded-md px-2 py-1 text-xs"
-                            >
-                              <option value="">—</option>
-                              <option value="engagement">Engagement</option>
-                              <option value="prewedding">Pre-wedding</option>
-                              <option value="weddingday">Wedding day</option>
-                            </select>
-                          )}
+                          <select
+                            value={photo.category || ""}
+                            onChange={(e) =>
+                              handleSetPhotoCategory(photo, e.target.value || null)
+                            }
+                            className="bg-background/50 border border-border/50 rounded-md px-2 py-1 text-xs"
+                          >
+                            <option value="">None</option>
+                            <option value="engagement">Engagement</option>
+                            <option value="prewedding">Pre-wedding</option>
+                            <option value="weddingday">Wedding day</option>
+                          </select>
                         </TableCell>
                         <TableCell>
                           {photo.isStatic ? (

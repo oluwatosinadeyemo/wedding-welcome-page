@@ -356,7 +356,7 @@ const CheckinPage = () => {
 
           {log.length === 0 ? (
             <p className="text-center text-muted-foreground text-sm py-8">
-              No scans yet — start scanning to log arrivals
+              No scans yet. Start scanning to log arrivals.
             </p>
           ) : (
             <div className="glass-card rounded-2xl overflow-hidden divide-y divide-border/20">
