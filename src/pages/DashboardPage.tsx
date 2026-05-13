@@ -798,7 +798,11 @@ const DashboardPage = () => {
                         </TableCell>
                         <TableCell className="text-foreground">
                           <div>
-                            <p>{photo.uploaded_by || "Guest"}</p>
+                            <p>
+                              {photo.category === "weddingday"
+                                ? photo.uploaded_by || "Guest"
+                                : "—"}
+                            </p>
                             {photo.isStatic && (
                               <span className="text-xs text-muted-foreground">Static file</span>
                             )}
