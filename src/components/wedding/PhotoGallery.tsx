@@ -429,13 +429,13 @@ const PhotoGallery = () => {
           </div>
         )}
 
-        {/* Photo Grid */}
+        {/* Photo Gallery — horizontally scrollable */}
         {filteredPhotos.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scroll-smooth [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {filteredPhotos.map((photo) => (
               <div
                 key={photo.id}
-                className="group relative aspect-square rounded-2xl overflow-hidden"
+                className="group relative flex-none w-64 h-64 sm:w-72 sm:h-72 md:w-80 md:h-80 rounded-2xl overflow-hidden snap-start"
               >
                 <img
                   src={getPhotoUrl(photo)}
