@@ -57,7 +57,7 @@ const CheckinPage = () => {
   const recordScan = useCallback(async (rawValue: string, overrideLabel?: string) => {
     const entry = {
       raw_value: rawValue,
-      label: overrideLabel ?? label.trim() || null,
+      label: (overrideLabel ?? label.trim()) || null,
     };
     const { data, error } = await (supabase.from("scan_log" as any) as any)
       .insert(entry)
