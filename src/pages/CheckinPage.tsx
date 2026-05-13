@@ -12,6 +12,7 @@ import {
   Trash2,
   Download,
 } from "lucide-react";
+import jsQR from "jsqr";
 
 interface ScanEntry {
   id: string;
@@ -26,20 +27,15 @@ const CheckinPage = () => {
   const [label, setLabel] = useState("");
   const [log, setLog] = useState<ScanEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [hasBarcodeDetector, setHasBarcodeDetector] = useState(false);
-  const [cameraError, setCameraError] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const scanIntervalRef = useRef<number | null>(null);
-  const lastScannedRef = useRef<string>("");
-  const cooldownRef = useRef<boolean>(false);
+  const rafRef = useRef<number | null>(null);
+  const cooldownRef = useRef(false);
 
   const { toast } = useToast();
-
-  useEffect(() => {
-    setHasBarcodeDetector("BarcodeDetector" in window);
-  }, []);
 
   // Load today's scans on mount
   useEffect(() => {
@@ -71,40 +67,68 @@ const CheckinPage = () => {
 
   const handleQRScan = useCallback(
     async (rawValue: string) => {
-      if (cooldownRef.current || rawValue === lastScannedRef.current) return;
+      if (cooldownRef.current) return;
       cooldownRef.current = true;
-      lastScannedRef.current = rawValue;
 
-      // Extract a human-readable label from QR data if possible
       let displayLabel: string | undefined;
+      let passId: string | undefined;
       try {
         const parsed = JSON.parse(rawValue);
-        displayLabel = parsed.name || parsed.guest_name || parsed.pass_id || undefined;
-      } catch {
-        // raw string — use as-is
-      }
+        passId = parsed.pass_id || undefined;
+        // fallback label from QR data if available
+        displayLabel = parsed.name || parsed.guest_name || undefined;
+      } catch { /* raw string — not a pass QR */ }
 
       setIsLoading(true);
       try {
-        await recordScan(rawValue, displayLabel);
-        toast({ title: "Scanned", description: displayLabel || rawValue.slice(0, 40) });
+        const entry = await recordScan(rawValue, displayLabel, passId);
+        toast({
+          title: "✓ Checked in",
+          description: entry.label || rawValue.slice(0, 50),
+        });
       } catch (err: any) {
-        toast({ title: "Scan failed", description: err.message, variant: "destructive" });
+        toast({
+          title: "Scan failed",
+          description: err.message,
+          variant: "destructive",
+        });
       } finally {
         setIsLoading(false);
         setTimeout(() => {
           cooldownRef.current = false;
-          lastScannedRef.current = "";
-        }, 2000);
+        }, 2500);
       }
     },
     [recordScan, toast]
   );
 
+  // jsQR scan loop — works in all browsers
+  const scanFrame = useCallback(() => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas || video.readyState < video.HAVE_ENOUGH_DATA) {
+      rafRef.current = requestAnimationFrame(scanFrame);
+      return;
+    }
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+      inversionAttempts: "dontInvert",
+    });
+    if (code && !cooldownRef.current) {
+      handleQRScan(code.data);
+    }
+    rafRef.current = requestAnimationFrame(scanFrame);
+  }, [handleQRScan]);
+
   const stopCamera = useCallback(() => {
-    if (scanIntervalRef.current) {
-      clearInterval(scanIntervalRef.current);
-      scanIntervalRef.current = null;
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
     }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop());
@@ -113,7 +137,7 @@ const CheckinPage = () => {
   }, []);
 
   const startCamera = useCallback(async () => {
-    setCameraError(false);
+    setCameraError(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "environment" },
@@ -123,37 +147,38 @@ const CheckinPage = () => {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
       }
-      const detector = new (window as any).BarcodeDetector({ formats: ["qr_code"] });
-      scanIntervalRef.current = window.setInterval(async () => {
-        if (!videoRef.current) return;
-        try {
-          const codes = await detector.detect(videoRef.current);
-          if (codes.length > 0) await handleQRScan(codes[0].rawValue);
-        } catch {}
-      }, 500);
-    } catch {
-      setCameraError(true);
+      rafRef.current = requestAnimationFrame(scanFrame);
+    } catch (err: any) {
+      setCameraError(
+        err.name === "NotAllowedError"
+          ? "Camera permission denied. Please allow camera access and reload."
+          : "Camera unavailable. Use manual entry below."
+      );
     }
-  }, [handleQRScan]);
+  }, [scanFrame]);
 
   useEffect(() => {
-    if (scanMode && hasBarcodeDetector) {
+    if (scanMode) {
       startCamera();
     } else {
       stopCamera();
     }
     return stopCamera;
-  }, [scanMode, hasBarcodeDetector, startCamera, stopCamera]);
+  }, [scanMode, startCamera, stopCamera]);
 
   const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!manualInput.trim()) return;
     setIsLoading(true);
     try {
-      await recordScan(manualInput.trim());
-      toast({ title: "Logged", description: manualInput.trim().slice(0, 40) });
+      const entry = await recordScan(manualInput.trim());
+      toast({ title: "Logged", description: entry.label || manualInput.trim().slice(0, 50) });
     } catch (err: any) {
-      toast({ title: "Failed", description: err.message, variant: "destructive" });
+      toast({
+        title: "Failed",
+        description: err.message,
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -196,35 +221,33 @@ const CheckinPage = () => {
         </div>
 
         {/* Mode tabs */}
-        {hasBarcodeDetector && (
-          <div className="flex rounded-xl overflow-hidden border border-border/50">
-            <button
-              onClick={() => setScanMode(true)}
-              className={`flex-1 py-3 text-sm font-sans flex items-center justify-center gap-2 transition-colors ${
-                scanMode
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <QrCode className="w-4 h-4" />
-              Scan QR
-            </button>
-            <button
-              onClick={() => setScanMode(false)}
-              className={`flex-1 py-3 text-sm font-sans flex items-center justify-center gap-2 transition-colors ${
-                !scanMode
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Search className="w-4 h-4" />
-              Manual Entry
-            </button>
-          </div>
-        )}
+        <div className="flex rounded-xl overflow-hidden border border-border/50">
+          <button
+            onClick={() => setScanMode(true)}
+            className={`flex-1 py-3 text-sm font-sans flex items-center justify-center gap-2 transition-colors ${
+              scanMode
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <QrCode className="w-4 h-4" />
+            Scan QR
+          </button>
+          <button
+            onClick={() => setScanMode(false)}
+            className={`flex-1 py-3 text-sm font-sans flex items-center justify-center gap-2 transition-colors ${
+              !scanMode
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Search className="w-4 h-4" />
+            Manual Entry
+          </button>
+        </div>
 
         {/* Camera */}
-        {scanMode && hasBarcodeDetector && (
+        {scanMode && (
           <div className="glass-card overflow-hidden rounded-2xl">
             <div className="relative aspect-square bg-black">
               <video
@@ -233,20 +256,27 @@ const CheckinPage = () => {
                 muted
                 playsInline
               />
+              {/* hidden canvas used by jsQR */}
+              <canvas ref={canvasRef} className="hidden" />
+
+              {/* viewfinder overlay */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className="w-2/3 h-2/3 border-2 border-primary rounded-xl" />
               </div>
+
               {cameraError && (
                 <div className="absolute inset-0 flex items-center justify-center bg-background/90 text-center px-6">
                   <div>
-                    <p className="text-destructive font-medium mb-2">Camera unavailable</p>
-                    <p className="text-muted-foreground text-sm">Use manual entry instead</p>
+                    <p className="text-destructive font-medium mb-2">
+                      {cameraError}
+                    </p>
                   </div>
                 </div>
               )}
+
               {isLoading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-background/80">
-                  <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                <div className="absolute inset-0 flex items-center justify-center bg-background/60">
+                  <Loader2 className="w-10 h-10 text-primary animate-spin" />
                 </div>
               )}
             </div>
@@ -257,10 +287,10 @@ const CheckinPage = () => {
         )}
 
         {/* Manual entry */}
-        {(!scanMode || !hasBarcodeDetector) && (
+        {!scanMode && (
           <form onSubmit={handleManualSubmit} className="space-y-3">
             <Input
-              placeholder="Name or invite code"
+              placeholder="Name or label (optional)"
               value={label}
               onChange={(e) => setLabel(e.target.value)}
               className="bg-background/50 border-border/50 rounded-xl py-5"
@@ -277,7 +307,11 @@ const CheckinPage = () => {
               disabled={isLoading}
               className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl py-6"
             >
-              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Log Entry"}
+              {isLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                "Log Entry"
+              )}
             </Button>
           </form>
         )}
@@ -319,7 +353,7 @@ const CheckinPage = () => {
                     <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">
-                        {entry.label || entry.raw_value.slice(0, 30)}
+                        {entry.label || entry.raw_value.slice(0, 40)}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {new Date(entry.scanned_at).toLocaleTimeString([], {
@@ -342,7 +376,10 @@ const CheckinPage = () => {
         </div>
 
         <div className="text-center">
-          <Link to="/" className="text-muted-foreground text-sm hover:text-foreground">
+          <Link
+            to="/"
+            className="text-muted-foreground text-sm hover:text-foreground"
+          >
             ← Back to wedding site
           </Link>
         </div>
