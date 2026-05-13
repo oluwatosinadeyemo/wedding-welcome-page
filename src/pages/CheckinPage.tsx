@@ -12,10 +12,7 @@ import {
   Users,
   ArrowLeft,
   Loader2,
-  Lock,
 } from "lucide-react";
-
-const CHECKIN_PIN = import.meta.env.VITE_CHECKIN_PIN || "1212";
 
 interface GuestResult {
   id: string;
@@ -35,11 +32,10 @@ interface CheckinResult {
   invite_code: string;
 }
 
-type Screen = "pin" | "search" | "confirm" | "result";
+type Screen = "search" | "confirm" | "result";
 
 const CheckinPage = () => {
-  const [screen, setScreen] = useState<Screen>("pin");
-  const [pin, setPin] = useState("");
+  const [screen, setScreen] = useState<Screen>("search");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<GuestResult[]>([]);
   const [selectedGuest, setSelectedGuest] = useState<GuestResult | null>(null);
@@ -155,16 +151,6 @@ const CheckinPage = () => {
     return stopCamera;
   }, [scanMode, hasBarcodeDetector, startCamera, stopCamera]);
 
-  const handlePinSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (pin === CHECKIN_PIN) {
-      setScreen("search");
-    } else {
-      toast({ title: "Incorrect PIN", variant: "destructive" });
-      setPin("");
-    }
-  };
-
   const handleSelectGuest = (guest: GuestResult) => {
     setSelectedGuest(guest);
     setScreen("confirm");
@@ -202,51 +188,6 @@ const CheckinPage = () => {
     setSearchResults([]);
     setScanMode(false);
   };
-
-  // ── PIN screen ────────────────────────────────────────────────────────────
-  if (screen === "pin") {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4">
-        <div className="glass-card p-8 w-full max-w-sm">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-              <Lock className="w-8 h-8 text-primary" />
-            </div>
-            <h1 className="font-serif text-2xl text-foreground">Staff Check-In</h1>
-            <p className="text-muted-foreground text-sm mt-2">
-              T &amp; P · December 12, 2026
-            </p>
-          </div>
-          <form onSubmit={handlePinSubmit} className="space-y-4">
-            <Input
-              type="password"
-              inputMode="numeric"
-              placeholder="Enter PIN"
-              value={pin}
-              onChange={(e) => setPin(e.target.value)}
-              maxLength={8}
-              className="text-center text-2xl tracking-widest bg-background/50 border-border/50 rounded-xl py-6"
-              autoFocus
-            />
-            <Button
-              type="submit"
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl py-6"
-            >
-              Enter
-            </Button>
-          </form>
-          <div className="text-center mt-6">
-            <Link
-              to="/"
-              className="text-muted-foreground text-sm hover:text-foreground"
-            >
-              ← Back to wedding site
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // ── Search / Scan screen ──────────────────────────────────────────────────
   if (screen === "search") {
@@ -378,13 +319,12 @@ const CheckinPage = () => {
           )}
 
           <div className="text-center mt-10">
-            <button
-              onClick={() => setScreen("pin")}
-              className="text-muted-foreground text-sm hover:text-foreground transition-colors"
+            <Link
+              to="/"
+              className="text-muted-foreground text-sm hover:text-foreground"
             >
-              <Lock className="w-3 h-3 inline mr-1" />
-              Lock screen
-            </button>
+              ← Back to wedding site
+            </Link>
           </div>
         </div>
       </div>
