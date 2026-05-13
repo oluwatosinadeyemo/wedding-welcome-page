@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
-import { Camera, Upload, X, Image as ImageIcon, Loader2, Trash2 } from "lucide-react";
+import { Camera, Upload, X, Image as ImageIcon, Loader2, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -132,8 +132,9 @@ const PhotoGallery = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [caption, setCaption] = useState("");
   const [showUploadForm, setShowUploadForm] = useState(false);
-  const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [activeFilter, setActiveFilter] = useState<FilterKey>("engagement");
+  const [currentPage, setCurrentPage] = useState(1);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isDeletingPhoto, setIsDeletingPhoto] = useState<string | null>(null);
   const [guestUploads, setGuestUploads] = useState<string[]>(() =>
@@ -199,23 +200,61 @@ const PhotoGallery = () => {
     };
   }, [fetchPhotos]);
 
+  const PHOTOS_PER_PAGE = 12;
+
   const filteredPhotos = useMemo(() => {
+    let list: Photo[];
     if (activeFilter === "prewedding") {
       const dbPrewedding = photos.filter(
         (p) => (p.category || "").toLowerCase() === "prewedding"
       );
-      return [...STATIC_PREWEDDING, ...dbPrewedding];
-    }
-    if (activeFilter === "weddingday") {
-      return photos.filter((p) => {
+      list = [...STATIC_PREWEDDING, ...dbPrewedding];
+    } else if (activeFilter === "weddingday") {
+      list = photos.filter((p) => {
         const cat = (p.category || "").toLowerCase();
         return cat === "weddingday" || cat === "";
       });
+    } else {
+      list = photos.filter(
+        (p) => (p.category || "").toLowerCase() === activeFilter
+      );
     }
-    return photos.filter(
-      (p) => (p.category || "").toLowerCase() === activeFilter
-    );
+    // Remove duplicates by file_path, keeping first occurrence
+    const seen = new Set<string>();
+    return list.filter((p) => {
+      if (seen.has(p.file_path)) return false;
+      seen.add(p.file_path);
+      return true;
+    });
   }, [photos, activeFilter]);
+
+  const totalPages = Math.ceil(filteredPhotos.length / PHOTOS_PER_PAGE);
+  const paginatedPhotos = filteredPhotos.slice(
+    (currentPage - 1) * PHOTOS_PER_PAGE,
+    currentPage * PHOTOS_PER_PAGE
+  );
+
+  const selectedPhoto = selectedIndex !== null ? filteredPhotos[selectedIndex] ?? null : null;
+
+  const navigateLightbox = useCallback((dir: 1 | -1) => {
+    setSelectedIndex((idx) => {
+      if (idx === null) return null;
+      const next = idx + dir;
+      if (next < 0 || next >= filteredPhotos.length) return idx;
+      return next;
+    });
+  }, [filteredPhotos.length]);
+
+  useEffect(() => {
+    if (selectedIndex === null) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") navigateLightbox(1);
+      else if (e.key === "ArrowLeft") navigateLightbox(-1);
+      else if (e.key === "Escape") setSelectedIndex(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selectedIndex, navigateLightbox]);
 
   const canDeletePhoto = (photo: Photo) => {
     if (photo.isStatic) return false;
@@ -359,6 +398,7 @@ const PhotoGallery = () => {
               key={f.key}
               onClick={() => {
                 setActiveFilter(f.key);
+                setCurrentPage(1);
                 setShowUploadForm(false);
               }}
               className={cn(
@@ -432,7 +472,7 @@ const PhotoGallery = () => {
         {/* Photo Grid */}
         {filteredPhotos.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {filteredPhotos.map((photo) => (
+            {paginatedPhotos.map((photo) => (
               <div
                 key={photo.id}
                 className="group relative aspect-square rounded-2xl overflow-hidden"
@@ -441,7 +481,7 @@ const PhotoGallery = () => {
                   src={getPhotoUrl(photo)}
                   alt={photo.caption || "Wedding photo"}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 cursor-pointer"
-                  onClick={() => setSelectedPhoto(photo)}
+                  onClick={() => setSelectedIndex(filteredPhotos.indexOf(photo))}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                 <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
@@ -486,6 +526,41 @@ const PhotoGallery = () => {
           </div>
         )}
 
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-3 mt-10">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="w-10 h-10 rounded-full border border-border/50 flex items-center justify-center text-muted-foreground hover:border-primary/40 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`w-10 h-10 rounded-full text-sm font-sans transition-all ${
+                  page === currentPage
+                    ? "bg-primary text-primary-foreground shadow-lg"
+                    : "border border-border/50 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="w-10 h-10 rounded-full border border-border/50 flex items-center justify-center text-muted-foreground hover:border-primary/40 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+        )}
+
         {/* Share a Photo button — only on Wedding day tab, below the grid */}
         {activeFilter === "weddingday" && (
           <div className="flex flex-col items-center gap-4 mt-12">
@@ -506,17 +581,37 @@ const PhotoGallery = () => {
         )}
 
         {/* Lightbox */}
-        {selectedPhoto && (
+        {selectedPhoto && selectedIndex !== null && (
           <div
             className="fixed inset-0 z-50 bg-background/95 backdrop-blur-xl flex items-center justify-center p-4"
-            onClick={() => setSelectedPhoto(null)}
+            onClick={() => setSelectedIndex(null)}
           >
+            {/* Close */}
             <button
-              className="absolute top-6 right-6 w-12 h-12 rounded-full bg-card/80 flex items-center justify-center text-foreground hover:bg-card transition-colors"
-              onClick={() => setSelectedPhoto(null)}
+              className="absolute top-6 right-6 w-12 h-12 rounded-full bg-card/80 flex items-center justify-center text-foreground hover:bg-card transition-colors z-10"
+              onClick={() => setSelectedIndex(null)}
             >
               <X className="w-6 h-6" />
             </button>
+
+            {/* Prev */}
+            <button
+              className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-card/80 flex items-center justify-center text-foreground hover:bg-card transition-colors disabled:opacity-30 disabled:cursor-not-allowed z-10"
+              onClick={(e) => { e.stopPropagation(); navigateLightbox(-1); }}
+              disabled={selectedIndex === 0}
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+
+            {/* Next */}
+            <button
+              className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-card/80 flex items-center justify-center text-foreground hover:bg-card transition-colors disabled:opacity-30 disabled:cursor-not-allowed z-10"
+              onClick={(e) => { e.stopPropagation(); navigateLightbox(1); }}
+              disabled={selectedIndex === filteredPhotos.length - 1}
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
+
             <div
               className="max-w-4xl max-h-[80vh]"
               onClick={(e) => e.stopPropagation()}
@@ -535,6 +630,9 @@ const PhotoGallery = () => {
                     {selectedPhoto.caption}
                   </p>
                 )}
+                <p className="text-muted-foreground text-xs mt-2">
+                  {selectedIndex + 1} / {filteredPhotos.length}
+                </p>
               </div>
             </div>
           </div>
