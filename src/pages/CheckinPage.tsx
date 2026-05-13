@@ -129,7 +129,7 @@ const CheckinPage = () => {
         try {
           const codes = await detector.detect(videoRef.current);
           if (codes.length > 0) await handleQRScan(codes[0].rawValue);
-        } catch {}
+        } catch { /* ignore failed frames */ }
       }, 500);
     } catch {
       setCameraError(true);
