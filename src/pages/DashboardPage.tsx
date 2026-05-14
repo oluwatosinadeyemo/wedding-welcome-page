@@ -35,9 +35,11 @@ import {
   UserCheck,
   KeyRound,
   AlertCircle,
+  LayoutGrid,
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import JSZip from "jszip";
+import SeatingChart from "@/components/wedding/SeatingChart";
 
 const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAIL || "oluwatosinadeyemo50@gmail.com")
   .split(",")
@@ -642,6 +644,10 @@ const DashboardPage = () => {
         <Tabs defaultValue="rsvps">
           <TabsList className="bg-card/50 border border-border/50 mb-6">
             <TabsTrigger value="rsvps">RSVPs ({rsvps.length})</TabsTrigger>
+            <TabsTrigger value="seating">
+              <LayoutGrid className="w-3.5 h-3.5 mr-1.5" />
+              Seating
+            </TabsTrigger>
             <TabsTrigger value="photos">Photos ({allPhotos.length})</TabsTrigger>
           </TabsList>
 
@@ -758,6 +764,11 @@ const DashboardPage = () => {
                 </TableBody>
               </Table>
             </div>
+          </TabsContent>
+
+          {/* Seating Tab */}
+          <TabsContent value="seating">
+            <SeatingChart />
           </TabsContent>
 
           {/* Photos Tab */}
