@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 
 interface RSVPFormProps {
-  onSubmitSuccess?: (attending: string) => void;
+  onSubmitSuccess?: (attending: string, fullName: string) => void;
 }
 
 const RSVPForm = ({ onSubmitSuccess }: RSVPFormProps = {}) => {
@@ -64,7 +64,7 @@ const RSVPForm = ({ onSubmitSuccess }: RSVPFormProps = {}) => {
         title: "RSVP Submitted!",
         description: "Thank you for letting us know.",
       });
-      onSubmitSuccess?.(values.attending);
+      onSubmitSuccess?.(values.attending, values.full_name.trim());
     } catch (err: any) {
       toast({
         title: "Submission failed",
