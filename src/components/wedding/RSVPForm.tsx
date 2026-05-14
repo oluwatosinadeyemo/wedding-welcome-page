@@ -107,7 +107,6 @@ const RSVPForm = ({ onSubmitSuccess }: RSVPFormProps = {}) => {
                 placeholder="Enter your full name"
                 {...form.register("full_name")}
                 className="bg-background/50 border-border/50 rounded-xl text-center"
-                autoFocus
               />
               {form.formState.errors.full_name && (
                 <p className="text-destructive text-xs">{form.formState.errors.full_name.message}</p>
