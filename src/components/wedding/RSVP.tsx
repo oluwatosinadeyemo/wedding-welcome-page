@@ -1,4 +1,4 @@
-import { Heart, Phone, MessageCircle } from "lucide-react";
+import { Heart, MessageCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const RSVP = () => {
@@ -33,42 +33,34 @@ const RSVP = () => {
         </Link>
 
         <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <div className="glass-card px-6 py-4 rounded-2xl flex items-center gap-3">
-            <Phone className="w-5 h-5 text-primary" />
+          <a
+            href="https://wa.me/2348118079253"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="glass-card px-6 py-4 rounded-2xl flex items-center gap-3 hover:border-green-500/30 transition-colors"
+          >
+            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-green-500/10 text-green-600">
+              <MessageCircle className="w-5 h-5" />
+            </div>
             <div className="text-left">
               <p className="font-sans text-xs text-muted-foreground uppercase tracking-wider">Bayo</p>
-              <a href="tel:+2348118079253" className="text-primary hover:underline font-sans text-sm">
-                +234 811 807 9253
-              </a>
+              <p className="text-green-600 font-sans text-sm">WhatsApp</p>
             </div>
-            <a
-              href="https://wa.me/2348118079253"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="ml-1 flex items-center justify-center w-8 h-8 rounded-full bg-green-500/10 text-green-600 hover:bg-green-500/20 transition-colors"
-              aria-label="WhatsApp Bayo"
-            >
-              <MessageCircle className="w-4 h-4" />
-            </a>
-          </div>
-          <div className="glass-card px-6 py-4 rounded-2xl flex items-center gap-3">
-            <Phone className="w-5 h-5 text-primary" />
+          </a>
+          <a
+            href="https://wa.me/2347065582596"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="glass-card px-6 py-4 rounded-2xl flex items-center gap-3 hover:border-green-500/30 transition-colors"
+          >
+            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-green-500/10 text-green-600">
+              <MessageCircle className="w-5 h-5" />
+            </div>
             <div className="text-left">
               <p className="font-sans text-xs text-muted-foreground uppercase tracking-wider">Deji</p>
-              <a href="tel:+2347065582596" className="text-primary hover:underline font-sans text-sm">
-                +234 706 558 2596
-              </a>
+              <p className="text-green-600 font-sans text-sm">WhatsApp</p>
             </div>
-            <a
-              href="https://wa.me/2347065582596"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="ml-1 flex items-center justify-center w-8 h-8 rounded-full bg-green-500/10 text-green-600 hover:bg-green-500/20 transition-colors"
-              aria-label="WhatsApp Deji"
-            >
-              <MessageCircle className="w-4 h-4" />
-            </a>
-          </div>
+          </a>
         </div>
       </div>
     </section>
