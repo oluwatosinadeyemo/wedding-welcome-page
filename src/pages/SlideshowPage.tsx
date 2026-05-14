@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Maximize, Minimize, ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -104,14 +104,10 @@ const SlideshowPage = () => {
     return () => { supabase.removeChannel(channel); };
   }, [fetchPhotos]);
 
-  const visiblePhotos = photos.filter((p) => !failedImages.has(p.file_path));
-
-  // When a new photo arrives, jump to it (it's at index 8 after static)
-  useEffect(() => {
-    if (newIds.size === 0 || visiblePhotos.length === 0) return;
-    const newIdx = visiblePhotos.findIndex((p) => newIds.has(p.id));
-    if (newIdx !== -1) goTo(newIdx);
-  }, [newIds]); // eslint-disable-line
+  const visiblePhotos = useMemo(
+    () => photos.filter((p) => !failedImages.has(p.file_path)),
+    [photos, failedImages]
+  );
 
   const stopTimers = useCallback(() => {
     if (advanceTimer.current) { clearTimeout(advanceTimer.current); advanceTimer.current = null; }
@@ -125,8 +121,15 @@ const SlideshowPage = () => {
       setCurrentIndex(idx);
       setProgress(0);
       setVisible(true);
-    }, 300); // fade out then in
+    }, 300);
   }, [stopTimers]);
+
+  // When a new photo arrives via realtime, jump to it
+  useEffect(() => {
+    if (newIds.size === 0 || visiblePhotos.length === 0) return;
+    const newIdx = visiblePhotos.findIndex((p) => newIds.has(p.id));
+    if (newIdx !== -1) goTo(newIdx);
+  }, [newIds, visiblePhotos, goTo]);
 
   const goNext = useCallback(() => {
     setCurrentIndex((i) => {

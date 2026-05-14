@@ -170,7 +170,7 @@ const PhotoGallery = () => {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [selectedIndex, navigateLightbox, toggleSlideshow]);
+  }, [selectedIndex, navigateLightbox, toggleSlideshow, stopSlideshow]);
 
   useEffect(() => {
     if (selectedIndex !== null) { document.body.style.overflow = "hidden"; }
