@@ -605,7 +605,7 @@ const PhotoGallery = () => {
             <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="w-10 h-10 rounded-full border border-border/50 flex items-center justify-center text-muted-foreground hover:border-primary/40 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              className="w-11 h-11 rounded-full border border-border/50 flex items-center justify-center text-muted-foreground hover:border-primary/40 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-all"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
@@ -614,7 +614,7 @@ const PhotoGallery = () => {
               <button
                 key={page}
                 onClick={() => setCurrentPage(page)}
-                className={`w-10 h-10 rounded-full text-sm font-sans transition-all ${
+                className={`w-11 h-11 rounded-full text-sm font-sans transition-all ${
                   page === currentPage
                     ? "bg-primary text-primary-foreground shadow-lg"
                     : "border border-border/50 text-muted-foreground hover:border-primary/40 hover:text-foreground"
@@ -627,7 +627,7 @@ const PhotoGallery = () => {
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className="w-10 h-10 rounded-full border border-border/50 flex items-center justify-center text-muted-foreground hover:border-primary/40 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              className="w-11 h-11 rounded-full border border-border/50 flex items-center justify-center text-muted-foreground hover:border-primary/40 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-all"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
