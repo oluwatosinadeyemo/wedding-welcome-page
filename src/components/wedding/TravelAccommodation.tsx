@@ -1,4 +1,4 @@
-import { MapPin, Car, Plane, Hotel, Phone, ExternalLink, Star } from "lucide-react";
+import { MapPin, Car, Plane, Hotel, ExternalLink, Star } from "lucide-react";
 
 const TravelAccommodation = () => {
   const hotelGroups = [
@@ -234,13 +234,6 @@ const TravelAccommodation = () => {
                         <span className="text-xs text-muted-foreground">/night</span>
                       </div>
                       <div className="flex items-center gap-2 mt-3">
-                        <a
-                          href={`tel:${hotel.phone}`}
-                          className="flex-1 flex items-center justify-center gap-1 py-3 sm:py-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-xs"
-                        >
-                          <Phone className="w-3 h-3" />
-                          <span>Call</span>
-                        </a>
                         <a
                           href={hotel.website}
                           target="_blank"
