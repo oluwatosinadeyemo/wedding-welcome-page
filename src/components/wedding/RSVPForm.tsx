@@ -226,7 +226,7 @@ const RSVPForm = ({ onSubmitSuccess }: RSVPFormProps = {}) => {
 
           {submittedData.attending === "yes" && (
             <a
-              href="/#pass"
+              href={`/pass?name=${encodeURIComponent(submittedData.full_name)}`}
               className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-primary/10 border border-primary/30 text-primary hover:bg-primary/20 transition-all duration-300 font-sans text-sm uppercase tracking-wider mb-6"
             >
               Generate Your Digital Pass
