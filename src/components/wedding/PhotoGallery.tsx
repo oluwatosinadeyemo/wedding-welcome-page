@@ -445,6 +445,9 @@ const PhotoGallery = () => {
           <p className="text-muted-foreground font-sans max-w-2xl mx-auto mt-6">
             Browse our wedding memories or share your own photos.
           </p>
+          <p className="text-primary font-sans text-lg tracking-widest mt-4 font-medium">
+            #T&P2026
+          </p>
         </div>
 
         {/* Filter Tabs + TV Mode button */}
@@ -647,6 +650,10 @@ const PhotoGallery = () => {
               <Camera className="w-5 h-5 mr-2" />
               Share a Photo
             </Button>
+            <p className="text-muted-foreground text-xs font-sans">
+              Tag your photos{" "}
+              <span className="text-primary font-medium">#T&P2026</span>
+            </p>
           </div>
         )}
 
