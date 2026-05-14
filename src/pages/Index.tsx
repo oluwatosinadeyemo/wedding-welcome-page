@@ -17,6 +17,7 @@ import { Heart, HeartCrack } from "lucide-react";
 type Stage = "envelope" | "rsvp" | "details" | "declined";
 
 const Index = () => {
+  const navigate = useNavigate();
   const [stage, setStage] = useState<Stage>(() => {
     const saved = sessionStorage.getItem("wedding_stage") as Stage | null;
     return saved ?? "envelope";
