@@ -16,9 +16,13 @@ import { Heart, HeartCrack } from "lucide-react";
 type Stage = "envelope" | "rsvp" | "details" | "declined";
 
 const Index = () => {
-  const [stage, setStage] = useState<Stage>("envelope");
+  const [stage, setStage] = useState<Stage>(() => {
+    const saved = sessionStorage.getItem("wedding_stage") as Stage | null;
+    return saved ?? "envelope";
+  });
 
   useEffect(() => {
+    sessionStorage.setItem("wedding_stage", stage);
     if (stage === "details") {
       window.scrollTo({ top: 0, behavior: "auto" });
     }
