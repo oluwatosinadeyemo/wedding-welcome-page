@@ -1,8 +1,14 @@
 import { Heart } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import RSVPForm from "@/components/wedding/RSVPForm";
 
 const RSVPPage = () => {
+  const navigate = useNavigate();
+
+  const handleBack = () => {
+    sessionStorage.setItem("wedding_stage", "details");
+    navigate("/");
+  };
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Background */}
@@ -39,12 +45,12 @@ const RSVPPage = () => {
 
         {/* Footer */}
         <div className="text-center mt-16">
-          <Link
-            to="/"
+          <button
+            onClick={handleBack}
             className="text-muted-foreground hover:text-foreground text-sm font-sans transition-colors"
           >
             Back to Wedding Site
-          </Link>
+          </button>
         </div>
       </div>
     </div>
