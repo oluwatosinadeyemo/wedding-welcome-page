@@ -295,6 +295,7 @@ const DashboardPage = () => {
   };
 
   const handleSetPhotoStatus = async (photo: PhotoEntry, status: "approved" | "rejected") => {
+    if (photo.isStatic) return;
     try {
       const { error } = await (supabase.from("wedding_photos") as any)
         .update({ status })
@@ -308,6 +309,7 @@ const DashboardPage = () => {
   };
 
   const handleSetPhotoCategory = async (photo: PhotoEntry, category: string | null) => {
+    if (photo.isStatic) return;
     try {
       const { error } = await (supabase.from("wedding_photos") as any)
         .update({ category })
@@ -851,7 +853,8 @@ const DashboardPage = () => {
                             onChange={(e) =>
                               handleSetPhotoCategory(photo, e.target.value || null)
                             }
-                            className="bg-background/50 border border-border/50 rounded-md px-2 py-1 text-xs"
+                            disabled={photo.isStatic}
+                            className="bg-background/50 border border-border/50 rounded-md px-2 py-1 text-xs disabled:opacity-40 disabled:cursor-not-allowed"
                           >
                             <option value="">None</option>
                             <option value="engagement">Engagement</option>
