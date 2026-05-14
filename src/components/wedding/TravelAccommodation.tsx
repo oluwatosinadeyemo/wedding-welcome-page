@@ -113,7 +113,7 @@ const TravelAccommodation = () => {
     {
       icon: Plane,
       title: "By Air",
-      description: "Fly into Murtala Muhammed International Airport (LOS) in Lagos, approximately 80 km from Abeokuta. Arrange ground transportation or use our shuttle service.",
+      description: "Fly into Murtala Muhammed International Airport (LOS) in Lagos, approximately 80 km from Abeokuta. Arrange ground transportation from the airport to Abeokuta.",
     },
     {
       icon: Car,
