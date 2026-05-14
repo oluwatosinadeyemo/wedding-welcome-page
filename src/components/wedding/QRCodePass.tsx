@@ -259,7 +259,6 @@ const QRCodePass = () => {
                   onKeyDown={(e) => { if (e.key === "Enter") handleLookup(); }}
                   maxLength={50}
                   className="bg-background/50 border-border/50 rounded-xl text-center text-lg py-6"
-                  autoFocus
                 />
                 {error && (
                   <p className="text-destructive text-sm text-center">{error}</p>
