@@ -25,7 +25,7 @@ const TravelAccommodation = () => {
           description: "Well-appointed rooms with quality service and convenient location",
           phone: "+234 803 984 6021",
           website: "https://ibdhotels.com/",
-          price: "₦63,500",
+          price: "₦65,000",
           rating: 4,
         },
         {
@@ -34,7 +34,7 @@ const TravelAccommodation = () => {
           description: "Stylish residence offering premium comfort and personalized service",
           phone: "+234 816 939 0399",
           website: "https://www.mitrosresidences.com/",
-          price: "₦35,000",
+          price: "₦75,000",
           rating: 4,
         },
         {
@@ -75,7 +75,7 @@ const TravelAccommodation = () => {
           description: "5-star hotel with extensive facilities and premium dining",
           phone: "+234 703 178 6648",
           website: "https://conferencehotelnigeria.com/abeokuta/",
-          price: "₦120,000",
+          price: "₦86,000",
           rating: 5,
         },
         {
