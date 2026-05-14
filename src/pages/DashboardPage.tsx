@@ -322,53 +322,84 @@ const DashboardPage = () => {
   const handleExportCSV = async () => {
     setIsExportingCSV(true);
     try {
-      const { data: guests } = await (supabase.from("guests" as any) as any)
+      const { data: guests, error } = await (supabase.from("guests" as any) as any)
         .select(
-          `id, full_name, invite_code, party_size, side, checked_in, checked_in_at,
+          `full_name, invite_code, party_size, side, table_assignment, pass_id, checked_in, checked_in_at,
            rsvps(attending, number_of_guests, message, submitted_at)`
         )
         .order("full_name");
 
-      const rows = [
-        [
-          "Name",
-          "Invite Code",
-          "Party Size",
-          "Side",
-          "Walk-in",
-          "RSVP",
-          "# Guests Attending",
-          "Checked In",
-          "Check-in Time",
-          "Message",
-        ].join(","),
-        ...(guests || []).map((g: any) => {
-          const rsvp = g.rsvps?.[0];
-          return [
-            `"${g.full_name}"`,
-            g.invite_code,
-            g.party_size,
-            g.side || "",
-            isWalkIn(g.invite_code) ? "Yes" : "No",
-            rsvp?.attending === "yes" ? "Attending" : rsvp?.attending === "no" ? "Declined" : rsvp?.attending === "maybe" ? "Maybe" : "Pending",
-            rsvp?.number_of_guests || "",
-            g.checked_in ? "Yes" : "No",
-            g.checked_in_at
-              ? new Date(g.checked_in_at).toLocaleString()
-              : "",
-            `"${(rsvp?.message || "").replace(/"/g, '""')}"`,
-          ].join(",");
-        }),
-      ].join("\n");
+      if (error) throw error;
 
-      const blob = new Blob([rows], { type: "text/csv" });
+      // Quote and escape a single CSV field
+      const field = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+
+      // DD/MM/YYYY HH:MM — consistent across all browsers/locales
+      const fmtDate = (iso: string | null | undefined) => {
+        if (!iso) return "";
+        const d = new Date(iso);
+        const dd = String(d.getDate()).padStart(2, "0");
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const hh = String(d.getHours()).padStart(2, "0");
+        const min = String(d.getMinutes()).padStart(2, "0");
+        return `${dd}/${mm}/${d.getFullYear()} ${hh}:${min}`;
+      };
+
+      const totalGuests = guests?.length ?? 0;
+      const attending = (guests || []).filter((g: any) => g.rsvps?.[0]?.attending === "yes").length;
+      const checkedIn = (guests || []).filter((g: any) => g.checked_in).length;
+      const now = new Date();
+
+      const meta = [
+        `${field("Tosin & Pelumi Wedding")},,,,,,,,,,,,`,
+        `${field("Guest List Report")},,,,,,,,,,,,`,
+        `${field("Exported")},${field(fmtDate(now.toISOString()))},,,,,,,,,,,`,
+        `${field("Total Guests")},${field(totalGuests)},,,,,,,,,,,`,
+        `${field("Attending")},${field(attending)},,,,,,,,,,,`,
+        `${field("Checked In")},${field(checkedIn)},,,,,,,,,,,`,
+        "",
+      ];
+
+      const headers = [
+        "Name", "Side", "Invite Code", "Walk-in",
+        "Party Size", "Table Assignment",
+        "RSVP Status", "Guests Attending", "RSVP Date", "Message",
+        "Has Pass", "Checked In", "Check-in Time",
+      ].map(field).join(",");
+
+      const rows = (guests || []).map((g: any) => {
+        const rsvp = g.rsvps?.[0];
+        const rsvpStatus =
+          rsvp?.attending === "yes" ? "Attending" :
+          rsvp?.attending === "no" ? "Declined" :
+          rsvp?.attending === "maybe" ? "Maybe" : "No Response";
+        return [
+          field(g.full_name),
+          field(g.side || ""),
+          field(g.invite_code),
+          field(isWalkIn(g.invite_code) ? "Yes" : "No"),
+          field(g.party_size),
+          field(g.table_assignment || ""),
+          field(rsvpStatus),
+          field(rsvp?.number_of_guests ?? ""),
+          field(fmtDate(rsvp?.submitted_at)),
+          field(rsvp?.message || ""),
+          field(g.pass_id ? "Yes" : "No"),
+          field(g.checked_in ? "Yes" : "No"),
+          field(fmtDate(g.checked_in_at)),
+        ].join(",");
+      });
+
+      // UTF-8 BOM ensures Excel opens without encoding issues
+      const csv = "﻿" + [...meta, headers, ...rows].join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `guest-list-${new Date().toISOString().split("T")[0]}.csv`;
+      a.download = `tosin-pelumi-guest-list-${now.toISOString().split("T")[0]}.csv`;
       a.click();
       URL.revokeObjectURL(url);
-      toast({ title: "Guest list exported" });
+      toast({ title: "Guest list exported", description: `${totalGuests} guests · ${attending} attending · ${checkedIn} checked in` });
     } catch (err: any) {
       toast({ title: "Export failed", description: err.message, variant: "destructive" });
     } finally {
