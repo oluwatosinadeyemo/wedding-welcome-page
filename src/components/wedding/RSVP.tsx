@@ -22,7 +22,7 @@ const RSVP = () => {
 
         <p className="text-muted-foreground mb-10 max-w-lg mx-auto text-lg font-sans leading-relaxed">
           Please let us know if you'll be able to celebrate with us.
-          Kindly respond by May 30th, 2026.
+          Kindly respond as soon as you can.
         </p>
 
         <Link
