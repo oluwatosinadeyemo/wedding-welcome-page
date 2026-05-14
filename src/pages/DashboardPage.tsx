@@ -743,7 +743,7 @@ const DashboardPage = () => {
                           <span className="text-xs text-muted-foreground">-</span>
                         )}
                       </TableCell>
-                      <TableCell className="hidden lg:table-cell max-w-[200px] truncate">
+                      <TableCell className="hidden lg:table-cell max-w-[250px] whitespace-normal break-words">
                         {rsvp.message || "-"}
                       </TableCell>
                       <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
