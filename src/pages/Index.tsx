@@ -90,9 +90,15 @@ const Index = () => {
               <HeartCrack className="w-8 h-8 text-muted-foreground" />
             </div>
             <h3 className="font-serif text-3xl text-foreground mb-4">We'll Miss You!</h3>
-            <p className="text-muted-foreground font-sans leading-relaxed">
+            <p className="text-muted-foreground font-sans leading-relaxed mb-8">
               Thank you for letting us know. You'll be in our thoughts on our special day. 💕
             </p>
+            <button
+              onClick={() => setStage("details")}
+              className="text-primary hover:text-primary/80 text-sm font-sans transition-colors underline underline-offset-4"
+            >
+              Browse the wedding details →
+            </button>
           </div>
         </div>
       </div>

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
-import { Download, Ticket, User, Calendar, MapPin, Loader2, ArrowRight } from "lucide-react";
+import { Download, Ticket, User, Calendar, MapPin, Loader2, ArrowRight, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,6 +28,9 @@ const QRCodePass = () => {
   const autoLookupDoneRef = useRef(false);
 
   const [step, setStep] = useState<"lookup" | "generate" | "display">("lookup");
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isStandalonePage = location.pathname === "/pass";
 
   const validateGuestName = (name: string): string => {
     const trimmed = name.trim();
@@ -422,6 +425,20 @@ const QRCodePass = () => {
                   New Pass
                 </Button>
               </div>
+
+              {isStandalonePage && (
+                <Button
+                  onClick={() => {
+                    sessionStorage.setItem("wedding_stage", "details");
+                    navigate("/");
+                  }}
+                  variant="outline"
+                  className="w-full mt-3 py-6 rounded-xl border-primary/30 text-primary hover:bg-primary/10"
+                >
+                  <Home className="w-4 h-4 mr-2" />
+                  View Wedding Details
+                </Button>
+              )}
             </div>
           )}
         </div>
