@@ -1,4 +1,4 @@
-import { Heart, Phone } from "lucide-react";
+import { Heart, Phone, MessageCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const RSVP = () => {
@@ -41,6 +41,15 @@ const RSVP = () => {
                 +234 811 807 9253
               </a>
             </div>
+            <a
+              href="https://wa.me/2348118079253"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-1 flex items-center justify-center w-8 h-8 rounded-full bg-green-500/10 text-green-600 hover:bg-green-500/20 transition-colors"
+              aria-label="WhatsApp Bayo"
+            >
+              <MessageCircle className="w-4 h-4" />
+            </a>
           </div>
           <div className="glass-card px-6 py-4 rounded-2xl flex items-center gap-3">
             <Phone className="w-5 h-5 text-primary" />
@@ -50,6 +59,15 @@ const RSVP = () => {
                 +234 706 558 2596
               </a>
             </div>
+            <a
+              href="https://wa.me/2347065582596"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-1 flex items-center justify-center w-8 h-8 rounded-full bg-green-500/10 text-green-600 hover:bg-green-500/20 transition-colors"
+              aria-label="WhatsApp Deji"
+            >
+              <MessageCircle className="w-4 h-4" />
+            </a>
           </div>
         </div>
       </div>
