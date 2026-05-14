@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 
 interface RSVPFormProps {
-  onSubmitSuccess?: (attending: string) => void;
+  onSubmitSuccess?: (attending: string, fullName: string) => void;
 }
 
 const RSVPForm = ({ onSubmitSuccess }: RSVPFormProps = {}) => {
@@ -64,7 +64,7 @@ const RSVPForm = ({ onSubmitSuccess }: RSVPFormProps = {}) => {
         title: "RSVP Submitted!",
         description: "Thank you for letting us know.",
       });
-      onSubmitSuccess?.(values.attending);
+      onSubmitSuccess?.(values.attending, values.full_name.trim());
     } catch (err: any) {
       toast({
         title: "Submission failed",
@@ -225,7 +225,7 @@ const RSVPForm = ({ onSubmitSuccess }: RSVPFormProps = {}) => {
 
           {submittedData.attending === "yes" && (
             <a
-              href="/#pass"
+              href={`/pass?name=${encodeURIComponent(submittedData.full_name)}`}
               className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-primary/10 border border-primary/30 text-primary hover:bg-primary/20 transition-all duration-300 font-sans text-sm uppercase tracking-wider mb-6"
             >
               Generate Your Digital Pass

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Envelope from "@/components/wedding/Envelope";
 import RSVPForm from "@/components/wedding/RSVPForm";
 import Navigation from "@/components/wedding/Navigation";
@@ -63,9 +64,11 @@ const Index = () => {
             </div>
 
             <div className="animate-fade-in-delay-3">
-              <RSVPForm onSubmitSuccess={(attending) => {
+              <RSVPForm onSubmitSuccess={(attending, fullName) => {
                 if (attending === "no") {
                   setStage("declined");
+                } else if (attending === "yes") {
+                  navigate(`/pass?name=${encodeURIComponent(fullName)}`);
                 } else {
                   setStage("details");
                 }

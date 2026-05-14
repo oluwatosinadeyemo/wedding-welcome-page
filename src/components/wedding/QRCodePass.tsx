@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { Download, Ticket, User, Calendar, MapPin, Loader2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ interface GuestPassData {
 }
 
 const QRCodePass = () => {
+  const [searchParams] = useSearchParams();
   const [guestName, setGuestName] = useState("");
   const [guest, setGuest] = useState<GuestPassData | null>(null);
   const [passId, setPassId] = useState<string | null>(null);
@@ -23,6 +25,7 @@ const QRCodePass = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const autoLookupDoneRef = useRef(false);
 
   const [step, setStep] = useState<"lookup" | "generate" | "display">("lookup");
 
@@ -35,10 +38,11 @@ const QRCodePass = () => {
     return trimmed;
   };
 
-  const handleLookup = async () => {
+  const handleLookup = async (overrideName?: string) => {
+    const nameToLookup = overrideName ?? guestName;
     let validName: string;
     try {
-      validName = validateGuestName(guestName);
+      validName = validateGuestName(nameToLookup);
     } catch (err: any) {
       setError(err.message);
       return;
@@ -86,6 +90,20 @@ const QRCodePass = () => {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (autoLookupDoneRef.current) return;
+    const nameFromQuery = searchParams.get("name");
+    const nameFromStorage = typeof window !== "undefined"
+      ? localStorage.getItem("wedding_guest_name")
+      : null;
+    const prefilled = (nameFromQuery || nameFromStorage || "").trim();
+    if (!prefilled) return;
+    autoLookupDoneRef.current = true;
+    setGuestName(prefilled);
+    handleLookup(prefilled);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const handleGeneratePass = async () => {
     if (!guest) return;
@@ -235,7 +253,7 @@ const QRCodePass = () => {
                   placeholder="Enter your full name"
                   value={guestName}
                   onChange={(e) => setGuestName(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleLookup()}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleLookup(); }}
                   maxLength={50}
                   className="bg-background/50 border-border/50 rounded-xl text-center text-lg py-6"
                   autoFocus
@@ -244,7 +262,7 @@ const QRCodePass = () => {
                   <p className="text-destructive text-sm text-center">{error}</p>
                 )}
                 <Button
-                  onClick={handleLookup}
+                  onClick={() => handleLookup()}
                   disabled={!guestName.trim() || isLoading}
                   className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-6 rounded-xl text-sm uppercase tracking-wider font-sans"
                 >
@@ -299,10 +317,16 @@ const QRCodePass = () => {
                     <User className="w-8 h-8 text-secondary" />
                   </div>
                   <h3 className="font-serif text-2xl text-foreground mb-4">
-                    RSVP Required
+                    {guest.rsvp_attending === "maybe"
+                      ? "Please Confirm Attendance"
+                      : "RSVP Required"}
                   </h3>
                   <p className="text-muted-foreground mb-6">
-                    Hi {guest.full_name}! You need to RSVP and confirm your attendance before generating your pass.
+                    {guest.rsvp_attending === "maybe"
+                      ? `Hi ${guest.full_name}! You currently RSVP'd as "Not Sure Yet". Please update your RSVP to "Joyfully Accept" to receive your digital pass.`
+                      : guest.rsvp_attending === "no"
+                      ? `Hi ${guest.full_name}, you've declined the invitation. If your plans have changed, please update your RSVP to receive a pass.`
+                      : `Hi ${guest.full_name}! You need to RSVP and confirm your attendance before generating your pass.`}
                   </p>
                   <div className="flex flex-col gap-3">
                     <a
