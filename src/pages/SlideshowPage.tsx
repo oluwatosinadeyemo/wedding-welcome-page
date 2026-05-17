@@ -246,7 +246,7 @@ const SlideshowPage = () => {
           )}
           <button
             onClick={toggleFullscreen}
-            title={isFullscreen ? "Exit fullscreen (F)" : "Fullscreen (F)"}
+            aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
             style={{ width: 34, height: 34, borderRadius: 8, border: "none", background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
           >
             {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
@@ -259,6 +259,7 @@ const SlideshowPage = () => {
         <>
           <button
             onClick={goPrev}
+            aria-label="Previous photo"
             style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", width: 48, height: 48, borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.12)", color: "white", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10, transition: "background 0.2s" }}
             onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.25)")}
             onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.12)")}
@@ -267,6 +268,7 @@ const SlideshowPage = () => {
           </button>
           <button
             onClick={goNext}
+            aria-label="Next photo"
             style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", width: 48, height: 48, borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.12)", color: "white", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10, transition: "background 0.2s" }}
             onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.25)")}
             onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.12)")}

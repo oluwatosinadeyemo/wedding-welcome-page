@@ -21,6 +21,10 @@ const Envelope = ({ onOpen }: EnvelopeProps) => {
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center bg-background cursor-pointer"
       onClick={handleClick}
+      role="button"
+      tabIndex={0}
+      aria-label="Open wedding invitation"
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick(); }}
     >
       {/* Subtle background pattern */}
       <div className="absolute inset-0 opacity-5">

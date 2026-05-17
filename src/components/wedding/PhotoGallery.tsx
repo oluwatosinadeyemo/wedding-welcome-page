@@ -323,13 +323,17 @@ const PhotoGallery = () => {
             <div className="glass-card p-8">
               <h3 className="font-serif text-2xl text-foreground mb-6 text-center">Upload Your Photo</h3>
               <div className="space-y-4">
+                <label htmlFor="guest-name" className="sr-only">Your name</label>
                 <Input
+                  id="guest-name"
                   placeholder="Your name"
                   value={guestName}
                   onChange={(e) => { setGuestName(e.target.value); localStorage.setItem(GUEST_NAME_KEY, e.target.value); }}
                   className="bg-background/50 border-border/50 rounded-xl"
                 />
+                <label htmlFor="photo-caption" className="sr-only">Caption (optional)</label>
                 <Input
+                  id="photo-caption"
                   placeholder="Caption (optional)"
                   value={caption}
                   onChange={(e) => setCaption(e.target.value)}
@@ -365,6 +369,10 @@ const PhotoGallery = () => {
                 key={photo.id}
                 className="group relative aspect-square rounded-2xl overflow-hidden cursor-pointer"
                 onClick={() => setSelectedIndex(filteredPhotos.indexOf(photo))}
+                role="button"
+                tabIndex={0}
+                aria-label={photo.caption || `Photo by ${photo.uploaded_by || "Guest"}`}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelectedIndex(filteredPhotos.indexOf(photo)); }}
               >
                 <img
                   src={getPhotoUrl(photo)}
@@ -383,7 +391,7 @@ const PhotoGallery = () => {
                   <button
                     onClick={(e) => openPinDelete(photo, e)}
                     className="absolute top-2 right-2 w-8 h-8 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center text-destructive/70 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-destructive hover:text-white"
-                    title="Remove photo"
+                    aria-label="Remove photo"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -408,6 +416,7 @@ const PhotoGallery = () => {
             <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
+              aria-label="Previous page"
               className="w-11 h-11 rounded-full border border-border/50 flex items-center justify-center text-muted-foreground hover:border-primary/40 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-all"
             >
               <ChevronLeft className="w-5 h-5" />
@@ -428,6 +437,7 @@ const PhotoGallery = () => {
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
+              aria-label="Next page"
               className="w-11 h-11 rounded-full border border-border/50 flex items-center justify-center text-muted-foreground hover:border-primary/40 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-all"
             >
               <ChevronRight className="w-5 h-5" />
@@ -471,7 +481,7 @@ const PhotoGallery = () => {
             <button
               className="absolute top-4 right-4 z-20 w-12 h-12 rounded-full bg-white/15 hover:bg-white/30 flex items-center justify-center text-white transition-colors shadow-lg"
               onClick={(e) => { e.stopPropagation(); setSelectedIndex(null); }}
-              title="Close (Esc)"
+              aria-label="Close (Esc)"
             >
               <X className="w-6 h-6" />
             </button>
@@ -480,7 +490,7 @@ const PhotoGallery = () => {
               <button
                 className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
                 onClick={toggleSlideshow}
-                title={isPlaying ? "Pause (Space)" : "Play slideshow (Space)"}
+                aria-label={isPlaying ? "Pause slideshow" : "Play slideshow"}
               >
                 {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
               </button>
@@ -564,6 +574,7 @@ const PhotoGallery = () => {
                 inputMode="numeric"
                 maxLength={4}
                 placeholder="• • • •"
+                aria-label="4-digit PIN to remove photo"
                 value={pinValue}
                 onChange={(e) => setPinValue(e.target.value.replace(/\D/g, "").slice(0, 4))}
                 onKeyDown={(e) => { if (e.key === "Enter") handlePinDelete(); if (e.key === "Escape") closePinDelete(); }}
