@@ -72,6 +72,8 @@ const Navigation = () => {
           <button
             className="md:hidden w-10 h-10 rounded-full bg-card/50 flex items-center justify-center"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={isMobileMenuOpen}
           >
             {isMobileMenuOpen ? (
               <X className="w-5 h-5 text-foreground" />
