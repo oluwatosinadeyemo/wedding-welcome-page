@@ -21,6 +21,7 @@ interface GuestEntry {
   side: string | null;
   table_assignment: string | null;
   checked_in: boolean;
+  rsvps: { attending: string }[] | null;
 }
 
 const SideBadge = ({ side }: { side: string | null }) => {
@@ -82,9 +83,11 @@ const SeatingChart = () => {
   const fetchGuests = useCallback(async () => {
     setLoading(true);
     const { data } = await (supabase.from("guests" as any) as any)
-      .select("id, full_name, party_size, side, table_assignment, checked_in")
+      .select("id, full_name, party_size, side, table_assignment, checked_in, rsvps(attending)")
       .order("full_name");
-    if (data) setGuests(data as GuestEntry[]);
+    if (data) setGuests(
+      (data as GuestEntry[]).filter((g) => g.rsvps?.[0]?.attending !== "no")
+    );
     setLoading(false);
   }, []);
 
