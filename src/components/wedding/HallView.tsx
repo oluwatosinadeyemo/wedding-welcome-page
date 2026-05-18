@@ -370,12 +370,12 @@ const HallTable = ({
             top: box / 2 + cOrbit + cR + 6,
             left: "50%",
             transform: "translateX(-50%)",
-            maxWidth: Math.max(box * 2.2, 200),
+            whiteSpace: "nowrap",
           }}
         >
           <span
             style={{
-              display: "block",
+              display: "inline-block",
               fontSize: Math.max(6.5, 7.5 * scale),
               fontWeight: 700,
               color: stripColor,
@@ -385,10 +385,6 @@ const HallTable = ({
               padding: "2px 8px",
               backdropFilter: "blur(6px)",
               letterSpacing: "0.02em",
-              textAlign: "center",
-              lineHeight: 1.6,
-              wordBreak: "break-word",
-              whiteSpace: "normal",
             }}
           >
             {nameStrip}
