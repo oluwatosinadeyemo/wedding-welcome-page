@@ -130,20 +130,18 @@ const SideBadge = ({ side }: { side: string | null }) => {
 // ─── ChairDot ─────────────────────────────────────────────────────────────────
 
 const ChairDot = ({
-  index, filled, side, guestName,
+  index, total, side, guestName,
 }: {
-  index: number; filled: boolean; side?: string | null; guestName?: string;
+  index: number; total: number; side?: string | null; guestName?: string;
 }) => {
-  const angle = (index / TABLE_CAPACITY) * 2 * Math.PI - Math.PI / 2;
+  const angle = (index / total) * 2 * Math.PI - Math.PI / 2;
   const cx = Math.cos(angle) * CHAIR_ORBIT + BOX / 2;
   const cy = Math.sin(angle) * CHAIR_ORBIT + BOX / 2;
 
   return (
     <div
-      title={filled && guestName ? guestName : "Empty seat"}
-      className={`absolute rounded-full transition-colors duration-200 pointer-events-none ${
-        filled ? chairFill(side ?? null) : "bg-white/[0.04] border border-white/[0.08] border-dashed"
-      }`}
+      title={guestName ?? ""}
+      className={`absolute rounded-full pointer-events-none ${chairFill(side ?? null)}`}
       style={{
         width: CHAIR_RADIUS * 2,
         height: CHAIR_RADIUS * 2,
@@ -151,6 +149,35 @@ const ChairDot = ({
         top: cy - CHAIR_RADIUS,
       }}
     />
+  );
+};
+
+// ─── ChairLabel ───────────────────────────────────────────────────────────────
+
+const ChairLabel = ({
+  index, total, name, side,
+}: {
+  index: number; total: number; name: string; side: string | null;
+}) => {
+  if (total === 0) return null;
+  const angle = (index / total) * 2 * Math.PI - Math.PI / 2;
+  const orbit = CHAIR_ORBIT + CHAIR_RADIUS + 13;
+  const cx = Math.cos(angle) * orbit + BOX / 2;
+  const cy = Math.sin(angle) * orbit + BOX / 2;
+  const firstName = name.split(" ")[0].slice(0, 9);
+  const l = side?.toLowerCase() ?? "";
+  const textColor = l.includes("bride")
+    ? "text-yellow-300/80"
+    : l.includes("groom")
+    ? "text-blue-300/80"
+    : "text-amber-300/70";
+  return (
+    <div
+      className={`absolute text-[7px] whitespace-nowrap pointer-events-none leading-none font-semibold ${textColor}`}
+      style={{ left: cx, top: cy, transform: "translate(-50%,-50%)", zIndex: 3 }}
+    >
+      {firstName}
+    </div>
   );
 };
 
@@ -231,13 +258,19 @@ const HallTable = ({
     }
   };
 
-  // Expand guests by party_size to fill chair slots
-  const chairs: (GuestEntry | null)[] = Array(TABLE_CAPACITY).fill(null);
-  let seat = 0;
+  // One chair per actual seat — dynamic count, no fixed maximum
+  const chairs: GuestEntry[] = [];
   for (const g of guests) {
-    for (let p = 0; p < g.party_size && seat < TABLE_CAPACITY; p++, seat++) {
-      chairs[seat] = g;
-    }
+    for (let p = 0; p < g.party_size; p++) chairs.push(g);
+  }
+  const totalChairs = chairs.length;
+
+  // One name label per guest entry, positioned at their first chair
+  const guestLabels: { guest: GuestEntry; seatIndex: number }[] = [];
+  let labelSeat = 0;
+  for (const g of guests) {
+    guestLabels.push({ guest: g, seatIndex: labelSeat });
+    labelSeat += g.party_size;
   }
 
   const circleBorder = isDragOver
@@ -275,7 +308,7 @@ const HallTable = ({
   return (
     <div
       ref={setNodeRef}
-      className="absolute"
+      className="absolute overflow-visible"
       style={{
         width: BOX,
         height: BOX,
@@ -285,14 +318,25 @@ const HallTable = ({
         transition: draggingRef.current ? "none" : undefined,
       }}
     >
-      {/* Chair dots (purely visual, pointer-events-none) */}
+      {/* Chair dots */}
       {chairs.map((g, i) => (
         <ChairDot
           key={i}
           index={i}
-          filled={g !== null}
-          side={g?.side}
-          guestName={g?.full_name}
+          total={totalChairs}
+          side={g.side}
+          guestName={g.full_name}
+        />
+      ))}
+
+      {/* Guest name labels — one per party entry */}
+      {totalChairs > 0 && guestLabels.map(({ guest, seatIndex }) => (
+        <ChairLabel
+          key={guest.id}
+          index={seatIndex}
+          total={totalChairs}
+          name={guest.full_name}
+          side={guest.side}
         />
       ))}
 
@@ -493,10 +537,6 @@ const HallView = ({ tableMap, unassigned, allTableNames, onAssignGuest }: HallVi
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-amber-400/60 flex-shrink-0" />
               Mutual
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full border border-white/15 border-dashed flex-shrink-0" />
-              Empty seat
             </div>
             <p className="text-white/25 font-semibold uppercase tracking-wider text-[8px] pt-1">Tables</p>
             <div className="flex items-center gap-1.5">
