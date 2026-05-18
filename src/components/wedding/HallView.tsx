@@ -198,11 +198,12 @@ const ChairLabel = ({
 // ─── HallTable ────────────────────────────────────────────────────────────────
 
 const HallTable = ({
-  name, guests, position, onReposition, onSavePosition, onSelect,
+  name, guests, position, manualSide, onReposition, onSavePosition, onSelect,
 }: {
   name: string;
   guests: GuestEntry[];
   position: Pos;
+  manualSide: "bride" | "groom" | undefined;
   onReposition: (name: string, pos: Pos) => void;
   onSavePosition: (name: string, pos: Pos) => void;
   onSelect: () => void;
@@ -211,18 +212,20 @@ const HallTable = ({
   const isOverCap = totalSeats > TABLE_CAPACITY;
   const isFull = totalSeats === TABLE_CAPACITY;
 
-  // Determine which side dominates this table by seat count
+  // Auto-detect dominant side from guest composition
   const brideSeats = guests
     .filter(g => g.side?.toLowerCase().includes("bride"))
     .reduce((s, g) => s + g.party_size, 0);
   const groomSeats = guests
     .filter(g => g.side?.toLowerCase().includes("groom"))
     .reduce((s, g) => s + g.party_size, 0);
-  const dominantSide =
+  const autoSide =
     guests.length === 0 ? null
     : brideSeats > groomSeats ? "bride"
     : groomSeats > brideSeats ? "groom"
     : "mixed";
+  // Manual override wins when set
+  const dominantSide = manualSide ?? autoSide;
 
   const { isOver: isDragOver, setNodeRef } = useDroppable({
     id: `table::${name}`,
@@ -420,9 +423,11 @@ interface HallViewProps {
   unassigned: GuestEntry[];
   allTableNames: string[];
   onAssignGuest: (guestId: string, tableName: string | null) => Promise<void>;
+  tableSides: Record<string, "bride" | "groom">;
+  onSetTableSide: (tableName: string, side: "bride" | "groom" | null) => void;
 }
 
-const HallView = ({ tableMap, unassigned, allTableNames, onAssignGuest }: HallViewProps) => {
+const HallView = ({ tableMap, unassigned, allTableNames, onAssignGuest, tableSides, onSetTableSide }: HallViewProps) => {
   const [positions, setPositions] = useState<Record<string, Pos>>(() =>
     loadPositions(allTableNames)
   );
@@ -658,6 +663,7 @@ const HallView = ({ tableMap, unassigned, allTableNames, onAssignGuest }: HallVi
                   name={name}
                   guests={tableMap.get(name) ?? []}
                   position={pos}
+                  manualSide={tableSides[name]}
                   onReposition={handleReposition}
                   onSavePosition={handleSavePosition}
                   onSelect={() => setSelectedTable(name)}
@@ -741,8 +747,43 @@ const HallView = ({ tableMap, unassigned, allTableNames, onAssignGuest }: HallVi
               </div>
             ))}
           </div>
-          <p className="text-[10px] text-muted-foreground/50 text-center pt-1 italic">
-            Drag the table circle on the hall map to reposition it
+          {/* ── Designation ── */}
+          <div className="border-t border-border/30 pt-3 mt-1">
+            <p className="text-[10px] text-muted-foreground/70 uppercase tracking-wider font-semibold mb-2">
+              Designate table for
+            </p>
+            <div className="flex gap-2">
+              {(["bride", "groom"] as const).map(s => {
+                const active = selectedTable ? tableSides[selectedTable] === s : false;
+                return (
+                  <button
+                    key={s}
+                    onClick={() => selectedTable && onSetTableSide(selectedTable, active ? null : s)}
+                    className={`flex-1 py-2 rounded-xl text-xs font-bold border-2 transition-all duration-200 ${
+                      active
+                        ? s === "bride"
+                          ? "bg-yellow-400/15 border-yellow-400 text-yellow-400 shadow-[0_0_14px_rgba(250,204,21,0.3)]"
+                          : "bg-blue-500/15 border-blue-500 text-blue-400 shadow-[0_0_14px_rgba(59,130,246,0.3)]"
+                        : "border-border/40 text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                    }`}
+                  >
+                    {s === "bride" ? "♡ Bride's side" : "◇ Groom's side"}
+                  </button>
+                );
+              })}
+              {selectedTable && tableSides[selectedTable] && (
+                <button
+                  onClick={() => selectedTable && onSetTableSide(selectedTable, null)}
+                  className="px-3 py-2 rounded-xl text-xs border border-border/40 text-muted-foreground hover:text-foreground transition-colors"
+                  title="Reset to auto-detect from guests"
+                >
+                  Auto
+                </button>
+              )}
+            </div>
+          </div>
+          <p className="text-[9px] text-muted-foreground/40 text-center mt-2 italic">
+            Drag the table circle to reposition it
           </p>
         </DialogContent>
       </Dialog>

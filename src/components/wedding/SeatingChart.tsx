@@ -80,7 +80,26 @@ const SeatingChart = () => {
   const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
   const [bulkAssignInput, setBulkAssignInput] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "hall">("list");
+  const [tableSides, setTableSides] = useState<Record<string, "bride" | "groom">>(() => {
+    try {
+      const raw = localStorage.getItem("wedding-table-sides-v1");
+      return raw ? JSON.parse(raw) : {};
+    } catch { return {}; }
+  });
   const { toast } = useToast();
+
+  const setTableSideOverride = useCallback(
+    (tableName: string, side: "bride" | "groom" | null) => {
+      setTableSides(prev => {
+        const next = { ...prev };
+        if (side === null) delete next[tableName];
+        else next[tableName] = side;
+        localStorage.setItem("wedding-table-sides-v1", JSON.stringify(next));
+        return next;
+      });
+    },
+    []
+  );
 
   const fetchGuests = useCallback(async () => {
     setLoading(true);
@@ -381,6 +400,8 @@ const SeatingChart = () => {
           unassigned={unassigned}
           allTableNames={allTableNames}
           onAssignGuest={assignGuestDirect}
+          tableSides={tableSides}
+          onSetTableSide={setTableSideOverride}
         />
       )}
 
@@ -445,11 +466,12 @@ const SeatingChart = () => {
           const groomSeatsCount = tableGuests
             .filter(g => g.side?.toLowerCase().includes("groom"))
             .reduce((s, g) => s + g.party_size, 0);
-          const tableSide =
+          const autoTableSide =
             tableGuests.length === 0 ? null
             : brideSeatsCount > groomSeatsCount ? "bride"
             : groomSeatsCount > brideSeatsCount ? "groom"
             : "mixed";
+          const tableSide = tableSides[tableName] ?? autoTableSide;
 
           const cardGlow =
             tableSide === "bride"
@@ -570,6 +592,34 @@ const SeatingChart = () => {
                   <p className="text-xs text-muted-foreground text-center py-1 italic">
                     No match in this table
                   </p>
+                )}
+              </div>
+
+              {/* ── Table designation ── */}
+              <div className="mt-3 pt-2 border-t border-border/20 flex items-center gap-1.5">
+                <span className="text-[9px] text-muted-foreground/60 mr-1 flex-shrink-0">Designate:</span>
+                {(["bride", "groom"] as const).map(s => (
+                  <button
+                    key={s}
+                    onClick={() => setTableSideOverride(tableName, tableSides[tableName] === s ? null : s)}
+                    className={`text-[9px] px-2 py-1 rounded-full border font-semibold transition-all ${
+                      tableSides[tableName] === s
+                        ? s === "bride"
+                          ? "bg-yellow-400/15 border-yellow-400/50 text-yellow-400"
+                          : "bg-blue-500/15 border-blue-500/50 text-blue-400"
+                        : "border-border/40 text-muted-foreground hover:text-foreground hover:border-primary/40"
+                    }`}
+                  >
+                    {s === "bride" ? "♡ Bride" : "◇ Groom"}
+                  </button>
+                ))}
+                {tableSides[tableName] && (
+                  <button
+                    onClick={() => setTableSideOverride(tableName, null)}
+                    className="ml-auto text-[9px] px-2 py-1 rounded-full border border-border/30 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Auto
+                  </button>
                 )}
               </div>
             </div>
