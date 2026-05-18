@@ -105,17 +105,17 @@ const chairFill = (side: string | null) => {
 
 // Title prefixes to skip when extracting a display name
 const TITLE_PREFIXES = new Set(["mr", "mrs", "ms", "miss", "dr", "prof", "rev", "sir", "chief", "pastor", "alhaji", "alhaja"]);
-const extractFirst = (fullName: string): string => {
+const extractFirst = (fullName: string, maxLen = 6): string => {
   const parts = fullName.trim().split(/\s+/);
   const clean = parts[0].replace(/[.,]/g, "").toLowerCase();
   const idx = TITLE_PREFIXES.has(clean) && parts.length > 1 ? 1 : 0;
-  return parts[idx].slice(0, 10);
+  return parts[idx].slice(0, maxLen);
 };
 
 const sideAccentClass = (side: string | null) => {
   if (!side) return "border-l-white/20";
   const l = side.toLowerCase();
-  if (l.includes("bride")) return "border-l-purple-400";
+  if (l.includes("bride")) return "border-l-yellow-400";
   if (l.includes("groom")) return "border-l-blue-400";
   return "border-l-amber-400/70";
 };
@@ -126,7 +126,7 @@ const SideBadge = ({ side }: { side: string | null }) => {
   if (!side) return null;
   const l = side.toLowerCase();
   const cls = l.includes("bride")
-    ? "bg-purple-500/20 text-purple-400"
+    ? "bg-yellow-400/20 text-yellow-300"
     : l.includes("groom")
     ? "bg-blue-500/20 text-blue-400"
     : "bg-amber-500/20 text-amber-400";
@@ -159,39 +159,6 @@ const ChairDot = ({
         top: cy - CHAIR_RADIUS,
       }}
     />
-  );
-};
-
-// ─── ChairLabel ───────────────────────────────────────────────────────────────
-
-const ChairLabel = ({
-  index, total, name, side,
-}: {
-  index: number; total: number; name: string; side: string | null;
-}) => {
-  if (total === 0) return null;
-  const angle = (index / total) * 2 * Math.PI - Math.PI / 2;
-  const orbit = CHAIR_ORBIT + CHAIR_RADIUS + 14;
-  const cx = Math.cos(angle) * orbit + BOX / 2;
-  const cy = Math.sin(angle) * orbit + BOX / 2;
-  const l = side?.toLowerCase() ?? "";
-  const textColor = l.includes("bride")
-    ? "text-yellow-300"
-    : l.includes("groom")
-    ? "text-blue-300"
-    : "text-purple-300";
-  return (
-    <div
-      className="absolute pointer-events-none leading-none"
-      style={{ left: cx, top: cy, transform: "translate(-50%,-50%)", zIndex: 10 }}
-    >
-      <span
-        className={`text-[7.5px] font-bold whitespace-nowrap px-[3px] py-[2px] rounded
-          bg-black/60 border border-white/10 backdrop-blur-sm ${textColor}`}
-      >
-        {extractFirst(name)}
-      </span>
-    </div>
   );
 };
 
@@ -282,13 +249,19 @@ const HallTable = ({
   }
   const totalChairs = chairs.length;
 
-  // One name label per guest entry, positioned at their first chair
-  const guestLabels: { guest: GuestEntry; seatIndex: number }[] = [];
-  let labelSeat = 0;
-  for (const g of guests) {
-    guestLabels.push({ guest: g, seatIndex: labelSeat });
-    labelSeat += g.party_size;
-  }
+  // Compact name strip: first names, max 3 shown, then "+N more"
+  const MAX_STRIP_NAMES = 3;
+  const firstNames = guests.map(g => extractFirst(g.full_name));
+  const stripShown = firstNames.slice(0, MAX_STRIP_NAMES);
+  const stripExtra = firstNames.length - MAX_STRIP_NAMES;
+  const nameStrip = stripExtra > 0
+    ? stripShown.join(" · ") + ` +${stripExtra}`
+    : stripShown.join(" · ");
+  const stripColor = dominantSide === "bride"
+    ? "rgba(253,230,138,0.88)"
+    : dominantSide === "groom"
+    ? "rgba(147,197,253,0.88)"
+    : "rgba(255,255,255,0.62)";
 
   // Inline styles for full control — Tailwind classes can't express rich gradients + rings
   const tableBackground = isDragOver
@@ -335,17 +308,6 @@ const HallTable = ({
         />
       ))}
 
-      {/* Guest name labels — one per party entry */}
-      {totalChairs > 0 && guestLabels.map(({ guest, seatIndex }) => (
-        <ChairLabel
-          key={guest.id}
-          index={seatIndex}
-          total={totalChairs}
-          name={guest.full_name}
-          side={guest.side}
-        />
-      ))}
-
       {/* Table circle — drag to reposition, click to open detail */}
       <div
         className="absolute rounded-full flex flex-col items-center justify-center cursor-grab active:cursor-grabbing select-none"
@@ -387,6 +349,34 @@ const HallTable = ({
           </span>
         )}
       </div>
+
+      {/* Name strip — compact label below chairs */}
+      {guests.length > 0 && (
+        <div
+          className="absolute pointer-events-none flex justify-center"
+          style={{ top: BOX / 2 + CHAIR_ORBIT + CHAIR_RADIUS + 7, left: 0, right: 0 }}
+        >
+          <span
+            style={{
+              fontSize: 7.5,
+              fontWeight: 700,
+              color: stripColor,
+              background: "rgba(0,0,0,0.58)",
+              border: "1px solid rgba(255,255,255,0.07)",
+              borderRadius: 5,
+              padding: "2px 7px",
+              whiteSpace: "nowrap",
+              backdropFilter: "blur(6px)",
+              letterSpacing: "0.025em",
+              maxWidth: 220,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {nameStrip}
+          </span>
+        </div>
+      )}
     </div>
   );
 };
@@ -536,7 +526,7 @@ const HallView = ({ tableMap, unassigned, allTableNames, onAssignGuest, tableSid
           <div className="mt-3 space-y-2 text-[9px] text-white/20 leading-snug">
             <p className="text-white/25 font-semibold uppercase tracking-wider text-[8px]">Chairs</p>
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-purple-400/70 flex-shrink-0" />
+              <span className="w-2.5 h-2.5 rounded-full bg-yellow-400/70 flex-shrink-0" />
               Bride's side
             </div>
             <div className="flex items-center gap-1.5">
