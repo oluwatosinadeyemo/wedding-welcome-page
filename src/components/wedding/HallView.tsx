@@ -257,8 +257,13 @@ const HallTable = ({
   }
   const totalChairs = chairs.length;
 
-  // Name strip — all first names, no artificial cut-off
-  const nameStrip = guests.map(g => extractFirst(g.full_name)).join(" · ");
+  // Name strip — full first word per guest, no character limit
+  const nameStrip = guests.map(g => {
+    const parts = g.full_name.trim().split(/\s+/);
+    const clean = parts[0].replace(/[.,]/g, "").toLowerCase();
+    const idx = TITLE_PREFIXES.has(clean) && parts.length > 1 ? 1 : 0;
+    return parts[idx];
+  }).join(" · ");
   const stripColor = dominantSide === "bride"
     ? "rgba(253,230,138,0.88)"
     : dominantSide === "groom"
@@ -357,26 +362,33 @@ const HallTable = ({
         )}
       </div>
 
-      {/* Name strip — full names, no artificial cut-off, wraps to 2 lines max */}
+      {/* Name strip — centered on table, wraps freely, never clips */}
       {guests.length > 0 && (
         <div
-          className="absolute pointer-events-none flex justify-center"
-          style={{ top: box / 2 + cOrbit + cR + 6, left: -30, right: -30 }}
+          className="absolute pointer-events-none"
+          style={{
+            top: box / 2 + cOrbit + cR + 6,
+            left: "50%",
+            transform: "translateX(-50%)",
+            maxWidth: Math.max(box * 2.2, 200),
+          }}
         >
           <span
             style={{
-              fontSize: Math.max(6, 7.5 * scale),
+              display: "block",
+              fontSize: Math.max(6.5, 7.5 * scale),
               fontWeight: 700,
               color: stripColor,
-              background: "rgba(0,0,0,0.58)",
+              background: "rgba(0,0,0,0.60)",
               border: "1px solid rgba(255,255,255,0.07)",
               borderRadius: 5,
-              padding: "2px 7px",
+              padding: "2px 8px",
               backdropFilter: "blur(6px)",
               letterSpacing: "0.02em",
               textAlign: "center",
-              lineHeight: 1.5,
+              lineHeight: 1.6,
               wordBreak: "break-word",
+              whiteSpace: "normal",
             }}
           >
             {nameStrip}
@@ -432,7 +444,12 @@ const HallView = ({ tableMap, unassigned, allTableNames, onAssignGuest, tableSid
   const [movingGuest,   setMovingGuest]   = useState<GuestEntry | null>(null);
   const [moveInput,     setMoveInput]     = useState("");
   const [isSaving,      setIsSaving]      = useState(false);
-  const [tableScale,    setTableScale]    = useState(1.0);
+  const [tableScale,    setTableScale]    = useState<number>(() => {
+    try {
+      const raw = localStorage.getItem("wedding-hall-scale-v1");
+      return raw ? parseFloat(raw) : 1.0;
+    } catch { return 1.0; }
+  });
 
   // Add positions for any new tables that appear after mount
   useEffect(() => {
@@ -543,7 +560,11 @@ const HallView = ({ tableMap, unassigned, allTableNames, onAssignGuest, tableSid
               max={1.3}
               step={0.05}
               value={tableScale}
-              onChange={e => setTableScale(parseFloat(e.target.value))}
+              onChange={e => {
+                const v = parseFloat(e.target.value);
+                setTableScale(v);
+                try { localStorage.setItem("wedding-hall-scale-v1", String(v)); } catch {}
+              }}
               className="w-full h-1 rounded-full appearance-none cursor-pointer"
               style={{ accentColor: "rgba(139,92,246,0.8)", background: `linear-gradient(to right, rgba(139,92,246,0.6) 0%, rgba(139,92,246,0.6) ${((tableScale - 0.5) / 0.8) * 100}%, rgba(255,255,255,0.08) ${((tableScale - 0.5) / 0.8) * 100}%, rgba(255,255,255,0.08) 100%)` }}
             />
