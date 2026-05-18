@@ -247,9 +247,9 @@ const HallTable = ({
     : isFull
     ? "border-yellow-500/50"
     : dominantSide === "bride"
-    ? "border-purple-400/60"
+    ? "border-yellow-400/70"
     : dominantSide === "groom"
-    ? "border-blue-400/60"
+    ? "border-blue-400/70"
     : dominantSide === "mixed"
     ? "border-white/25"
     : "border-white/10";
@@ -257,9 +257,9 @@ const HallTable = ({
   const circleBg = isDragOver
     ? "bg-emerald-950/50"
     : dominantSide === "bride"
-    ? "bg-purple-950/40"
+    ? "bg-yellow-950/50"
     : dominantSide === "groom"
-    ? "bg-blue-950/40"
+    ? "bg-blue-950/50"
     : "bg-white/[0.035]";
 
   const glow = isDragOver
@@ -267,9 +267,9 @@ const HallTable = ({
     : isOverCap
     ? "shadow-[0_0_16px_rgba(239,68,68,0.18)]"
     : dominantSide === "bride"
-    ? "shadow-[0_0_18px_rgba(168,85,247,0.25)]"
+    ? "shadow-[0_0_20px_rgba(250,204,21,0.30)]"
     : dominantSide === "groom"
-    ? "shadow-[0_0_18px_rgba(96,165,250,0.25)]"
+    ? "shadow-[0_0_20px_rgba(96,165,250,0.30)]"
     : "";
 
   return (
@@ -329,7 +329,7 @@ const HallTable = ({
         {dominantSide && dominantSide !== "mixed" && (
           <span
             className={`text-[7px] mt-0.5 pointer-events-none uppercase tracking-widest font-semibold ${
-              dominantSide === "bride" ? "text-purple-400/70" : "text-blue-400/70"
+              dominantSide === "bride" ? "text-yellow-400/80" : "text-blue-400/80"
             }`}
           >
             {dominantSide === "bride" ? "♡ bride" : "◇ groom"}
@@ -500,11 +500,11 @@ const HallView = ({ tableMap, unassigned, allTableNames, onAssignGuest }: HallVi
             </div>
             <p className="text-white/25 font-semibold uppercase tracking-wider text-[8px] pt-1">Tables</p>
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full border-2 border-purple-400/60 bg-purple-950/40 flex-shrink-0" />
+              <span className="w-2.5 h-2.5 rounded-full border-2 border-yellow-400/70 bg-yellow-950/50 flex-shrink-0" />
               Bride's table
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full border-2 border-blue-400/60 bg-blue-950/40 flex-shrink-0" />
+              <span className="w-2.5 h-2.5 rounded-full border-2 border-blue-400/70 bg-blue-950/50 flex-shrink-0" />
               Groom's table
             </div>
             <div className="flex items-center gap-1.5">
