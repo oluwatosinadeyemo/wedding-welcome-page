@@ -140,23 +140,24 @@ const SideBadge = ({ side }: { side: string | null }) => {
 // ─── ChairDot ─────────────────────────────────────────────────────────────────
 
 const ChairDot = ({
-  index, total, side, guestName,
+  index, total, side, guestName, cR, cOrbit, box,
 }: {
   index: number; total: number; side?: string | null; guestName?: string;
+  cR: number; cOrbit: number; box: number;
 }) => {
   const angle = (index / total) * 2 * Math.PI - Math.PI / 2;
-  const cx = Math.cos(angle) * CHAIR_ORBIT + BOX / 2;
-  const cy = Math.sin(angle) * CHAIR_ORBIT + BOX / 2;
+  const cx = Math.cos(angle) * cOrbit + box / 2;
+  const cy = Math.sin(angle) * cOrbit + box / 2;
 
   return (
     <div
       title={guestName ?? ""}
       className={`absolute rounded-full pointer-events-none ${chairFill(side ?? null)}`}
       style={{
-        width: CHAIR_RADIUS * 2,
-        height: CHAIR_RADIUS * 2,
-        left: cx - CHAIR_RADIUS,
-        top: cy - CHAIR_RADIUS,
+        width: cR * 2,
+        height: cR * 2,
+        left: cx - cR,
+        top: cy - cR,
       }}
     />
   );
@@ -165,7 +166,7 @@ const ChairDot = ({
 // ─── HallTable ────────────────────────────────────────────────────────────────
 
 const HallTable = ({
-  name, guests, position, manualSide, onReposition, onSavePosition, onSelect,
+  name, guests, position, manualSide, onReposition, onSavePosition, onSelect, scale,
 }: {
   name: string;
   guests: GuestEntry[];
@@ -174,7 +175,14 @@ const HallTable = ({
   onReposition: (name: string, pos: Pos) => void;
   onSavePosition: (name: string, pos: Pos) => void;
   onSelect: () => void;
+  scale: number;
 }) => {
+  // Scaled geometry — everything derived from the scale factor
+  const tR     = TABLE_RADIUS * scale;
+  const cR     = CHAIR_RADIUS * scale;
+  const cOrbit = tR + 9 * scale + cR;
+  const box    = BOX * scale;
+
   const totalSeats = guests.reduce((s, g) => s + g.party_size, 0);
   const isOverCap = totalSeats > TABLE_CAPACITY;
   const isFull = totalSeats === TABLE_CAPACITY;
@@ -225,8 +233,8 @@ const HallTable = ({
     if (!movedRef.current && Math.hypot(dx, dy) > 5) movedRef.current = true;
     if (!movedRef.current) return;
     const next: Pos = {
-      x: Math.round(Math.max(BOX / 2, Math.min(HALL_W - BOX / 2, startPos.current.x + dx))),
-      y: Math.round(Math.max(BOX / 2, Math.min(HALL_H - BOX / 2, startPos.current.y + dy))),
+      x: Math.round(Math.max(box / 2, Math.min(HALL_W - box / 2, startPos.current.x + dx))),
+      y: Math.round(Math.max(box / 2, Math.min(HALL_H - box / 2, startPos.current.y + dy))),
     };
     lastPos.current = next;
     onReposition(name, next);
@@ -249,14 +257,8 @@ const HallTable = ({
   }
   const totalChairs = chairs.length;
 
-  // Compact name strip: first names, max 3 shown, then "+N more"
-  const MAX_STRIP_NAMES = 3;
-  const firstNames = guests.map(g => extractFirst(g.full_name));
-  const stripShown = firstNames.slice(0, MAX_STRIP_NAMES);
-  const stripExtra = firstNames.length - MAX_STRIP_NAMES;
-  const nameStrip = stripExtra > 0
-    ? stripShown.join(" · ") + ` +${stripExtra}`
-    : stripShown.join(" · ");
+  // Name strip — all first names, no artificial cut-off
+  const nameStrip = guests.map(g => extractFirst(g.full_name)).join(" · ");
   const stripColor = dominantSide === "bride"
     ? "rgba(253,230,138,0.88)"
     : dominantSide === "groom"
@@ -289,12 +291,11 @@ const HallTable = ({
       ref={setNodeRef}
       className="absolute overflow-visible"
       style={{
-        width: BOX,
-        height: BOX,
-        left: position.x - BOX / 2,
-        top:  position.y - BOX / 2,
+        width: box,
+        height: box,
+        left: position.x - box / 2,
+        top:  position.y - box / 2,
         zIndex: isDragOver ? 20 : 2,
-        transition: draggingRef.current ? "none" : undefined,
       }}
     >
       {/* Chair dots */}
@@ -305,6 +306,9 @@ const HallTable = ({
           total={totalChairs}
           side={g.side}
           guestName={g.full_name}
+          cR={cR}
+          cOrbit={cOrbit}
+          box={box}
         />
       ))}
 
@@ -312,10 +316,10 @@ const HallTable = ({
       <div
         className="absolute rounded-full flex flex-col items-center justify-center cursor-grab active:cursor-grabbing select-none"
         style={{
-          width:  TABLE_RADIUS * 2,
-          height: TABLE_RADIUS * 2,
-          left:   BOX / 2 - TABLE_RADIUS,
-          top:    BOX / 2 - TABLE_RADIUS,
+          width:  tR * 2,
+          height: tR * 2,
+          left:   box / 2 - tR,
+          top:    box / 2 - tR,
           background: tableBackground,
           boxShadow: tableBoxShadow,
           backdropFilter: "blur(8px)",
@@ -327,50 +331,52 @@ const HallTable = ({
         onPointerCancel={handlePointerUp}
       >
         <span
-          className="text-[10px] font-serif text-white/85 text-center leading-tight pointer-events-none px-2"
-          style={{ maxWidth: TABLE_RADIUS * 1.3, wordBreak: "break-word" }}
+          className="font-serif text-white/85 text-center leading-tight pointer-events-none px-1"
+          style={{ fontSize: Math.max(7, 10 * scale), maxWidth: tR * 1.4, wordBreak: "break-word" }}
         >
           {name}
         </span>
         <span
-          className={`text-[8px] mt-0.5 pointer-events-none font-semibold ${
+          className={`mt-0.5 pointer-events-none font-semibold ${
             isOverCap ? "text-red-400" : isFull ? "text-yellow-300" : "text-white/35"
           }`}
+          style={{ fontSize: Math.max(6, 8 * scale) }}
         >
           {totalSeats}/{TABLE_CAPACITY}
         </span>
         {dominantSide && dominantSide !== "mixed" && (
           <span
-            className={`text-[7px] mt-1 pointer-events-none font-bold tracking-widest ${
+            className={`mt-0.5 pointer-events-none font-bold tracking-widest ${
               dominantSide === "bride" ? "text-yellow-400" : "text-blue-400"
             }`}
+            style={{ fontSize: Math.max(5, 7 * scale) }}
           >
-            {dominantSide === "bride" ? "♡ BRIDE" : "◇ GROOM"}
+            {dominantSide === "bride" ? "♡" : "◇"}
+            {scale >= 0.75 ? (dominantSide === "bride" ? " BRIDE" : " GROOM") : ""}
           </span>
         )}
       </div>
 
-      {/* Name strip — compact label below chairs */}
+      {/* Name strip — full names, no artificial cut-off, wraps to 2 lines max */}
       {guests.length > 0 && (
         <div
           className="absolute pointer-events-none flex justify-center"
-          style={{ top: BOX / 2 + CHAIR_ORBIT + CHAIR_RADIUS + 7, left: 0, right: 0 }}
+          style={{ top: box / 2 + cOrbit + cR + 6, left: -30, right: -30 }}
         >
           <span
             style={{
-              fontSize: 7.5,
+              fontSize: Math.max(6, 7.5 * scale),
               fontWeight: 700,
               color: stripColor,
               background: "rgba(0,0,0,0.58)",
               border: "1px solid rgba(255,255,255,0.07)",
               borderRadius: 5,
               padding: "2px 7px",
-              whiteSpace: "nowrap",
               backdropFilter: "blur(6px)",
-              letterSpacing: "0.025em",
-              maxWidth: 220,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
+              letterSpacing: "0.02em",
+              textAlign: "center",
+              lineHeight: 1.5,
+              wordBreak: "break-word",
             }}
           >
             {nameStrip}
@@ -426,6 +432,7 @@ const HallView = ({ tableMap, unassigned, allTableNames, onAssignGuest, tableSid
   const [movingGuest,   setMovingGuest]   = useState<GuestEntry | null>(null);
   const [moveInput,     setMoveInput]     = useState("");
   const [isSaving,      setIsSaving]      = useState(false);
+  const [tableScale,    setTableScale]    = useState(1.0);
 
   // Add positions for any new tables that appear after mount
   useEffect(() => {
@@ -523,6 +530,29 @@ const HallView = ({ tableMap, unassigned, allTableNames, onAssignGuest, tableSid
           <p className="text-[9px] text-white/20 text-center mt-3 italic leading-snug">
             Drag a name onto<br />a table to assign
           </p>
+
+          {/* Table size slider */}
+          <div className="mt-4 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[8px] text-white/30 uppercase tracking-wider font-semibold">Table size</span>
+              <span className="text-[8px] text-white/25">{Math.round(tableScale * 100)}%</span>
+            </div>
+            <input
+              type="range"
+              min={0.5}
+              max={1.3}
+              step={0.05}
+              value={tableScale}
+              onChange={e => setTableScale(parseFloat(e.target.value))}
+              className="w-full h-1 rounded-full appearance-none cursor-pointer"
+              style={{ accentColor: "rgba(139,92,246,0.8)", background: `linear-gradient(to right, rgba(139,92,246,0.6) 0%, rgba(139,92,246,0.6) ${((tableScale - 0.5) / 0.8) * 100}%, rgba(255,255,255,0.08) ${((tableScale - 0.5) / 0.8) * 100}%, rgba(255,255,255,0.08) 100%)` }}
+            />
+            <div className="flex justify-between text-[7px] text-white/15">
+              <span>Small</span>
+              <span>Large</span>
+            </div>
+          </div>
+
           <div className="mt-3 space-y-2 text-[9px] text-white/20 leading-snug">
             <p className="text-white/25 font-semibold uppercase tracking-wider text-[8px]">Chairs</p>
             <div className="flex items-center gap-1.5">
@@ -657,6 +687,7 @@ const HallView = ({ tableMap, unassigned, allTableNames, onAssignGuest, tableSid
                   onReposition={handleReposition}
                   onSavePosition={handleSavePosition}
                   onSelect={() => setSelectedTable(name)}
+                  scale={tableScale}
                 />
               );
             })}
