@@ -439,8 +439,25 @@ const SeatingChart = () => {
           const seats = totalSeats(tableGuests);
           const isRenaming = renamingTable === tableName;
 
+          const brideSeatsCount = tableGuests
+            .filter(g => g.side?.toLowerCase().includes("bride"))
+            .reduce((s, g) => s + g.party_size, 0);
+          const groomSeatsCount = tableGuests
+            .filter(g => g.side?.toLowerCase().includes("groom"))
+            .reduce((s, g) => s + g.party_size, 0);
+          const tableSide =
+            tableGuests.length === 0 ? null
+            : brideSeatsCount > groomSeatsCount ? "bride"
+            : groomSeatsCount > brideSeatsCount ? "groom"
+            : "mixed";
+
+          const cardAccent =
+            tableSide === "bride" ? "border-l-yellow-400/70"
+            : tableSide === "groom" ? "border-l-blue-400/60"
+            : "border-l-transparent";
+
           return (
-            <div key={tableName} className="glass-card p-4 group">
+            <div key={tableName} className={`glass-card p-4 group border-l-2 ${cardAccent}`}>
               <div className="flex items-center justify-between mb-1 gap-2">
                 {isRenaming ? (
                   <div className="flex items-center gap-1.5 flex-1 min-w-0">
@@ -481,9 +498,21 @@ const SeatingChart = () => {
                     </button>
                   </div>
                 )}
-                <span className="text-xs text-muted-foreground flex-shrink-0">
-                  {tableGuests.length} guest{tableGuests.length !== 1 ? "s" : ""}
-                </span>
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  {tableSide === "bride" && (
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-yellow-400/10 text-yellow-400 border border-yellow-400/20">
+                      ♡ Bride
+                    </span>
+                  )}
+                  {tableSide === "groom" && (
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-blue-400/10 text-blue-400 border border-blue-400/20">
+                      ◇ Groom
+                    </span>
+                  )}
+                  <span className="text-xs text-muted-foreground">
+                    {tableGuests.length} guest{tableGuests.length !== 1 ? "s" : ""}
+                  </span>
+                </div>
               </div>
 
               <CapacityBar seats={seats} />
