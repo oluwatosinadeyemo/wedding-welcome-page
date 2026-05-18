@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Users, MapPin, Loader2, X, Pencil, Check, Download, Search } from "lucide-react";
+import HallView from "./HallView";
 
 const TABLE_CAPACITY = 10;
 
@@ -78,6 +79,7 @@ const SeatingChart = () => {
   const [selectedUnassigned, setSelectedUnassigned] = useState<Set<string>>(new Set());
   const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
   const [bulkAssignInput, setBulkAssignInput] = useState("");
+  const [viewMode, setViewMode] = useState<"list" | "hall">("list");
   const { toast } = useToast();
 
   const fetchGuests = useCallback(async () => {
@@ -280,6 +282,21 @@ const SeatingChart = () => {
     URL.revokeObjectURL(url);
   };
 
+  const assignGuestDirect = useCallback(async (guestId: string, tableName: string | null) => {
+    try {
+      const { error } = await (supabase.from("guests" as any) as any)
+        .update({ table_assignment: tableName })
+        .eq("id", guestId);
+      if (error) throw error;
+      setGuests(prev =>
+        prev.map(g => g.id === guestId ? { ...g, table_assignment: tableName } : g)
+      );
+      toast({ title: tableName ? `Assigned to ${tableName}` : "Removed from table" });
+    } catch (err: any) {
+      toast({ title: "Failed", description: err.message, variant: "destructive" });
+    }
+  }, [toast]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -322,14 +339,53 @@ const SeatingChart = () => {
         {unassigned.length > 0 && (
           <span className="text-yellow-500 font-medium">{unassigned.length} unassigned</span>
         )}
-        <button
-          onClick={handleExportCSV}
-          className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors border border-border/50 rounded-lg px-3 py-1.5"
-        >
-          <Download className="w-3.5 h-3.5" />
-          Export CSV
-        </button>
+        <div className="ml-auto flex items-center gap-2">
+          {/* View mode toggle */}
+          <div className="flex items-center rounded-lg border border-border/50 bg-background/40 p-0.5 text-xs">
+            <button
+              onClick={() => setViewMode("list")}
+              className={`px-2.5 py-1 rounded-md transition-colors ${
+                viewMode === "list"
+                  ? "bg-primary/20 text-primary font-medium"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              List
+            </button>
+            <button
+              onClick={() => setViewMode("hall")}
+              className={`px-2.5 py-1 rounded-md transition-colors ${
+                viewMode === "hall"
+                  ? "bg-primary/20 text-primary font-medium"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Hall View
+            </button>
+          </div>
+
+          <button
+            onClick={handleExportCSV}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors border border-border/50 rounded-lg px-3 py-1.5"
+          >
+            <Download className="w-3.5 h-3.5" />
+            Export CSV
+          </button>
+        </div>
       </div>
+
+      {/* Hall view */}
+      {viewMode === "hall" && (
+        <HallView
+          tableMap={tableMap}
+          unassigned={unassigned}
+          allTableNames={allTableNames}
+          onAssignGuest={assignGuestDirect}
+        />
+      )}
+
+      {/* List view */}
+      {viewMode === "list" && <>
 
       {/* Global search */}
       <div className="relative mb-4 max-w-sm">
@@ -527,6 +583,8 @@ const SeatingChart = () => {
           </div>
         )}
       </div>
+
+      </>}
 
       {/* Single assign dialog */}
       <Dialog open={!!selectedGuest} onOpenChange={() => setSelectedGuest(null)}>
