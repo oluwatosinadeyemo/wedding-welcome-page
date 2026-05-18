@@ -170,6 +170,19 @@ const HallTable = ({
   const isOverCap = totalSeats > TABLE_CAPACITY;
   const isFull = totalSeats === TABLE_CAPACITY;
 
+  // Determine which side dominates this table by seat count
+  const brideSeats = guests
+    .filter(g => g.side?.toLowerCase().includes("bride"))
+    .reduce((s, g) => s + g.party_size, 0);
+  const groomSeats = guests
+    .filter(g => g.side?.toLowerCase().includes("groom"))
+    .reduce((s, g) => s + g.party_size, 0);
+  const dominantSide =
+    guests.length === 0 ? null
+    : brideSeats > groomSeats ? "bride"
+    : groomSeats > brideSeats ? "groom"
+    : "mixed";
+
   const { isOver: isDragOver, setNodeRef } = useDroppable({
     id: `table::${name}`,
     data: { type: "table", tableName: name },
@@ -233,14 +246,30 @@ const HallTable = ({
     ? "border-red-500/60"
     : isFull
     ? "border-yellow-500/50"
+    : dominantSide === "bride"
+    ? "border-purple-400/60"
+    : dominantSide === "groom"
+    ? "border-blue-400/60"
+    : dominantSide === "mixed"
+    ? "border-white/25"
     : "border-white/10";
 
-  const circleBg = isDragOver ? "bg-emerald-950/50" : "bg-white/[0.035]";
+  const circleBg = isDragOver
+    ? "bg-emerald-950/50"
+    : dominantSide === "bride"
+    ? "bg-purple-950/40"
+    : dominantSide === "groom"
+    ? "bg-blue-950/40"
+    : "bg-white/[0.035]";
 
   const glow = isDragOver
     ? "shadow-[0_0_24px_rgba(52,211,153,0.22)]"
     : isOverCap
     ? "shadow-[0_0_16px_rgba(239,68,68,0.18)]"
+    : dominantSide === "bride"
+    ? "shadow-[0_0_18px_rgba(168,85,247,0.25)]"
+    : dominantSide === "groom"
+    ? "shadow-[0_0_18px_rgba(96,165,250,0.25)]"
     : "";
 
   return (
@@ -297,6 +326,15 @@ const HallTable = ({
         >
           {totalSeats}/{TABLE_CAPACITY}
         </span>
+        {dominantSide && dominantSide !== "mixed" && (
+          <span
+            className={`text-[7px] mt-0.5 pointer-events-none uppercase tracking-widest font-semibold ${
+              dominantSide === "bride" ? "text-purple-400/70" : "text-blue-400/70"
+            }`}
+          >
+            {dominantSide === "bride" ? "♡ bride" : "◇ groom"}
+          </span>
+        )}
       </div>
     </div>
   );
@@ -442,7 +480,8 @@ const HallView = ({ tableMap, unassigned, allTableNames, onAssignGuest }: HallVi
           <p className="text-[9px] text-white/20 text-center mt-3 italic leading-snug">
             Drag a name onto<br />a table to assign
           </p>
-          <div className="mt-3 space-y-1.5 text-[9px] text-white/20 leading-snug">
+          <div className="mt-3 space-y-2 text-[9px] text-white/20 leading-snug">
+            <p className="text-white/25 font-semibold uppercase tracking-wider text-[8px]">Chairs</p>
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-purple-400/70 flex-shrink-0" />
               Bride's side
@@ -458,6 +497,19 @@ const HallView = ({ tableMap, unassigned, allTableNames, onAssignGuest }: HallVi
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full border border-white/15 border-dashed flex-shrink-0" />
               Empty seat
+            </div>
+            <p className="text-white/25 font-semibold uppercase tracking-wider text-[8px] pt-1">Tables</p>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full border-2 border-purple-400/60 bg-purple-950/40 flex-shrink-0" />
+              Bride's table
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full border-2 border-blue-400/60 bg-blue-950/40 flex-shrink-0" />
+              Groom's table
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full border-2 border-white/25 bg-white/5 flex-shrink-0" />
+              Mixed
             </div>
           </div>
         </div>
