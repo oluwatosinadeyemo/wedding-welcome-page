@@ -24,10 +24,10 @@ import {
 // ─── Geometry constants ────────────────────────────────────────────────────────
 
 const TABLE_CAPACITY = 10;
-const TABLE_RADIUS = 44;       // px — inner circle radius
-const CHAIR_RADIUS = 10;       // px — each chair dot radius
-const CHAIR_ORBIT = TABLE_RADIUS + 8 + CHAIR_RADIUS; // 62px from table centre
-const BOX = 160;               // bounding box that contains table + all chairs
+const TABLE_RADIUS = 50;       // larger circle for more presence
+const CHAIR_RADIUS = 11;       // bigger chair dots
+const CHAIR_ORBIT = TABLE_RADIUS + 9 + CHAIR_RADIUS; // 70px from table centre
+const BOX = 160;               // bounding box (chairs overflow visibly)
 
 const HALL_W = 1040;
 const HALL_H = 720;
@@ -94,12 +94,22 @@ const persistPositions = (pos: Record<string, Pos>) => {
 
 // ─── Colour helpers ───────────────────────────────────────────────────────────
 
+// Vivid chair colours with strong glow so side is instantly obvious
 const chairFill = (side: string | null) => {
-  if (!side) return "bg-white/[0.07] border border-white/10";
+  if (!side) return "bg-slate-600/80 border border-slate-400/30";
   const l = side.toLowerCase();
-  if (l.includes("bride")) return "bg-purple-400/70 border border-purple-300/40 shadow-[0_0_5px_rgba(192,132,252,0.45)]";
-  if (l.includes("groom")) return "bg-blue-400/70 border border-blue-300/40 shadow-[0_0_5px_rgba(147,197,253,0.45)]";
-  return "bg-amber-400/60 border border-amber-300/35";
+  if (l.includes("bride")) return "bg-yellow-400 border-2 border-yellow-200/60 shadow-[0_0_9px_rgba(250,204,21,0.85)]";
+  if (l.includes("groom")) return "bg-blue-500 border-2 border-blue-300/60 shadow-[0_0_9px_rgba(59,130,246,0.85)]";
+  return "bg-purple-500 border-2 border-purple-300/50 shadow-[0_0_8px_rgba(168,85,247,0.75)]";
+};
+
+// Title prefixes to skip when extracting a display name
+const TITLE_PREFIXES = new Set(["mr", "mrs", "ms", "miss", "dr", "prof", "rev", "sir", "chief", "pastor", "alhaji", "alhaja"]);
+const extractFirst = (fullName: string): string => {
+  const parts = fullName.trim().split(/\s+/);
+  const clean = parts[0].replace(/[.,]/g, "").toLowerCase();
+  const idx = TITLE_PREFIXES.has(clean) && parts.length > 1 ? 1 : 0;
+  return parts[idx].slice(0, 10);
 };
 
 const sideAccentClass = (side: string | null) => {
@@ -161,22 +171,26 @@ const ChairLabel = ({
 }) => {
   if (total === 0) return null;
   const angle = (index / total) * 2 * Math.PI - Math.PI / 2;
-  const orbit = CHAIR_ORBIT + CHAIR_RADIUS + 13;
+  const orbit = CHAIR_ORBIT + CHAIR_RADIUS + 14;
   const cx = Math.cos(angle) * orbit + BOX / 2;
   const cy = Math.sin(angle) * orbit + BOX / 2;
-  const firstName = name.split(" ")[0].slice(0, 9);
   const l = side?.toLowerCase() ?? "";
   const textColor = l.includes("bride")
-    ? "text-yellow-300/80"
+    ? "text-yellow-300"
     : l.includes("groom")
-    ? "text-blue-300/80"
-    : "text-amber-300/70";
+    ? "text-blue-300"
+    : "text-purple-300";
   return (
     <div
-      className={`absolute text-[7px] whitespace-nowrap pointer-events-none leading-none font-semibold ${textColor}`}
-      style={{ left: cx, top: cy, transform: "translate(-50%,-50%)", zIndex: 3 }}
+      className="absolute pointer-events-none leading-none"
+      style={{ left: cx, top: cy, transform: "translate(-50%,-50%)", zIndex: 10 }}
     >
-      {firstName}
+      <span
+        className={`text-[7.5px] font-bold whitespace-nowrap px-[3px] py-[2px] rounded
+          bg-black/60 border border-white/10 backdrop-blur-sm ${textColor}`}
+      >
+        {extractFirst(name)}
+      </span>
     </div>
   );
 };
@@ -273,37 +287,26 @@ const HallTable = ({
     labelSeat += g.party_size;
   }
 
-  const circleBorder = isDragOver
-    ? "border-emerald-400/70"
+  // Inline styles for full control — Tailwind classes can't express rich gradients + rings
+  const tableBackground = isDragOver
+    ? "radial-gradient(circle at 38% 35%, rgba(52,211,153,0.18) 0%, rgba(4,18,12,0.97) 100%)"
+    : dominantSide === "bride"
+    ? "radial-gradient(circle at 38% 35%, rgba(250,204,21,0.16) 0%, rgba(18,14,2,0.97) 100%)"
+    : dominantSide === "groom"
+    ? "radial-gradient(circle at 38% 35%, rgba(59,130,246,0.16) 0%, rgba(2,8,22,0.97) 100%)"
+    : "radial-gradient(circle at 38% 35%, rgba(255,255,255,0.05) 0%, rgba(12,10,22,0.97) 100%)";
+
+  const tableBoxShadow = isDragOver
+    ? "0 0 0 2.5px rgba(52,211,153,0.7), 0 0 32px rgba(52,211,153,0.32)"
     : isOverCap
-    ? "border-red-500/60"
+    ? "0 0 0 2.5px rgba(239,68,68,0.7), 0 0 24px rgba(239,68,68,0.32)"
     : isFull
-    ? "border-yellow-500/50"
+    ? "0 0 0 2px rgba(250,204,21,0.55), 0 0 20px rgba(250,204,21,0.22)"
     : dominantSide === "bride"
-    ? "border-yellow-400/70"
+    ? "0 0 0 2.5px rgba(250,204,21,0.65), 0 0 30px rgba(250,204,21,0.28)"
     : dominantSide === "groom"
-    ? "border-blue-400/70"
-    : dominantSide === "mixed"
-    ? "border-white/25"
-    : "border-white/10";
-
-  const circleBg = isDragOver
-    ? "bg-emerald-950/50"
-    : dominantSide === "bride"
-    ? "bg-yellow-950/50"
-    : dominantSide === "groom"
-    ? "bg-blue-950/50"
-    : "bg-white/[0.035]";
-
-  const glow = isDragOver
-    ? "shadow-[0_0_24px_rgba(52,211,153,0.22)]"
-    : isOverCap
-    ? "shadow-[0_0_16px_rgba(239,68,68,0.18)]"
-    : dominantSide === "bride"
-    ? "shadow-[0_0_20px_rgba(250,204,21,0.30)]"
-    : dominantSide === "groom"
-    ? "shadow-[0_0_20px_rgba(96,165,250,0.30)]"
-    : "";
+    ? "0 0 0 2.5px rgba(59,130,246,0.65), 0 0 30px rgba(59,130,246,0.28)"
+    : "0 0 0 1px rgba(255,255,255,0.12)";
 
   return (
     <div
@@ -340,17 +343,18 @@ const HallTable = ({
         />
       ))}
 
-      {/* Table circle — drag handle + click opener */}
+      {/* Table circle — drag to reposition, click to open detail */}
       <div
-        className={`absolute rounded-full border-2 flex flex-col items-center justify-center
-          transition-all duration-200 cursor-grab active:cursor-grabbing select-none
-          ${circleBorder} ${circleBg} ${glow}`}
+        className="absolute rounded-full flex flex-col items-center justify-center cursor-grab active:cursor-grabbing select-none"
         style={{
           width:  TABLE_RADIUS * 2,
           height: TABLE_RADIUS * 2,
           left:   BOX / 2 - TABLE_RADIUS,
           top:    BOX / 2 - TABLE_RADIUS,
-          backdropFilter: "blur(6px)",
+          background: tableBackground,
+          boxShadow: tableBoxShadow,
+          backdropFilter: "blur(8px)",
+          transition: "box-shadow 0.25s ease, background 0.25s ease",
         }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -358,25 +362,25 @@ const HallTable = ({
         onPointerCancel={handlePointerUp}
       >
         <span
-          className="text-[10px] font-serif text-white/80 text-center leading-tight pointer-events-none px-2"
+          className="text-[10px] font-serif text-white/85 text-center leading-tight pointer-events-none px-2"
           style={{ maxWidth: TABLE_RADIUS * 1.3, wordBreak: "break-word" }}
         >
           {name}
         </span>
         <span
-          className={`text-[8px] mt-0.5 pointer-events-none font-medium ${
-            isOverCap ? "text-red-400" : isFull ? "text-yellow-400" : "text-white/30"
+          className={`text-[8px] mt-0.5 pointer-events-none font-semibold ${
+            isOverCap ? "text-red-400" : isFull ? "text-yellow-300" : "text-white/35"
           }`}
         >
           {totalSeats}/{TABLE_CAPACITY}
         </span>
         {dominantSide && dominantSide !== "mixed" && (
           <span
-            className={`text-[7px] mt-0.5 pointer-events-none uppercase tracking-widest font-semibold ${
-              dominantSide === "bride" ? "text-yellow-400/80" : "text-blue-400/80"
+            className={`text-[7px] mt-1 pointer-events-none font-bold tracking-widest ${
+              dominantSide === "bride" ? "text-yellow-400" : "text-blue-400"
             }`}
           >
-            {dominantSide === "bride" ? "♡ bride" : "◇ groom"}
+            {dominantSide === "bride" ? "♡ BRIDE" : "◇ GROOM"}
           </span>
         )}
       </div>

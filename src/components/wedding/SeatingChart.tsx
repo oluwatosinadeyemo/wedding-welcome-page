@@ -451,13 +451,29 @@ const SeatingChart = () => {
             : groomSeatsCount > brideSeatsCount ? "groom"
             : "mixed";
 
-          const cardAccent =
-            tableSide === "bride" ? "border-l-yellow-400/70"
-            : tableSide === "groom" ? "border-l-blue-400/60"
-            : "border-l-transparent";
+          const cardGlow =
+            tableSide === "bride"
+              ? "0 0 0 1.5px rgba(250,204,21,0.45), 0 0 16px rgba(250,204,21,0.10)"
+              : tableSide === "groom"
+              ? "0 0 0 1.5px rgba(59,130,246,0.45), 0 0 16px rgba(59,130,246,0.10)"
+              : undefined;
 
           return (
-            <div key={tableName} className={`glass-card p-4 group border-l-2 ${cardAccent}`}>
+            <div
+              key={tableName}
+              className="glass-card p-4 group relative overflow-hidden"
+              style={cardGlow ? { boxShadow: cardGlow } : undefined}
+            >
+              {/* Coloured top accent bar */}
+              {tableSide && tableSide !== "mixed" && (
+                <div
+                  className={`absolute top-0 left-0 right-0 h-[3px] ${
+                    tableSide === "bride"
+                      ? "bg-gradient-to-r from-yellow-400 via-yellow-400/60 to-transparent"
+                      : "bg-gradient-to-r from-blue-500 via-blue-500/60 to-transparent"
+                  }`}
+                />
+              )}
               <div className="flex items-center justify-between mb-1 gap-2">
                 {isRenaming ? (
                   <div className="flex items-center gap-1.5 flex-1 min-w-0">
