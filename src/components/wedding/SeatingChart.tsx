@@ -39,19 +39,20 @@ const sideColor = (side: string | null) => {
 const SideBadge = ({ side }: { side: string | null }) => {
   if (!side) return null;
   const lower = side.toLowerCase();
-  const cls = lower.includes("bride")
-    ? "bg-purple-500/20 text-purple-400"
+  const style = lower.includes("bride")
+    ? { background: "rgba(250,204,21,0.15)", color: "#fcd34d", border: "1px solid rgba(250,204,21,0.3)" }
     : lower.includes("groom")
-    ? "bg-blue-500/20 text-blue-400"
-    : "bg-muted/50 text-muted-foreground";
+    ? { background: "rgba(59,130,246,0.15)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.3)" }
+    : { background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.1)" };
   return (
-    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 ${cls}`}>
+    <span style={{ ...style, fontSize: 9, padding: "2px 7px", borderRadius: 9999, fontWeight: 600, flexShrink: 0 }}>
       {side}
     </span>
   );
 };
 
-const CapacityBar = ({ seats }: { seats: number }) => {
+// ─── CapacityBar ─────────────────────────────────────────────────────────────
+const CapacityBar = ({ seats, side }: { seats: number; side?: string | null }) => {
   const pct = Math.min(100, (seats / TABLE_CAPACITY) * 100);
   const isOver = seats > TABLE_CAPACITY;
   const isFull = seats === TABLE_CAPACITY;
@@ -122,6 +123,7 @@ const TableRing = ({ tableName, seats, onRename }: TableRingProps) => {
   );
 };
 
+// ─── SeatingChart ─────────────────────────────────────────────────────────────
 const SeatingChart = () => {
   const [guests, setGuests] = useState<GuestEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -135,7 +137,30 @@ const SeatingChart = () => {
   const [selectedUnassigned, setSelectedUnassigned] = useState<Set<string>>(new Set());
   const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
   const [bulkAssignInput, setBulkAssignInput] = useState("");
+  const [viewMode, setViewMode] = useState<"list" | "hall">("list");
+  const [draggingGuestId, setDraggingGuestId] = useState<string | null>(null);
+  const [tableSides, setTableSides] = useState<Record<string, "bride" | "groom">>(() => {
+    try {
+      const raw = localStorage.getItem("wedding-table-sides-v1");
+      return raw ? JSON.parse(raw) : {};
+    } catch { return {}; }
+  });
   const { toast } = useToast();
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+  const draggingGuest = draggingGuestId ? guests.find(g => g.id === draggingGuestId) ?? null : null;
+
+  const setTableSideOverride = useCallback(
+    (tableName: string, side: "bride" | "groom" | null) => {
+      setTableSides(prev => {
+        const next = { ...prev };
+        if (side === null) delete next[tableName];
+        else next[tableName] = side;
+        localStorage.setItem("wedding-table-sides-v1", JSON.stringify(next));
+        return next;
+      });
+    }, []
+  );
 
   const fetchGuests = useCallback(async () => {
     setLoading(true);
@@ -153,9 +178,7 @@ const SeatingChart = () => {
   useEffect(() => {
     const channel = supabase
       .channel("guests-seating")
-      .on("postgres_changes" as any, { event: "*", schema: "public", table: "guests" }, () => {
-        fetchGuests();
-      })
+      .on("postgres_changes" as any, { event: "*", schema: "public", table: "guests" }, () => fetchGuests())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [fetchGuests]);
@@ -174,27 +197,22 @@ const SeatingChart = () => {
   const unassigned = useMemo(() => guests.filter((g) => !g.table_assignment), [guests]);
 
   const allTableNames = useMemo(
-    () =>
-      Array.from(tableMap.keys()).sort((a, b) => {
-        const na = parseInt(a.replace(/\D/g, ""), 10);
-        const nb = parseInt(b.replace(/\D/g, ""), 10);
-        if (!isNaN(na) && !isNaN(nb)) return na - nb;
-        return a.localeCompare(b);
-      }),
+    () => Array.from(tableMap.keys()).sort((a, b) => {
+      const na = parseInt(a.replace(/\D/g, ""), 10);
+      const nb = parseInt(b.replace(/\D/g, ""), 10);
+      if (!isNaN(na) && !isNaN(nb)) return na - nb;
+      return a.localeCompare(b);
+    }),
     [tableMap]
   );
 
   const totalSeats = (gs: GuestEntry[]) => gs.reduce((s, g) => s + g.party_size, 0);
-
   const searchLower = globalSearch.toLowerCase();
-
   const filteredTableNames = globalSearch
-    ? allTableNames.filter(
-        (name) =>
-          name.toLowerCase().includes(searchLower) ||
-          tableMap.get(name)!.some((g) => g.full_name.toLowerCase().includes(searchLower))
-      )
+    ? allTableNames.filter(name => name.toLowerCase().includes(searchLower) || tableMap.get(name)!.some(g => g.full_name.toLowerCase().includes(searchLower)))
     : allTableNames;
+  const getVisibleGuests = (gs: GuestEntry[]) => globalSearch ? gs.filter(g => g.full_name.toLowerCase().includes(searchLower)) : gs;
+  const filteredUnassigned = globalSearch ? unassigned.filter(g => g.full_name.toLowerCase().includes(searchLower)) : unassigned;
 
   const getVisibleGuests = (gs: GuestEntry[]) =>
     globalSearch ? gs.filter((g) => g.full_name.toLowerCase().includes(searchLower)) : gs;
@@ -223,29 +241,20 @@ const SeatingChart = () => {
     const newTable = tableValue !== undefined ? tableValue : assignInput.trim() || null;
     try {
       const { error } = await (supabase.from("guests" as any) as any)
-        .update({ table_assignment: newTable })
-        .eq("id", selectedGuest.id);
+        .update({ table_assignment: newTable }).eq("id", selectedGuest.id);
       if (error) throw error;
-      setGuests((prev) =>
-        prev.map((g) => (g.id === selectedGuest.id ? { ...g, table_assignment: newTable } : g))
-      );
+      setGuests(prev => prev.map(g => g.id === selectedGuest.id ? { ...g, table_assignment: newTable } : g));
       toast({ title: newTable ? `Assigned to ${newTable}` : "Removed from table" });
       setSelectedGuest(null);
     } catch (err: any) {
       toast({ title: "Failed to save", description: err.message, variant: "destructive" });
-    } finally {
-      setIsSaving(false);
-    }
+    } finally { setIsSaving(false); }
   };
 
   const handleRemoveInline = async (guest: GuestEntry) => {
     try {
-      await (supabase.from("guests" as any) as any)
-        .update({ table_assignment: null })
-        .eq("id", guest.id);
-      setGuests((prev) =>
-        prev.map((g) => (g.id === guest.id ? { ...g, table_assignment: null } : g))
-      );
+      await (supabase.from("guests" as any) as any).update({ table_assignment: null }).eq("id", guest.id);
+      setGuests(prev => prev.map(g => g.id === guest.id ? { ...g, table_assignment: null } : g));
     } catch (err: any) {
       toast({ title: "Failed", description: err.message, variant: "destructive" });
     }
@@ -253,20 +262,12 @@ const SeatingChart = () => {
 
   const handleRenameTable = async () => {
     const newName = renameInput.trim();
-    if (!renamingTable || !newName || newName === renamingTable) {
-      setRenamingTable(null);
-      return;
-    }
+    if (!renamingTable || !newName || newName === renamingTable) { setRenamingTable(null); return; }
     try {
       const { error } = await (supabase.from("guests" as any) as any)
-        .update({ table_assignment: newName })
-        .eq("table_assignment", renamingTable);
+        .update({ table_assignment: newName }).eq("table_assignment", renamingTable);
       if (error) throw error;
-      setGuests((prev) =>
-        prev.map((g) =>
-          g.table_assignment === renamingTable ? { ...g, table_assignment: newName } : g
-        )
-      );
+      setGuests(prev => prev.map(g => g.table_assignment === renamingTable ? { ...g, table_assignment: newName } : g));
       toast({ title: `Renamed to "${newName}"` });
     } catch (err: any) {
       toast({ title: "Failed to rename", description: err.message, variant: "destructive" });
@@ -275,10 +276,9 @@ const SeatingChart = () => {
   };
 
   const toggleSelectGuest = (id: string) => {
-    setSelectedUnassigned((prev) => {
+    setSelectedUnassigned(prev => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
   };
@@ -290,21 +290,16 @@ const SeatingChart = () => {
     try {
       const ids = Array.from(selectedUnassigned);
       const { error } = await (supabase.from("guests" as any) as any)
-        .update({ table_assignment: tableName })
-        .in("id", ids);
+        .update({ table_assignment: tableName }).in("id", ids);
       if (error) throw error;
-      setGuests((prev) =>
-        prev.map((g) => (selectedUnassigned.has(g.id) ? { ...g, table_assignment: tableName } : g))
-      );
+      setGuests(prev => prev.map(g => selectedUnassigned.has(g.id) ? { ...g, table_assignment: tableName } : g));
       toast({ title: `${ids.length} guest${ids.length !== 1 ? "s" : ""} assigned to ${tableName}` });
       setSelectedUnassigned(new Set());
       setBulkAssignOpen(false);
       setBulkAssignInput("");
     } catch (err: any) {
       toast({ title: "Failed", description: err.message, variant: "destructive" });
-    } finally {
-      setIsSaving(false);
-    }
+    } finally { setIsSaving(false); }
   };
 
   const handleExportCSV = () => {
@@ -325,26 +320,38 @@ const SeatingChart = () => {
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url;
-    a.download = "seating-chart.csv";
-    a.click();
+    a.href = url; a.download = "seating-chart.csv"; a.click();
     URL.revokeObjectURL(url);
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
-      </div>
-    );
-  }
+  const assignGuestDirect = useCallback(async (guestId: string, tableName: string | null) => {
+    try {
+      const { error } = await (supabase.from("guests" as any) as any)
+        .update({ table_assignment: tableName }).eq("id", guestId);
+      if (error) throw error;
+      setGuests(prev => prev.map(g => g.id === guestId ? { ...g, table_assignment: tableName } : g));
+      toast({ title: tableName ? `Assigned to ${tableName}` : "Removed from table" });
+    } catch (err: any) {
+      toast({ title: "Failed", description: err.message, variant: "destructive" });
+    }
+  }, [toast]);
 
+  const handleListDragStart = useCallback((event: DragStartEvent) => {
+    setDraggingGuestId(event.active.id as string);
+  }, []);
+
+  const handleListDragEnd = useCallback(async (event: DragEndEvent) => {
+    setDraggingGuestId(null);
+    const { active, over } = event;
+    if (!over) return;
+    await assignGuestDirect(active.id as string, over.id as string);
+  }, [assignGuestDirect]);
+
+  if (loading) {
+    return <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>;
+  }
   if (guests.length === 0) {
-    return (
-      <div className="text-center py-16 text-muted-foreground">
-        No guests found. Add guests via invite codes first.
-      </div>
-    );
+    return <div className="text-center py-16 text-muted-foreground">No guests found. Add guests via invite codes first.</div>;
   }
 
   const showUnassignedPool = unassigned.length > 0 && (!globalSearch || filteredUnassigned.length > 0);
@@ -664,9 +671,7 @@ const SeatingChart = () => {
       {/* Single assign dialog */}
       <Dialog open={!!selectedGuest} onOpenChange={() => setSelectedGuest(null)}>
         <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Assign Table</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Assign Table</DialogTitle></DialogHeader>
           <div className="space-y-4 pt-2">
             <p className="text-sm text-muted-foreground">
               Assigning{" "}
@@ -684,18 +689,10 @@ const SeatingChart = () => {
               />
               {allTableNames.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-3">
-                  {allTableNames.map((t) => (
-                    <button
-                      key={t}
-                      onClick={() => setAssignInput(t)}
-                      className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
-                        assignInput === t
-                          ? "bg-primary/10 border-primary/40 text-primary"
-                          : "border-border/50 text-muted-foreground hover:border-primary/30"
-                      }`}
-                    >
-                      {t}
-                    </button>
+                  {allTableNames.map(t => (
+                    <button key={t} onClick={() => setAssignInput(t)}
+                      className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${assignInput === t ? "bg-primary/10 border-primary/40 text-primary" : "border-border/50 text-muted-foreground hover:border-primary/30"}`}
+                    >{t}</button>
                   ))}
                 </div>
               )}
@@ -732,18 +729,10 @@ const SeatingChart = () => {
             />
             {allTableNames.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
-                {allTableNames.map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => setBulkAssignInput(t)}
-                    className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
-                      bulkAssignInput === t
-                        ? "bg-primary/10 border-primary/40 text-primary"
-                        : "border-border/50 text-muted-foreground hover:border-primary/30"
-                    }`}
-                  >
-                    {t}
-                  </button>
+                {allTableNames.map(t => (
+                  <button key={t} onClick={() => setBulkAssignInput(t)}
+                    className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${bulkAssignInput === t ? "bg-primary/10 border-primary/40 text-primary" : "border-border/50 text-muted-foreground hover:border-primary/30"}`}
+                  >{t}</button>
                 ))}
               </div>
             )}
