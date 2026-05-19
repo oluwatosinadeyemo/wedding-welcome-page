@@ -10,9 +10,13 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Users, MapPin, Loader2, X, Pencil, Check, Download, Search } from "lucide-react";
+import {
+  Users, MapPin, Loader2, X, Pencil, Check, Download, Search, LayoutGrid, Table2,
+} from "lucide-react";
 
 const TABLE_CAPACITY = 10;
+// Circumference of the SVG ring circle (r = 68): 2π × 68 ≈ 427.26
+const RING_CIRCUMFERENCE = 427.26;
 
 interface GuestEntry {
   id: string;
@@ -23,6 +27,14 @@ interface GuestEntry {
   checked_in: boolean;
   rsvps: { attending: string }[] | null;
 }
+
+const sideColor = (side: string | null) => {
+  if (!side) return "bg-muted-foreground/30";
+  const l = side.toLowerCase();
+  if (l.includes("bride")) return "bg-purple-400";
+  if (l.includes("groom")) return "bg-blue-400";
+  return "bg-muted-foreground/30";
+};
 
 const SideBadge = ({ side }: { side: string | null }) => {
   if (!side) return null;
@@ -43,25 +55,69 @@ const CapacityBar = ({ seats }: { seats: number }) => {
   const pct = Math.min(100, (seats / TABLE_CAPACITY) * 100);
   const isOver = seats > TABLE_CAPACITY;
   const isFull = seats === TABLE_CAPACITY;
-  const barColor = isOver
-    ? "bg-destructive"
-    : seats >= TABLE_CAPACITY * 0.8
-    ? "bg-yellow-500"
-    : "bg-primary";
+  const barColor = isOver ? "bg-destructive" : seats >= TABLE_CAPACITY * 0.8 ? "bg-yellow-500" : "bg-primary";
   return (
     <div className="mt-2 mb-3">
       <div className="flex items-center justify-between text-xs mb-1">
         <span className={isOver ? "text-destructive font-medium" : isFull ? "text-yellow-500 font-medium" : "text-muted-foreground"}>
-          {seats} / {TABLE_CAPACITY} seats
-          {isOver ? " · over capacity" : isFull ? " · full" : ""}
+          {seats} / {TABLE_CAPACITY} seats{isOver ? " · over capacity" : isFull ? " · full" : ""}
         </span>
       </div>
       <div className="h-1.5 rounded-full bg-muted/30 overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all duration-300 ${barColor}`}
-          style={{ width: `${pct}%` }}
-        />
+        <div className={`h-full rounded-full transition-all duration-300 ${barColor}`} style={{ width: `${pct}%` }} />
       </div>
+    </div>
+  );
+};
+
+interface TableRingProps {
+  tableName: string;
+  seats: number;
+  onRename: () => void;
+}
+
+const TableRing = ({ tableName, seats, onRename }: TableRingProps) => {
+  const pct = Math.min(1, seats / TABLE_CAPACITY);
+  const isOver = seats > TABLE_CAPACITY;
+  const isFull = seats === TABLE_CAPACITY;
+  const ringColor = isOver ? "#ef4444" : seats >= TABLE_CAPACITY * 0.8 ? "#eab308" : "hsl(var(--primary))";
+  const dashOffset = RING_CIRCUMFERENCE * (1 - pct);
+
+  return (
+    <div className="relative w-36 h-36 mx-auto">
+      <svg width="144" height="144" viewBox="0 0 144 144" className="absolute inset-0">
+        {/* Track */}
+        <circle cx="72" cy="72" r="68" fill="hsl(var(--card)/0.6)" stroke="hsl(var(--border)/0.4)" strokeWidth="1.5" />
+        {/* Background ring */}
+        <circle cx="72" cy="72" r="68" fill="none" stroke="hsl(var(--muted)/0.3)" strokeWidth="5" />
+        {/* Progress ring */}
+        <circle
+          cx="72" cy="72" r="68"
+          fill="none"
+          stroke={ringColor}
+          strokeWidth="5"
+          strokeLinecap="round"
+          strokeDasharray={RING_CIRCUMFERENCE}
+          strokeDashoffset={dashOffset}
+          transform="rotate(-90 72 72)"
+          style={{ transition: "stroke-dashoffset 0.4s ease" }}
+        />
+      </svg>
+      {/* Centre content */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center px-3 text-center">
+        <span className="font-serif text-sm text-foreground leading-tight line-clamp-2">{tableName}</span>
+        <span className={`text-[11px] mt-1 font-medium ${isOver ? "text-destructive" : isFull ? "text-yellow-500" : "text-muted-foreground"}`}>
+          {seats}/{TABLE_CAPACITY}
+        </span>
+      </div>
+      {/* Rename button */}
+      <button
+        onClick={onRename}
+        aria-label={`Rename ${tableName}`}
+        className="absolute top-1 right-1 w-6 h-6 rounded-full bg-background/60 flex items-center justify-center text-muted-foreground/40 hover:text-muted-foreground transition-colors opacity-0 group-hover/hall:opacity-100"
+      >
+        <Pencil className="w-3 h-3" />
+      </button>
     </div>
   );
 };
@@ -69,6 +125,7 @@ const CapacityBar = ({ seats }: { seats: number }) => {
 const SeatingChart = () => {
   const [guests, setGuests] = useState<GuestEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<"list" | "hall">("list");
   const [selectedGuest, setSelectedGuest] = useState<GuestEntry | null>(null);
   const [assignInput, setAssignInput] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -85,17 +142,14 @@ const SeatingChart = () => {
     const { data } = await (supabase.from("guests" as any) as any)
       .select("id, full_name, party_size, side, table_assignment, checked_in, rsvps(attending)")
       .order("full_name");
-    if (data) setGuests(
-      (data as GuestEntry[]).filter((g) => g.rsvps?.[0]?.attending !== "no")
-    );
+    if (data)
+      setGuests((data as GuestEntry[]).filter((g) => g.rsvps?.[0]?.attending !== "no"));
     setLoading(false);
   }, []);
 
-  useEffect(() => {
-    fetchGuests();
-  }, [fetchGuests]);
+  useEffect(() => { fetchGuests(); }, [fetchGuests]);
 
-  // Real-time sync — any change to the guests table refreshes the view
+  // Real-time sync
   useEffect(() => {
     const channel = supabase
       .channel("guests-seating")
@@ -149,7 +203,6 @@ const SeatingChart = () => {
     ? unassigned.filter((g) => g.full_name.toLowerCase().includes(searchLower))
     : unassigned;
 
-  // Summary stats
   const brideCount = useMemo(
     () => guests.filter((g) => g.side?.toLowerCase().includes("bride")).length,
     [guests]
@@ -268,9 +321,7 @@ const SeatingChart = () => {
         g.checked_in ? "Yes" : "No",
       ]);
     }
-    const csv = rows
-      .map((r) => r.map((v) => `"${v.replace(/"/g, '""')}"`).join(","))
-      .join("\n");
+    const csv = rows.map((r) => r.map((v) => `"${v.replace(/"/g, '""')}"`).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -296,10 +347,30 @@ const SeatingChart = () => {
     );
   }
 
-  const showUnassignedPool =
-    unassigned.length > 0 && (!globalSearch || filteredUnassigned.length > 0);
-  const noResults =
-    globalSearch && filteredTableNames.length === 0 && filteredUnassigned.length === 0;
+  const showUnassignedPool = unassigned.length > 0 && (!globalSearch || filteredUnassigned.length > 0);
+  const noResults = globalSearch && filteredTableNames.length === 0 && filteredUnassigned.length === 0;
+
+  const renameInlineUI = (tableName: string) =>
+    renamingTable === tableName ? (
+      <div className="flex items-center gap-1.5 flex-1 min-w-0">
+        <Input
+          value={renameInput}
+          onChange={(e) => setRenameInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleRenameTable();
+            if (e.key === "Escape") setRenamingTable(null);
+          }}
+          className="h-7 text-sm bg-background/50 border-border/50 rounded-lg px-2"
+          autoFocus
+        />
+        <button onClick={handleRenameTable} className="text-primary hover:text-primary/80 flex-shrink-0" aria-label="Confirm rename">
+          <Check className="w-4 h-4" />
+        </button>
+        <button onClick={() => setRenamingTable(null)} className="text-muted-foreground hover:text-foreground flex-shrink-0" aria-label="Cancel rename">
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+    ) : null;
 
   return (
     <div>
@@ -313,15 +384,9 @@ const SeatingChart = () => {
           <Users className="w-4 h-4 text-primary" />
           {guests.length - unassigned.length} / {guests.length} guests assigned
         </span>
-        {brideCount > 0 && (
-          <span className="text-purple-400 font-medium">{brideCount} bride's side</span>
-        )}
-        {groomCount > 0 && (
-          <span className="text-blue-400 font-medium">{groomCount} groom's side</span>
-        )}
-        {unassigned.length > 0 && (
-          <span className="text-yellow-500 font-medium">{unassigned.length} unassigned</span>
-        )}
+        {brideCount > 0 && <span className="text-purple-400 font-medium">{brideCount} bride's side</span>}
+        {groomCount > 0 && <span className="text-blue-400 font-medium">{groomCount} groom's side</span>}
+        {unassigned.length > 0 && <span className="text-yellow-500 font-medium">{unassigned.length} unassigned</span>}
         <button
           onClick={handleExportCSV}
           className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors border border-border/50 rounded-lg px-3 py-1.5"
@@ -331,24 +396,54 @@ const SeatingChart = () => {
         </button>
       </div>
 
-      {/* Global search */}
-      <div className="relative mb-4 max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-        <Input
-          placeholder="Search all guests..."
-          value={globalSearch}
-          onChange={(e) => setGlobalSearch(e.target.value)}
-          className="pl-9 pr-9 bg-background/50 border-border/50 rounded-xl"
-        />
-        {globalSearch && (
+      {/* Controls row: search + view toggle */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+          <Input
+            placeholder="Search all guests..."
+            value={globalSearch}
+            onChange={(e) => setGlobalSearch(e.target.value)}
+            className="pl-9 pr-9 bg-background/50 border-border/50 rounded-xl"
+          />
+          {globalSearch && (
+            <button
+              onClick={() => setGlobalSearch("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label="Clear search"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+
+        {/* View toggle */}
+        <div className="flex items-center rounded-lg border border-border/50 overflow-hidden">
           <button
-            onClick={() => setGlobalSearch("")}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            aria-label="Clear search"
+            onClick={() => setViewMode("list")}
+            aria-label="List view"
+            className={`px-3 py-2 flex items-center gap-1.5 text-xs transition-colors ${
+              viewMode === "list"
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
           >
-            <X className="w-4 h-4" />
+            <LayoutGrid className="w-3.5 h-3.5" />
+            List
           </button>
-        )}
+          <button
+            onClick={() => setViewMode("hall")}
+            aria-label="Hall view"
+            className={`px-3 py-2 flex items-center gap-1.5 text-xs transition-colors border-l border-border/50 ${
+              viewMode === "hall"
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Table2 className="w-3.5 h-3.5" />
+            Hall
+          </button>
+        </div>
       </div>
 
       {/* Bulk assign bar */}
@@ -357,176 +452,214 @@ const SeatingChart = () => {
           <span className="text-sm text-foreground font-medium">
             {selectedUnassigned.size} guest{selectedUnassigned.size !== 1 ? "s" : ""} selected
           </span>
-          <Button
-            size="sm"
-            onClick={() => setBulkAssignOpen(true)}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground ml-auto"
-          >
+          <Button size="sm" onClick={() => setBulkAssignOpen(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground ml-auto">
             Assign to table
           </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => setSelectedUnassigned(new Set())}
-            className="text-muted-foreground"
-          >
+          <Button size="sm" variant="ghost" onClick={() => setSelectedUnassigned(new Set())} className="text-muted-foreground">
             Clear
           </Button>
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {/* Assigned tables */}
-        {filteredTableNames.map((tableName) => {
-          const tableGuests = tableMap.get(tableName)!;
-          const visibleGuests = getVisibleGuests(tableGuests);
-          const seats = totalSeats(tableGuests);
-          const isRenaming = renamingTable === tableName;
+      {/* ── LIST VIEW ── */}
+      {viewMode === "list" && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filteredTableNames.map((tableName) => {
+            const tableGuests = tableMap.get(tableName)!;
+            const visibleGuests = getVisibleGuests(tableGuests);
+            const seats = totalSeats(tableGuests);
+            const isRenaming = renamingTable === tableName;
 
-          return (
-            <div key={tableName} className="glass-card p-4 group">
-              <div className="flex items-center justify-between mb-1 gap-2">
-                {isRenaming ? (
-                  <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                    <Input
-                      value={renameInput}
-                      onChange={(e) => setRenameInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") handleRenameTable();
-                        if (e.key === "Escape") setRenamingTable(null);
-                      }}
-                      className="h-7 text-sm bg-background/50 border-border/50 rounded-lg px-2"
-                      autoFocus
-                    />
-                    <button
-                      onClick={handleRenameTable}
-                      className="text-primary hover:text-primary/80 flex-shrink-0"
-                      aria-label="Confirm rename"
-                    >
-                      <Check className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => setRenamingTable(null)}
-                      className="text-muted-foreground hover:text-foreground flex-shrink-0"
-                      aria-label="Cancel rename"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <h3 className="font-serif text-base text-foreground truncate">{tableName}</h3>
-                    <button
-                      onClick={() => { setRenamingTable(tableName); setRenameInput(tableName); }}
-                      className="text-muted-foreground/0 group-hover:text-muted-foreground/50 hover:!text-muted-foreground flex-shrink-0 transition-colors"
-                      aria-label={`Rename ${tableName}`}
-                    >
-                      <Pencil className="w-3 h-3" />
-                    </button>
-                  </div>
-                )}
-                <span className="text-xs text-muted-foreground flex-shrink-0">
-                  {tableGuests.length} guest{tableGuests.length !== 1 ? "s" : ""}
-                </span>
-              </div>
+            return (
+              <div key={tableName} className="glass-card p-4 group">
+                <div className="flex items-center justify-between mb-1 gap-2">
+                  {isRenaming ? (
+                    renameInlineUI(tableName)
+                  ) : (
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <h3 className="font-serif text-base text-foreground truncate">{tableName}</h3>
+                      <button
+                        onClick={() => { setRenamingTable(tableName); setRenameInput(tableName); }}
+                        className="text-muted-foreground/0 group-hover:text-muted-foreground/50 hover:!text-muted-foreground flex-shrink-0 transition-colors"
+                        aria-label={`Rename ${tableName}`}
+                      >
+                        <Pencil className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+                  <span className="text-xs text-muted-foreground flex-shrink-0">
+                    {tableGuests.length} guest{tableGuests.length !== 1 ? "s" : ""}
+                  </span>
+                </div>
 
-              <CapacityBar seats={seats} />
+                <CapacityBar seats={seats} />
 
-              <div className="space-y-1.5">
-                {visibleGuests.map((g) => (
-                  <div
-                    key={g.id}
-                    className="flex items-center justify-between gap-2 py-1.5 px-2 rounded-lg bg-background/40 group/row"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <p className="text-sm text-foreground truncate">{g.full_name}</p>
-                        <SideBadge side={g.side} />
+                <div className="space-y-1.5">
+                  {visibleGuests.map((g) => (
+                    <div key={g.id} className="flex items-center justify-between gap-2 py-1.5 px-2 rounded-lg bg-background/40 group/row">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="text-sm text-foreground truncate">{g.full_name}</p>
+                          <SideBadge side={g.side} />
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {g.party_size > 1 ? `Party of ${g.party_size}` : "1 seat"}
+                          {g.checked_in ? " · ✓ checked in" : ""}
+                        </p>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {g.party_size > 1 ? `Party of ${g.party_size}` : "1 seat"}
-                        {g.checked_in ? " · ✓ checked in" : ""}
+                      <div className="flex gap-1.5 flex-shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity">
+                        <button onClick={() => openAssign(g)} className="text-xs text-primary hover:underline">Move</button>
+                        <button onClick={() => handleRemoveInline(g)} className="text-destructive hover:text-destructive/70" aria-label="Remove from table">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  {globalSearch && visibleGuests.length === 0 && (
+                    <p className="text-xs text-muted-foreground text-center py-1 italic">No match in this table</p>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Unassigned pool — list view */}
+          {showUnassignedPool && <UnassignedPool
+            unassigned={unassigned}
+            filteredUnassigned={filteredUnassigned}
+            globalSearch={globalSearch}
+            selectedUnassigned={selectedUnassigned}
+            toggleSelectGuest={toggleSelectGuest}
+            openAssign={openAssign}
+          />}
+
+          {noResults && (
+            <div className="col-span-full text-center py-12 text-muted-foreground">
+              No guests found for &ldquo;{globalSearch}&rdquo;
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── HALL VIEW ── */}
+      {viewMode === "hall" && (
+        <div>
+          {/* Legend */}
+          <div className="flex items-center gap-4 mb-6 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-purple-400 inline-block" /> Bride's side</span>
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-blue-400 inline-block" /> Groom's side</span>
+            <span className="flex items-center gap-1.5"><span className="text-primary font-bold">✓</span> Checked in</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredTableNames.map((tableName) => {
+              const tableGuests = tableMap.get(tableName)!;
+              const visibleGuests = getVisibleGuests(tableGuests);
+              const seats = totalSeats(tableGuests);
+              const isRenaming = renamingTable === tableName;
+
+              return (
+                <div key={tableName} className="group/hall">
+                  {/* Round table ring */}
+                  {isRenaming ? (
+                    <div className="flex items-center justify-center gap-2 mb-3 px-4">
+                      {renameInlineUI(tableName)}
+                    </div>
+                  ) : (
+                    <TableRing
+                      tableName={tableName}
+                      seats={seats}
+                      onRename={() => { setRenamingTable(tableName); setRenameInput(tableName); }}
+                    />
+                  )}
+
+                  {/* Guest name list */}
+                  <div className="mt-4 glass-card p-4 space-y-0 divide-y divide-border/30">
+                    {visibleGuests.length === 0 ? (
+                      <p className="text-xs text-muted-foreground text-center py-2 italic">
+                        {globalSearch ? "No match" : "No guests assigned"}
                       </p>
+                    ) : (
+                      visibleGuests.map((g) => (
+                        <div
+                          key={g.id}
+                          className="flex items-center gap-2.5 py-2 group/row"
+                        >
+                          <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 mt-0.5 ${sideColor(g.side)}`} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-foreground font-medium leading-snug">
+                              {g.full_name}
+                              {g.party_size > 1 && (
+                                <span className="text-muted-foreground font-normal"> +{g.party_size - 1}</span>
+                              )}
+                              {g.checked_in && (
+                                <span className="text-primary font-medium ml-1.5 text-xs">✓</span>
+                              )}
+                            </p>
+                            {g.side && <p className="text-[11px] text-muted-foreground leading-none mt-0.5">{g.side}</p>}
+                          </div>
+                          <div className="flex gap-1.5 flex-shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity">
+                            <button onClick={() => openAssign(g)} className="text-[11px] text-primary hover:underline">Move</button>
+                            <button onClick={() => handleRemoveInline(g)} className="text-destructive hover:text-destructive/70" aria-label="Remove from table">
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+
+            {noResults && (
+              <div className="col-span-full text-center py-12 text-muted-foreground">
+                No guests found for &ldquo;{globalSearch}&rdquo;
+              </div>
+            )}
+          </div>
+
+          {/* Unassigned pool — hall view (flat list below) */}
+          {showUnassignedPool && (
+            <div className="mt-10">
+              <h3 className="font-serif text-base text-yellow-500 mb-3 flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-yellow-500/40 border border-yellow-500/60 inline-block" />
+                Unassigned guests ({unassigned.length})
+              </h3>
+              <div className="glass-card p-4 border-yellow-500/20 divide-y divide-border/30">
+                {filteredUnassigned.map((g) => (
+                  <div key={g.id} className="flex items-center gap-2.5 py-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedUnassigned.has(g.id)}
+                      onChange={() => toggleSelectGuest(g.id)}
+                      className="w-4 h-4 rounded accent-primary flex-shrink-0 cursor-pointer"
+                      aria-label={`Select ${g.full_name}`}
+                    />
+                    <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${sideColor(g.side)}`} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-foreground font-medium">
+                        {g.full_name}
+                        {g.party_size > 1 && <span className="text-muted-foreground font-normal"> +{g.party_size - 1}</span>}
+                      </p>
+                      {g.side && <p className="text-[11px] text-muted-foreground">{g.side}</p>}
                     </div>
-                    <div className="flex gap-1.5 flex-shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity">
-                      <button
-                        onClick={() => openAssign(g)}
-                        className="text-xs text-primary hover:underline"
-                      >
-                        Move
-                      </button>
-                      <button
-                        onClick={() => handleRemoveInline(g)}
-                        className="text-destructive hover:text-destructive/70"
-                        aria-label="Remove from table"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => openAssign(g)}
+                      className="flex-shrink-0 text-xs px-2.5 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                    >
+                      Assign
+                    </button>
                   </div>
                 ))}
-                {globalSearch && visibleGuests.length === 0 && (
-                  <p className="text-xs text-muted-foreground text-center py-1 italic">
-                    No match in this table
-                  </p>
+                {filteredUnassigned.length === 0 && globalSearch && (
+                  <p className="text-xs text-muted-foreground text-center py-2">No match</p>
                 )}
               </div>
             </div>
-          );
-        })}
-
-        {/* Unassigned pool */}
-        {showUnassignedPool && (
-          <div className="glass-card p-4 border-yellow-500/20">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-serif text-base text-yellow-500">Unassigned</h3>
-              <span className="text-xs text-muted-foreground">
-                {unassigned.length} guest{unassigned.length !== 1 ? "s" : ""}
-              </span>
-            </div>
-            <div className="space-y-1.5">
-              {filteredUnassigned.map((g) => (
-                <div
-                  key={g.id}
-                  className="flex items-center gap-2 py-1.5 px-2 rounded-lg bg-background/40"
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedUnassigned.has(g.id)}
-                    onChange={() => toggleSelectGuest(g.id)}
-                    className="w-4 h-4 rounded accent-primary flex-shrink-0 cursor-pointer"
-                    aria-label={`Select ${g.full_name}`}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <p className="text-sm text-foreground truncate">{g.full_name}</p>
-                      <SideBadge side={g.side} />
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {g.party_size > 1 ? `Party of ${g.party_size}` : "1 seat"}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => openAssign(g)}
-                    className="flex-shrink-0 text-xs px-2.5 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-                  >
-                    Assign
-                  </button>
-                </div>
-              ))}
-              {filteredUnassigned.length === 0 && globalSearch && (
-                <p className="text-xs text-muted-foreground text-center py-2">No match</p>
-              )}
-            </div>
-          </div>
-        )}
-
-        {noResults && (
-          <div className="col-span-full text-center py-12 text-muted-foreground">
-            No guests found for &ldquo;{globalSearch}&rdquo;
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       {/* Single assign dialog */}
       <Dialog open={!!selectedGuest} onOpenChange={() => setSelectedGuest(null)}>
@@ -538,18 +671,14 @@ const SeatingChart = () => {
             <p className="text-sm text-muted-foreground">
               Assigning{" "}
               <span className="text-foreground font-medium">{selectedGuest?.full_name}</span>
-              {selectedGuest && selectedGuest.party_size > 1
-                ? ` (party of ${selectedGuest.party_size})`
-                : ""}
+              {selectedGuest && selectedGuest.party_size > 1 ? ` (party of ${selectedGuest.party_size})` : ""}
             </p>
             <div>
               <Input
                 placeholder="Table name or number (e.g. Table 1)"
                 value={assignInput}
                 onChange={(e) => setAssignInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && assignInput.trim()) handleAssign();
-                }}
+                onKeyDown={(e) => { if (e.key === "Enter" && assignInput.trim()) handleAssign(); }}
                 className="bg-background/50 border-border/50 rounded-xl"
                 autoFocus
               />
@@ -574,29 +703,12 @@ const SeatingChart = () => {
           </div>
           <DialogFooter className="gap-2 pt-2">
             {selectedGuest?.table_assignment && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleAssign(null)}
-                disabled={isSaving}
-                className="text-muted-foreground mr-auto"
-              >
+              <Button variant="ghost" size="sm" onClick={() => handleAssign(null)} disabled={isSaving} className="text-muted-foreground mr-auto">
                 Remove from table
               </Button>
             )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setSelectedGuest(null)}
-              className="border-border/50"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => handleAssign()}
-              disabled={isSaving || !assignInput.trim()}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
-            >
+            <Button variant="outline" size="sm" onClick={() => setSelectedGuest(null)} className="border-border/50">Cancel</Button>
+            <Button onClick={() => handleAssign()} disabled={isSaving || !assignInput.trim()} className="bg-primary hover:bg-primary/90 text-primary-foreground">
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Assign"}
             </Button>
           </DialogFooter>
@@ -607,18 +719,14 @@ const SeatingChart = () => {
       <Dialog open={bulkAssignOpen} onOpenChange={setBulkAssignOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>
-              Assign {selectedUnassigned.size} Guest{selectedUnassigned.size !== 1 ? "s" : ""}
-            </DialogTitle>
+            <DialogTitle>Assign {selectedUnassigned.size} Guest{selectedUnassigned.size !== 1 ? "s" : ""}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
             <Input
               placeholder="Table name or number (e.g. Table 1)"
               value={bulkAssignInput}
               onChange={(e) => setBulkAssignInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && bulkAssignInput.trim()) handleBulkAssign();
-              }}
+              onKeyDown={(e) => { if (e.key === "Enter" && bulkAssignInput.trim()) handleBulkAssign(); }}
               className="bg-background/50 border-border/50 rounded-xl"
               autoFocus
             />
@@ -641,19 +749,8 @@ const SeatingChart = () => {
             )}
           </div>
           <DialogFooter className="gap-2 pt-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setBulkAssignOpen(false)}
-              className="border-border/50"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleBulkAssign}
-              disabled={isSaving || !bulkAssignInput.trim()}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
-            >
+            <Button variant="outline" size="sm" onClick={() => setBulkAssignOpen(false)} className="border-border/50">Cancel</Button>
+            <Button onClick={handleBulkAssign} disabled={isSaving || !bulkAssignInput.trim()} className="bg-primary hover:bg-primary/90 text-primary-foreground">
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Assign"}
             </Button>
           </DialogFooter>
@@ -662,5 +759,62 @@ const SeatingChart = () => {
     </div>
   );
 };
+
+// Extracted to avoid repetition between list and hall views
+const UnassignedPool = ({
+  unassigned,
+  filteredUnassigned,
+  globalSearch,
+  selectedUnassigned,
+  toggleSelectGuest,
+  openAssign,
+}: {
+  unassigned: GuestEntry[];
+  filteredUnassigned: GuestEntry[];
+  globalSearch: string;
+  selectedUnassigned: Set<string>;
+  toggleSelectGuest: (id: string) => void;
+  openAssign: (g: GuestEntry) => void;
+}) => (
+  <div className="glass-card p-4 border-yellow-500/20">
+    <div className="flex items-center justify-between mb-3">
+      <h3 className="font-serif text-base text-yellow-500">Unassigned</h3>
+      <span className="text-xs text-muted-foreground">
+        {unassigned.length} guest{unassigned.length !== 1 ? "s" : ""}
+      </span>
+    </div>
+    <div className="space-y-1.5">
+      {filteredUnassigned.map((g) => (
+        <div key={g.id} className="flex items-center gap-2 py-1.5 px-2 rounded-lg bg-background/40">
+          <input
+            type="checkbox"
+            checked={selectedUnassigned.has(g.id)}
+            onChange={() => toggleSelectGuest(g.id)}
+            className="w-4 h-4 rounded accent-primary flex-shrink-0 cursor-pointer"
+            aria-label={`Select ${g.full_name}`}
+          />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <p className="text-sm text-foreground">{g.full_name}</p>
+              <SideBadge side={g.side} />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {g.party_size > 1 ? `Party of ${g.party_size}` : "1 seat"}
+            </p>
+          </div>
+          <button
+            onClick={() => openAssign(g)}
+            className="flex-shrink-0 text-xs px-2.5 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+          >
+            Assign
+          </button>
+        </div>
+      ))}
+      {filteredUnassigned.length === 0 && globalSearch && (
+        <p className="text-xs text-muted-foreground text-center py-2">No match</p>
+      )}
+    </div>
+  </div>
+);
 
 export default SeatingChart;
