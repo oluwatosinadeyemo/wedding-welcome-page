@@ -362,34 +362,33 @@ const HallTable = ({
         )}
       </div>
 
-      {/* Name strip — bounded width so it wraps and never overflows the hall edge */}
+      {/* Name strip — constrained to the bounding box so it never overflows hall edges */}
       {guests.length > 0 && (
         <div
           className="absolute pointer-events-none"
           style={{
-            top: box / 2 + cOrbit + cR + 6,
-            left: "50%",
-            transform: "translateX(-50%)",
-            width: Math.max(180, box * 1.6),
+            top: box / 2 + cOrbit + cR + 4,
+            left: 0,
+            width: box,
             textAlign: "center",
           }}
         >
           <span
             style={{
               display: "inline-block",
+              maxWidth: "100%",
               fontSize: Math.max(6.5, 7.5 * scale),
-              fontWeight: 700,
+              fontWeight: 600,
               color: stripColor,
-              background: "rgba(0,0,0,0.72)",
-              border: "1px solid rgba(255,255,255,0.08)",
+              background: "rgba(0,0,0,0.78)",
+              border: "1px solid rgba(255,255,255,0.07)",
               borderRadius: 5,
-              padding: "3px 8px",
+              padding: "3px 6px",
               backdropFilter: "blur(6px)",
-              letterSpacing: "0.02em",
+              letterSpacing: "0.01em",
               whiteSpace: "normal",
               wordBreak: "break-word",
-              lineHeight: 1.5,
-              maxWidth: "100%",
+              lineHeight: 1.6,
             }}
           >
             {nameStrip}
