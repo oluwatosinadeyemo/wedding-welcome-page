@@ -146,44 +146,58 @@ const getInitials = (fullName: string): string => {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 };
 
+const chairCompanionFill = (side: string | null) => {
+  if (!side) return "border border-dashed border-slate-400/50 bg-slate-700/50";
+  const l = side.toLowerCase();
+  if (l.includes("bride")) return "border border-dashed border-yellow-400/70 bg-yellow-900/40";
+  if (l.includes("groom")) return "border border-dashed border-blue-400/70 bg-blue-900/40";
+  return "border border-dashed border-purple-400/60 bg-purple-900/40";
+};
+
 const ChairDot = ({
-  index, total, side, guestName, cR, cOrbit, box,
+  index, total, side, guestName, isPrimary, cR, cOrbit, box,
 }: {
   index: number; total: number; side?: string | null; guestName?: string;
-  cR: number; cOrbit: number; box: number;
+  isPrimary: boolean; cR: number; cOrbit: number; box: number;
 }) => {
   const angle = (index / total) * 2 * Math.PI - Math.PI / 2;
   const cx = Math.cos(angle) * cOrbit + box / 2;
   const cy = Math.sin(angle) * cOrbit + box / 2;
-  const initials = guestName ? getInitials(guestName) : "";
   const fontSize = Math.max(5, cR * 0.72);
+  const label = isPrimary
+    ? (guestName ? getInitials(guestName) : "")
+    : "+";
+  const tooltipText = isPrimary
+    ? (guestName ?? "")
+    : guestName ? `+1 guest of ${guestName}` : "";
 
   return (
     <div
-      title={guestName ?? ""}
-      className={`absolute rounded-full pointer-events-none flex items-center justify-center ${chairFill(side ?? null)}`}
+      title={tooltipText}
+      className={`absolute rounded-full pointer-events-none flex items-center justify-center ${
+        isPrimary ? chairFill(side ?? null) : chairCompanionFill(side ?? null)
+      }`}
       style={{
         width: cR * 2,
         height: cR * 2,
         left: cx - cR,
         top: cy - cR,
+        opacity: isPrimary ? 1 : 0.75,
       }}
     >
-      {initials && (
-        <span
-          style={{
-            fontSize,
-            fontWeight: 700,
-            color: "rgba(255,255,255,0.92)",
-            lineHeight: 1,
-            letterSpacing: "-0.02em",
-            textShadow: "0 1px 2px rgba(0,0,0,0.6)",
-            userSelect: "none",
-          }}
-        >
-          {initials}
-        </span>
-      )}
+      <span
+        style={{
+          fontSize,
+          fontWeight: isPrimary ? 700 : 600,
+          color: isPrimary ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.65)",
+          lineHeight: 1,
+          letterSpacing: "-0.02em",
+          textShadow: "0 1px 2px rgba(0,0,0,0.6)",
+          userSelect: "none",
+        }}
+      >
+        {label}
+      </span>
     </div>
   );
 };
@@ -275,10 +289,12 @@ const HallTable = ({
     }
   };
 
-  // One chair per actual seat — dynamic count, no fixed maximum
-  const chairs: GuestEntry[] = [];
+  // One chair per actual seat — first seat is the named guest, extras are companions
+  const chairs: { guest: GuestEntry; isPrimary: boolean }[] = [];
   for (const g of guests) {
-    for (let p = 0; p < g.party_size; p++) chairs.push(g);
+    for (let p = 0; p < g.party_size; p++) {
+      chairs.push({ guest: g, isPrimary: p === 0 });
+    }
   }
   const totalChairs = chairs.length;
 
@@ -317,13 +333,14 @@ const HallTable = ({
       }}
     >
       {/* Chair dots */}
-      {chairs.map((g, i) => (
+      {chairs.map(({ guest: g, isPrimary }, i) => (
         <ChairDot
           key={i}
           index={i}
           total={totalChairs}
           side={g.side}
           guestName={g.full_name}
+          isPrimary={isPrimary}
           cR={cR}
           cOrbit={cOrbit}
           box={box}
