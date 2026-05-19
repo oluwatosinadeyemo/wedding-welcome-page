@@ -139,6 +139,13 @@ const SideBadge = ({ side }: { side: string | null }) => {
 
 // ─── ChairDot ─────────────────────────────────────────────────────────────────
 
+const getInitials = (fullName: string): string => {
+  const parts = fullName.trim().split(/\s+/).filter(p => !TITLE_PREFIXES.has(p.replace(/[.,]/g, "").toLowerCase()));
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+};
+
 const ChairDot = ({
   index, total, side, guestName, cR, cOrbit, box,
 }: {
@@ -148,18 +155,36 @@ const ChairDot = ({
   const angle = (index / total) * 2 * Math.PI - Math.PI / 2;
   const cx = Math.cos(angle) * cOrbit + box / 2;
   const cy = Math.sin(angle) * cOrbit + box / 2;
+  const initials = guestName ? getInitials(guestName) : "";
+  const fontSize = Math.max(5, cR * 0.72);
 
   return (
     <div
       title={guestName ?? ""}
-      className={`absolute rounded-full pointer-events-none ${chairFill(side ?? null)}`}
+      className={`absolute rounded-full pointer-events-none flex items-center justify-center ${chairFill(side ?? null)}`}
       style={{
         width: cR * 2,
         height: cR * 2,
         left: cx - cR,
         top: cy - cR,
       }}
-    />
+    >
+      {initials && (
+        <span
+          style={{
+            fontSize,
+            fontWeight: 700,
+            color: "rgba(255,255,255,0.92)",
+            lineHeight: 1,
+            letterSpacing: "-0.02em",
+            textShadow: "0 1px 2px rgba(0,0,0,0.6)",
+            userSelect: "none",
+          }}
+        >
+          {initials}
+        </span>
+      )}
+    </div>
   );
 };
 
@@ -257,18 +282,6 @@ const HallTable = ({
   }
   const totalChairs = chairs.length;
 
-  // Name strip — full first word per guest, no character limit
-  const nameStrip = guests.map(g => {
-    const parts = g.full_name.trim().split(/\s+/);
-    const clean = parts[0].replace(/[.,]/g, "").toLowerCase();
-    const idx = TITLE_PREFIXES.has(clean) && parts.length > 1 ? 1 : 0;
-    return parts[idx];
-  }).join(" · ");
-  const stripColor = dominantSide === "bride"
-    ? "rgba(253,230,138,0.88)"
-    : dominantSide === "groom"
-    ? "rgba(147,197,253,0.88)"
-    : "rgba(255,255,255,0.62)";
 
   // Inline styles for full control — Tailwind classes can't express rich gradients + rings
   const tableBackground = isDragOver
@@ -362,39 +375,6 @@ const HallTable = ({
         )}
       </div>
 
-      {/* Name strip — constrained to the bounding box so it never overflows hall edges */}
-      {guests.length > 0 && (
-        <div
-          className="absolute pointer-events-none"
-          style={{
-            top: box / 2 + cOrbit + cR + 4,
-            left: 0,
-            width: box,
-            textAlign: "center",
-          }}
-        >
-          <span
-            style={{
-              display: "inline-block",
-              maxWidth: "100%",
-              fontSize: Math.max(6.5, 7.5 * scale),
-              fontWeight: 600,
-              color: stripColor,
-              background: "rgba(0,0,0,0.78)",
-              border: "1px solid rgba(255,255,255,0.07)",
-              borderRadius: 5,
-              padding: "3px 6px",
-              backdropFilter: "blur(6px)",
-              letterSpacing: "0.01em",
-              whiteSpace: "normal",
-              wordBreak: "break-word",
-              lineHeight: 1.6,
-            }}
-          >
-            {nameStrip}
-          </span>
-        </div>
-      )}
     </div>
   );
 };
