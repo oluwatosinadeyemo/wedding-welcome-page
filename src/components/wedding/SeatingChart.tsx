@@ -13,10 +13,18 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Users, MapPin, Loader2, X, Pencil, Check, Download, Search, LayoutGrid, Table2,
 } from "lucide-react";
+import {
+  DndContext,
+  DragEndEvent,
+  DragStartEvent,
+  DragOverlay,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import HallView from "./HallView";
 
 const TABLE_CAPACITY = 10;
-// Circumference of the SVG ring circle (r = 68): 2π × 68 ≈ 427.26
-const RING_CIRCUMFERENCE = 427.26;
 
 interface GuestEntry {
   id: string;
@@ -71,58 +79,6 @@ const CapacityBar = ({ seats, side }: { seats: number; side?: string | null }) =
   );
 };
 
-interface TableRingProps {
-  tableName: string;
-  seats: number;
-  onRename: () => void;
-}
-
-const TableRing = ({ tableName, seats, onRename }: TableRingProps) => {
-  const pct = Math.min(1, seats / TABLE_CAPACITY);
-  const isOver = seats > TABLE_CAPACITY;
-  const isFull = seats === TABLE_CAPACITY;
-  const ringColor = isOver ? "#ef4444" : seats >= TABLE_CAPACITY * 0.8 ? "#eab308" : "hsl(var(--primary))";
-  const dashOffset = RING_CIRCUMFERENCE * (1 - pct);
-
-  return (
-    <div className="relative w-36 h-36 mx-auto">
-      <svg width="144" height="144" viewBox="0 0 144 144" className="absolute inset-0">
-        {/* Track */}
-        <circle cx="72" cy="72" r="68" fill="hsl(var(--card)/0.6)" stroke="hsl(var(--border)/0.4)" strokeWidth="1.5" />
-        {/* Background ring */}
-        <circle cx="72" cy="72" r="68" fill="none" stroke="hsl(var(--muted)/0.3)" strokeWidth="5" />
-        {/* Progress ring */}
-        <circle
-          cx="72" cy="72" r="68"
-          fill="none"
-          stroke={ringColor}
-          strokeWidth="5"
-          strokeLinecap="round"
-          strokeDasharray={RING_CIRCUMFERENCE}
-          strokeDashoffset={dashOffset}
-          transform="rotate(-90 72 72)"
-          style={{ transition: "stroke-dashoffset 0.4s ease" }}
-        />
-      </svg>
-      {/* Centre content */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center px-3 text-center">
-        <span className="font-serif text-sm text-foreground leading-tight line-clamp-2">{tableName}</span>
-        <span className={`text-[11px] mt-1 font-medium ${isOver ? "text-destructive" : isFull ? "text-yellow-500" : "text-muted-foreground"}`}>
-          {seats}/{TABLE_CAPACITY}
-        </span>
-      </div>
-      {/* Rename button */}
-      <button
-        onClick={onRename}
-        aria-label={`Rename ${tableName}`}
-        className="absolute top-1 right-1 w-6 h-6 rounded-full bg-background/60 flex items-center justify-center text-muted-foreground/40 hover:text-muted-foreground transition-colors opacity-0 group-hover/hall:opacity-100"
-      >
-        <Pencil className="w-3 h-3" />
-      </button>
-    </div>
-  );
-};
-
 // ─── SeatingChart ─────────────────────────────────────────────────────────────
 const SeatingChart = () => {
   const [guests, setGuests] = useState<GuestEntry[]>([]);
@@ -137,7 +93,6 @@ const SeatingChart = () => {
   const [selectedUnassigned, setSelectedUnassigned] = useState<Set<string>>(new Set());
   const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
   const [bulkAssignInput, setBulkAssignInput] = useState("");
-  const [viewMode, setViewMode] = useState<"list" | "hall">("list");
   const [draggingGuestId, setDraggingGuestId] = useState<string | null>(null);
   const [tableSides, setTableSides] = useState<Record<string, "bride" | "groom">>(() => {
     try {
@@ -211,9 +166,6 @@ const SeatingChart = () => {
   const filteredTableNames = globalSearch
     ? allTableNames.filter(name => name.toLowerCase().includes(searchLower) || tableMap.get(name)!.some(g => g.full_name.toLowerCase().includes(searchLower)))
     : allTableNames;
-  const getVisibleGuests = (gs: GuestEntry[]) => globalSearch ? gs.filter(g => g.full_name.toLowerCase().includes(searchLower)) : gs;
-  const filteredUnassigned = globalSearch ? unassigned.filter(g => g.full_name.toLowerCase().includes(searchLower)) : unassigned;
-
   const getVisibleGuests = (gs: GuestEntry[]) =>
     globalSearch ? gs.filter((g) => g.full_name.toLowerCase().includes(searchLower)) : gs;
 
@@ -550,122 +502,14 @@ const SeatingChart = () => {
 
       {/* ── HALL VIEW ── */}
       {viewMode === "hall" && (
-        <div>
-          {/* Legend */}
-          <div className="flex items-center gap-4 mb-6 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-purple-400 inline-block" /> Bride's side</span>
-            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-blue-400 inline-block" /> Groom's side</span>
-            <span className="flex items-center gap-1.5"><span className="text-primary font-bold">✓</span> Checked in</span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredTableNames.map((tableName) => {
-              const tableGuests = tableMap.get(tableName)!;
-              const visibleGuests = getVisibleGuests(tableGuests);
-              const seats = totalSeats(tableGuests);
-              const isRenaming = renamingTable === tableName;
-
-              return (
-                <div key={tableName} className="group/hall">
-                  {/* Round table ring */}
-                  {isRenaming ? (
-                    <div className="flex items-center justify-center gap-2 mb-3 px-4">
-                      {renameInlineUI(tableName)}
-                    </div>
-                  ) : (
-                    <TableRing
-                      tableName={tableName}
-                      seats={seats}
-                      onRename={() => { setRenamingTable(tableName); setRenameInput(tableName); }}
-                    />
-                  )}
-
-                  {/* Guest name list */}
-                  <div className="mt-4 glass-card p-4 space-y-0 divide-y divide-border/30">
-                    {visibleGuests.length === 0 ? (
-                      <p className="text-xs text-muted-foreground text-center py-2 italic">
-                        {globalSearch ? "No match" : "No guests assigned"}
-                      </p>
-                    ) : (
-                      visibleGuests.map((g) => (
-                        <div
-                          key={g.id}
-                          className="flex items-center gap-2.5 py-2 group/row"
-                        >
-                          <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 mt-0.5 ${sideColor(g.side)}`} />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-foreground font-medium leading-snug">
-                              {g.full_name}
-                              {g.party_size > 1 && (
-                                <span className="text-muted-foreground font-normal"> +{g.party_size - 1}</span>
-                              )}
-                              {g.checked_in && (
-                                <span className="text-primary font-medium ml-1.5 text-xs">✓</span>
-                              )}
-                            </p>
-                            {g.side && <p className="text-[11px] text-muted-foreground leading-none mt-0.5">{g.side}</p>}
-                          </div>
-                          <div className="flex gap-1.5 flex-shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity">
-                            <button onClick={() => openAssign(g)} className="text-[11px] text-primary hover:underline">Move</button>
-                            <button onClick={() => handleRemoveInline(g)} className="text-destructive hover:text-destructive/70" aria-label="Remove from table">
-                              <X className="w-3 h-3" />
-                            </button>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-
-            {noResults && (
-              <div className="col-span-full text-center py-12 text-muted-foreground">
-                No guests found for &ldquo;{globalSearch}&rdquo;
-              </div>
-            )}
-          </div>
-
-          {/* Unassigned pool — hall view (flat list below) */}
-          {showUnassignedPool && (
-            <div className="mt-10">
-              <h3 className="font-serif text-base text-yellow-500 mb-3 flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-yellow-500/40 border border-yellow-500/60 inline-block" />
-                Unassigned guests ({unassigned.length})
-              </h3>
-              <div className="glass-card p-4 border-yellow-500/20 divide-y divide-border/30">
-                {filteredUnassigned.map((g) => (
-                  <div key={g.id} className="flex items-center gap-2.5 py-2">
-                    <input
-                      type="checkbox"
-                      checked={selectedUnassigned.has(g.id)}
-                      onChange={() => toggleSelectGuest(g.id)}
-                      className="w-4 h-4 rounded accent-primary flex-shrink-0 cursor-pointer"
-                      aria-label={`Select ${g.full_name}`}
-                    />
-                    <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${sideColor(g.side)}`} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-foreground font-medium">
-                        {g.full_name}
-                        {g.party_size > 1 && <span className="text-muted-foreground font-normal"> +{g.party_size - 1}</span>}
-                      </p>
-                      {g.side && <p className="text-[11px] text-muted-foreground">{g.side}</p>}
-                    </div>
-                    <button
-                      onClick={() => openAssign(g)}
-                      className="flex-shrink-0 text-xs px-2.5 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-                    >
-                      Assign
-                    </button>
-                  </div>
-                ))}
-                {filteredUnassigned.length === 0 && globalSearch && (
-                  <p className="text-xs text-muted-foreground text-center py-2">No match</p>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
+        <HallView
+          tableMap={tableMap}
+          unassigned={unassigned}
+          allTableNames={allTableNames}
+          onAssignGuest={assignGuestDirect}
+          tableSides={tableSides}
+          onSetTableSide={setTableSideOverride}
+        />
       )}
 
       {/* Single assign dialog */}
