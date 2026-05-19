@@ -362,7 +362,7 @@ const HallTable = ({
         )}
       </div>
 
-      {/* Name strip — centered on table, wraps freely, never clips */}
+      {/* Name strip — bounded width so it wraps and never overflows the hall edge */}
       {guests.length > 0 && (
         <div
           className="absolute pointer-events-none"
@@ -370,7 +370,8 @@ const HallTable = ({
             top: box / 2 + cOrbit + cR + 6,
             left: "50%",
             transform: "translateX(-50%)",
-            whiteSpace: "nowrap",
+            width: Math.max(180, box * 1.6),
+            textAlign: "center",
           }}
         >
           <span
@@ -379,12 +380,16 @@ const HallTable = ({
               fontSize: Math.max(6.5, 7.5 * scale),
               fontWeight: 700,
               color: stripColor,
-              background: "rgba(0,0,0,0.60)",
-              border: "1px solid rgba(255,255,255,0.07)",
+              background: "rgba(0,0,0,0.72)",
+              border: "1px solid rgba(255,255,255,0.08)",
               borderRadius: 5,
-              padding: "2px 8px",
+              padding: "3px 8px",
               backdropFilter: "blur(6px)",
               letterSpacing: "0.02em",
+              whiteSpace: "normal",
+              wordBreak: "break-word",
+              lineHeight: 1.5,
+              maxWidth: "100%",
             }}
           >
             {nameStrip}
