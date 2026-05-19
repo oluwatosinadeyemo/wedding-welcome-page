@@ -10,20 +10,13 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Users, MapPin, Loader2, X, Pencil, Check, Download, Search } from "lucide-react";
 import {
-  DndContext,
-  DragOverlay,
-  useDraggable,
-  useDroppable,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
-import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
-import HallView from "./HallView";
+  Users, MapPin, Loader2, X, Pencil, Check, Download, Search, LayoutGrid, Table2,
+} from "lucide-react";
 
 const TABLE_CAPACITY = 10;
+// Circumference of the SVG ring circle (r = 68): 2π × 68 ≈ 427.26
+const RING_CIRCUMFERENCE = 427.26;
 
 interface GuestEntry {
   id: string;
@@ -35,7 +28,14 @@ interface GuestEntry {
   rsvps: { attending: string }[] | null;
 }
 
-// ─── SideBadge ───────────────────────────────────────────────────────────────
+const sideColor = (side: string | null) => {
+  if (!side) return "bg-muted-foreground/30";
+  const l = side.toLowerCase();
+  if (l.includes("bride")) return "bg-purple-400";
+  if (l.includes("groom")) return "bg-blue-400";
+  return "bg-muted-foreground/30";
+};
+
 const SideBadge = ({ side }: { side: string | null }) => {
   if (!side) return null;
   const lower = side.toLowerCase();
@@ -56,288 +56,69 @@ const CapacityBar = ({ seats, side }: { seats: number; side?: string | null }) =
   const pct = Math.min(100, (seats / TABLE_CAPACITY) * 100);
   const isOver = seats > TABLE_CAPACITY;
   const isFull = seats === TABLE_CAPACITY;
-  const barColor = isOver ? "#ef4444" : side === "bride" ? "#facc15" : side === "groom" ? "#3b82f6" : seats >= TABLE_CAPACITY * 0.8 ? "#eab308" : "#8b5cf6";
-  const textColor = isOver ? "#f87171" : isFull ? (side === "bride" ? "#fcd34d" : side === "groom" ? "#93c5fd" : "#a78bfa") : "rgba(255,255,255,0.35)";
+  const barColor = isOver ? "bg-destructive" : seats >= TABLE_CAPACITY * 0.8 ? "bg-yellow-500" : "bg-primary";
   return (
-    <div style={{ marginBottom: 12, marginTop: 6 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, marginBottom: 4 }}>
-        <span style={{ color: textColor, fontWeight: isOver || isFull ? 600 : 400 }}>
+    <div className="mt-2 mb-3">
+      <div className="flex items-center justify-between text-xs mb-1">
+        <span className={isOver ? "text-destructive font-medium" : isFull ? "text-yellow-500 font-medium" : "text-muted-foreground"}>
           {seats} / {TABLE_CAPACITY} seats{isOver ? " · over capacity" : isFull ? " · full" : ""}
         </span>
       </div>
-      <div style={{ height: 4, borderRadius: 9999, background: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
-        <div style={{ height: "100%", borderRadius: 9999, width: `${pct}%`, background: barColor, transition: "width 0.3s ease", boxShadow: `0 0 6px ${barColor}80` }} />
+      <div className="h-1.5 rounded-full bg-muted/30 overflow-hidden">
+        <div className={`h-full rounded-full transition-all duration-300 ${barColor}`} style={{ width: `${pct}%` }} />
       </div>
     </div>
   );
 };
 
-// ─── DraggableGuestPill ───────────────────────────────────────────────────────
-const DraggableGuestPill = ({
-  guest,
-  isSelected,
-  onToggleSelect,
-  onAssignClick,
-}: {
-  guest: GuestEntry;
-  isSelected: boolean;
-  onToggleSelect: () => void;
-  onAssignClick: () => void;
-}) => {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: guest.id });
-  const lower = guest.side?.toLowerCase() ?? "";
-  const isBride = lower.includes("bride");
-  const isGroom = lower.includes("groom");
-
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 6, opacity: isDragging ? 0.3 : 1, transition: "opacity 0.15s" }}>
-      <input
-        type="checkbox"
-        checked={isSelected}
-        onChange={onToggleSelect}
-        style={{ width: 13, height: 13, flexShrink: 0, cursor: "pointer", accentColor: isBride ? "#facc15" : isGroom ? "#3b82f6" : "#a78bfa" }}
-        aria-label={`Select ${guest.full_name}`}
-      />
-      <div
-        ref={setNodeRef}
-        {...attributes}
-        {...listeners}
-        className="group/pill"
-        style={{
-          display: "flex", alignItems: "center", gap: 6,
-          background: isBride ? "rgba(250,204,21,0.10)" : isGroom ? "rgba(59,130,246,0.10)" : "rgba(255,255,255,0.06)",
-          border: `1px solid ${isBride ? "rgba(250,204,21,0.28)" : isGroom ? "rgba(59,130,246,0.28)" : "rgba(255,255,255,0.10)"}`,
-          borderRadius: 9999, padding: "5px 11px",
-          cursor: isDragging ? "grabbing" : "grab",
-          userSelect: "none",
-          color: isBride ? "#fde68a" : isGroom ? "#93c5fd" : "#e2e8f0",
-          fontSize: 12, fontWeight: 500,
-          boxShadow: isBride ? "0 1px 8px rgba(250,204,21,0.08)" : isGroom ? "0 1px 8px rgba(59,130,246,0.08)" : "none",
-          position: "relative",
-        }}
-      >
-        <span style={{ maxWidth: 130, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{guest.full_name}</span>
-        {guest.party_size > 1 && <span style={{ opacity: 0.5, fontSize: 10 }}>×{guest.party_size}</span>}
-        <button
-          className="opacity-0 group-hover/pill:opacity-100 transition-opacity"
-          style={{ fontSize: 9, padding: "1px 6px", borderRadius: 9999, border: "1px solid rgba(255,255,255,0.18)", color: "rgba(255,255,255,0.55)", background: "rgba(255,255,255,0.07)", cursor: "pointer", flexShrink: 0 }}
-          onClick={(e) => { e.stopPropagation(); onAssignClick(); }}
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          Assign
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// ─── GuestPillOverlay ─────────────────────────────────────────────────────────
-const GuestPillOverlay = ({ guest }: { guest: GuestEntry }) => {
-  const lower = guest.side?.toLowerCase() ?? "";
-  const isBride = lower.includes("bride");
-  const isGroom = lower.includes("groom");
-  return (
-    <div style={{
-      display: "flex", alignItems: "center", gap: 6,
-      background: isBride ? "linear-gradient(90deg,rgba(250,204,21,0.22),rgba(180,130,0,0.14))" : isGroom ? "linear-gradient(90deg,rgba(59,130,246,0.22),rgba(29,78,216,0.14))" : "rgba(255,255,255,0.14)",
-      border: `1.5px solid ${isBride ? "rgba(250,204,21,0.55)" : isGroom ? "rgba(59,130,246,0.55)" : "rgba(255,255,255,0.25)"}`,
-      borderRadius: 9999, padding: "7px 16px",
-      fontSize: 13, fontWeight: 700,
-      color: isBride ? "#fde68a" : isGroom ? "#93c5fd" : "#f1f5f9",
-      boxShadow: isBride ? "0 6px 24px rgba(250,204,21,0.25),0 2px 10px rgba(0,0,0,0.5)" : isGroom ? "0 6px 24px rgba(59,130,246,0.25),0 2px 10px rgba(0,0,0,0.5)" : "0 6px 24px rgba(0,0,0,0.4)",
-      backdropFilter: "blur(12px)", cursor: "grabbing", whiteSpace: "nowrap",
-    }}>
-      {guest.full_name}
-      {guest.party_size > 1 && <span style={{ opacity: 0.6, fontSize: 11, marginLeft: 4 }}>×{guest.party_size}</span>}
-    </div>
-  );
-};
-
-// ─── DroppableTableCard ───────────────────────────────────────────────────────
-interface TableCardProps {
+interface TableRingProps {
   tableName: string;
-  tableGuests: GuestEntry[];
-  tableSide: "bride" | "groom" | "mixed" | null;
-  tableSideOverride: "bride" | "groom" | undefined;
-  visibleGuests: GuestEntry[];
   seats: number;
-  isRenaming: boolean;
-  renameInput: string;
-  onRenameChange: (v: string) => void;
-  onRenameConfirm: () => void;
-  onRenameCancel: () => void;
-  onStartRename: () => void;
-  onOpenAssign: (g: GuestEntry) => void;
-  onRemove: (g: GuestEntry) => void;
-  onSetSide: (side: "bride" | "groom" | null) => void;
-  globalSearch: string;
+  onRename: () => void;
 }
 
-const DroppableTableCard = ({
-  tableName, tableGuests, tableSide, tableSideOverride, visibleGuests, seats,
-  isRenaming, renameInput, onRenameChange, onRenameConfirm, onRenameCancel,
-  onStartRename, onOpenAssign, onRemove, onSetSide, globalSearch,
-}: TableCardProps) => {
-  const { isOver, setNodeRef } = useDroppable({ id: tableName });
-
-  const bg = isOver
-    ? "linear-gradient(145deg,#051a0c 0%,#030f08 100%)"
-    : tableSide === "bride"
-    ? "linear-gradient(145deg,#1c1300 0%,#130d00 55%,#0e0900 100%)"
-    : tableSide === "groom"
-    ? "linear-gradient(145deg,#060e1e 0%,#030a14 55%,#020710 100%)"
-    : "linear-gradient(145deg,#0e0e1c 0%,#08080f 100%)";
-
-  const borderColor = isOver ? "rgba(52,211,153,0.75)" : tableSide === "bride" ? "rgba(250,204,21,0.38)" : tableSide === "groom" ? "rgba(59,130,246,0.38)" : "rgba(255,255,255,0.07)";
-  const shadow = isOver
-    ? "0 0 0 2px rgba(52,211,153,0.65),0 0 40px rgba(52,211,153,0.22),inset 0 0 24px rgba(52,211,153,0.04)"
-    : tableSide === "bride"
-    ? "0 0 0 1.5px rgba(250,204,21,0.32),0 6px 36px rgba(250,204,21,0.10),0 2px 16px rgba(0,0,0,0.7)"
-    : tableSide === "groom"
-    ? "0 0 0 1.5px rgba(59,130,246,0.32),0 6px 36px rgba(59,130,246,0.10),0 2px 16px rgba(0,0,0,0.7)"
-    : "0 0 0 1px rgba(255,255,255,0.06),0 4px 20px rgba(0,0,0,0.5)";
-
-  const accentGrad = isOver
-    ? "linear-gradient(90deg,rgba(52,211,153,0.9) 0%,rgba(52,211,153,0.4) 55%,transparent 100%)"
-    : tableSide === "bride"
-    ? "linear-gradient(90deg,rgba(250,204,21,0.9) 0%,rgba(250,204,21,0.35) 55%,transparent 100%)"
-    : "linear-gradient(90deg,rgba(59,130,246,0.9) 0%,rgba(59,130,246,0.35) 55%,transparent 100%)";
-
-  const nameColor = tableSide === "bride" ? "#fde68a" : tableSide === "groom" ? "#93c5fd" : "#f1f5f9";
-  const nameShadow = tableSide === "bride" ? "0 0 18px rgba(250,204,21,0.28)" : tableSide === "groom" ? "0 0 18px rgba(59,130,246,0.28)" : undefined;
-  const subColor = tableSide === "bride" ? "rgba(253,230,138,0.42)" : tableSide === "groom" ? "rgba(147,197,253,0.42)" : "rgba(255,255,255,0.28)";
-
-  const rowBg = tableSide === "bride" ? "rgba(250,204,21,0.05)" : tableSide === "groom" ? "rgba(59,130,246,0.05)" : "rgba(255,255,255,0.03)";
-  const rowBgHover = tableSide === "bride" ? "rgba(250,204,21,0.09)" : tableSide === "groom" ? "rgba(59,130,246,0.09)" : "rgba(255,255,255,0.06)";
-  const moveColor = tableSide === "bride" ? "#fcd34d" : tableSide === "groom" ? "#93c5fd" : "rgba(255,255,255,0.5)";
-
-  const btnActive = (s: "bride" | "groom") => tableSideOverride === s;
+const TableRing = ({ tableName, seats, onRename }: TableRingProps) => {
+  const pct = Math.min(1, seats / TABLE_CAPACITY);
+  const isOver = seats > TABLE_CAPACITY;
+  const isFull = seats === TABLE_CAPACITY;
+  const ringColor = isOver ? "#ef4444" : seats >= TABLE_CAPACITY * 0.8 ? "#eab308" : "hsl(var(--primary))";
+  const dashOffset = RING_CIRCUMFERENCE * (1 - pct);
 
   return (
-    <div
-      ref={setNodeRef}
-      className="group"
-      style={{ background: bg, border: `1.5px solid ${borderColor}`, boxShadow: shadow, borderRadius: 16, padding: 16, position: "relative", overflow: "hidden", transition: "border-color 0.15s ease,box-shadow 0.15s ease" }}
-    >
-      {/* Top accent bar */}
-      {(isOver || tableSide === "bride" || tableSide === "groom") && (
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: accentGrad }} />
-      )}
-
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 4 }}>
-        {isRenaming ? (
-          <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, minWidth: 0 }}>
-            <Input
-              value={renameInput}
-              onChange={(e) => onRenameChange(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") onRenameConfirm(); if (e.key === "Escape") onRenameCancel(); }}
-              className="h-7 text-sm rounded-lg px-2"
-              style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.15)", color: "#f1f5f9" }}
-              autoFocus
-            />
-            <button onClick={onRenameConfirm} style={{ color: "#34d399", flexShrink: 0 }}><Check className="w-4 h-4" /></button>
-            <button onClick={onRenameCancel} style={{ color: "rgba(255,255,255,0.35)", flexShrink: 0 }}><X className="w-4 h-4" /></button>
-          </div>
-        ) : (
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-              <h3 className="font-serif" style={{ fontSize: 18, color: nameColor, textShadow: nameShadow, margin: 0, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}>
-                {tableName}
-              </h3>
-              {tableSide === "bride" && (
-                <span style={{ fontSize: 9, padding: "2px 8px", borderRadius: 9999, fontWeight: 700, background: "rgba(250,204,21,0.12)", border: "1px solid rgba(250,204,21,0.35)", color: "#fcd34d", letterSpacing: "0.05em", flexShrink: 0 }}>♡ BRIDE</span>
-              )}
-              {tableSide === "groom" && (
-                <span style={{ fontSize: 9, padding: "2px 8px", borderRadius: 9999, fontWeight: 700, background: "rgba(59,130,246,0.12)", border: "1px solid rgba(59,130,246,0.35)", color: "#93c5fd", letterSpacing: "0.05em", flexShrink: 0 }}>◇ GROOM</span>
-              )}
-            </div>
-            <p style={{ fontSize: 11, color: subColor, marginTop: 2 }}>
-              {tableGuests.length} guest{tableGuests.length !== 1 ? "s" : ""}
-            </p>
-          </div>
-        )}
-        {!isRenaming && (
-          <button
-            onClick={onStartRename}
-            className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity"
-            style={{ color: moveColor, marginTop: 2, flexShrink: 0 }}
-            aria-label={`Rename ${tableName}`}
-          >
-            <Pencil className="w-3.5 h-3.5" />
-          </button>
-        )}
+    <div className="relative w-36 h-36 mx-auto">
+      <svg width="144" height="144" viewBox="0 0 144 144" className="absolute inset-0">
+        {/* Track */}
+        <circle cx="72" cy="72" r="68" fill="hsl(var(--card)/0.6)" stroke="hsl(var(--border)/0.4)" strokeWidth="1.5" />
+        {/* Background ring */}
+        <circle cx="72" cy="72" r="68" fill="none" stroke="hsl(var(--muted)/0.3)" strokeWidth="5" />
+        {/* Progress ring */}
+        <circle
+          cx="72" cy="72" r="68"
+          fill="none"
+          stroke={ringColor}
+          strokeWidth="5"
+          strokeLinecap="round"
+          strokeDasharray={RING_CIRCUMFERENCE}
+          strokeDashoffset={dashOffset}
+          transform="rotate(-90 72 72)"
+          style={{ transition: "stroke-dashoffset 0.4s ease" }}
+        />
+      </svg>
+      {/* Centre content */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center px-3 text-center">
+        <span className="font-serif text-sm text-foreground leading-tight line-clamp-2">{tableName}</span>
+        <span className={`text-[11px] mt-1 font-medium ${isOver ? "text-destructive" : isFull ? "text-yellow-500" : "text-muted-foreground"}`}>
+          {seats}/{TABLE_CAPACITY}
+        </span>
       </div>
-
-      <CapacityBar seats={seats} side={tableSide} />
-
-      {/* Drop indicator */}
-      {isOver && (
-        <div style={{ marginBottom: 10, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "7px 12px", borderRadius: 10, background: "rgba(52,211,153,0.07)", border: "1px dashed rgba(52,211,153,0.45)" }}>
-          <span style={{ fontSize: 11, color: "#6ee7b7", fontWeight: 700, letterSpacing: "0.06em" }}>↓ DROP TO ASSIGN</span>
-        </div>
-      )}
-
-      {/* Guest rows */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        {visibleGuests.map((g) => (
-          <div
-            key={g.id}
-            className="group/row"
-            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "7px 10px", borderRadius: 10, background: rowBg, transition: "background 0.15s" }}
-            onMouseEnter={e => (e.currentTarget.style.background = rowBgHover)}
-            onMouseLeave={e => (e.currentTarget.style.background = rowBg)}
-          >
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                <p style={{ fontSize: 13, color: "#f1f5f9", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0 }}>{g.full_name}</p>
-                <SideBadge side={g.side} />
-              </div>
-              <p style={{ fontSize: 11, color: "rgba(255,255,255,0.32)", marginTop: 2 }}>
-                {g.party_size > 1 ? `Party of ${g.party_size}` : "1 seat"}
-                {g.checked_in ? " · ✓ checked in" : ""}
-              </p>
-            </div>
-            <div className="opacity-0 group-hover/row:opacity-100 transition-opacity" style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-              <button onClick={() => onOpenAssign(g)} style={{ fontSize: 12, color: moveColor, fontWeight: 600, background: "none", border: "none", cursor: "pointer", padding: 0 }}>Move</button>
-              <button onClick={() => onRemove(g)} style={{ color: "#f87171", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center" }} aria-label="Remove">
-                <X className="w-3 h-3" />
-              </button>
-            </div>
-          </div>
-        ))}
-        {globalSearch && visibleGuests.length === 0 && (
-          <p style={{ fontSize: 11, color: "rgba(255,255,255,0.25)", textAlign: "center", padding: "4px 0", fontStyle: "italic" }}>No match in this table</p>
-        )}
-      </div>
-
-      {/* Designation controls */}
-      <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 6 }}>
-        <span style={{ fontSize: 9, color: "rgba(255,255,255,0.28)", flexShrink: 0, marginRight: 2 }}>Designate:</span>
-        {(["bride", "groom"] as const).map(s => (
-          <button
-            key={s}
-            onClick={() => onSetSide(btnActive(s) ? null : s)}
-            style={{
-              fontSize: 9, padding: "3px 9px", borderRadius: 9999, fontWeight: 700, cursor: "pointer",
-              border: `1px solid ${btnActive(s) ? (s === "bride" ? "rgba(250,204,21,0.6)" : "rgba(59,130,246,0.6)") : "rgba(255,255,255,0.14)"}`,
-              background: btnActive(s) ? (s === "bride" ? "rgba(250,204,21,0.14)" : "rgba(59,130,246,0.14)") : "transparent",
-              color: btnActive(s) ? (s === "bride" ? "#fcd34d" : "#93c5fd") : "rgba(255,255,255,0.38)",
-              transition: "all 0.15s ease",
-            }}
-          >
-            {s === "bride" ? "♡ Bride" : "◇ Groom"}
-          </button>
-        ))}
-        {tableSideOverride && (
-          <button
-            onClick={() => onSetSide(null)}
-            style={{ marginLeft: "auto", fontSize: 9, padding: "3px 9px", borderRadius: 9999, border: "1px solid rgba(255,255,255,0.12)", background: "transparent", color: "rgba(255,255,255,0.32)", cursor: "pointer" }}
-          >
-            Auto
-          </button>
-        )}
-      </div>
+      {/* Rename button */}
+      <button
+        onClick={onRename}
+        aria-label={`Rename ${tableName}`}
+        className="absolute top-1 right-1 w-6 h-6 rounded-full bg-background/60 flex items-center justify-center text-muted-foreground/40 hover:text-muted-foreground transition-colors opacity-0 group-hover/hall:opacity-100"
+      >
+        <Pencil className="w-3 h-3" />
+      </button>
     </div>
   );
 };
@@ -346,6 +127,7 @@ const DroppableTableCard = ({
 const SeatingChart = () => {
   const [guests, setGuests] = useState<GuestEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<"list" | "hall">("list");
   const [selectedGuest, setSelectedGuest] = useState<GuestEntry | null>(null);
   const [assignInput, setAssignInput] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -385,14 +167,14 @@ const SeatingChart = () => {
     const { data } = await (supabase.from("guests" as any) as any)
       .select("id, full_name, party_size, side, table_assignment, checked_in, rsvps(attending)")
       .order("full_name");
-    if (data) setGuests(
-      (data as GuestEntry[]).filter((g) => g.rsvps?.[0]?.attending !== "no")
-    );
+    if (data)
+      setGuests((data as GuestEntry[]).filter((g) => g.rsvps?.[0]?.attending !== "no"));
     setLoading(false);
   }, []);
 
   useEffect(() => { fetchGuests(); }, [fetchGuests]);
 
+  // Real-time sync
   useEffect(() => {
     const channel = supabase
       .channel("guests-seating")
@@ -432,8 +214,21 @@ const SeatingChart = () => {
   const getVisibleGuests = (gs: GuestEntry[]) => globalSearch ? gs.filter(g => g.full_name.toLowerCase().includes(searchLower)) : gs;
   const filteredUnassigned = globalSearch ? unassigned.filter(g => g.full_name.toLowerCase().includes(searchLower)) : unassigned;
 
-  const brideCount = useMemo(() => guests.filter(g => g.side?.toLowerCase().includes("bride")).length, [guests]);
-  const groomCount = useMemo(() => guests.filter(g => g.side?.toLowerCase().includes("groom")).length, [guests]);
+  const getVisibleGuests = (gs: GuestEntry[]) =>
+    globalSearch ? gs.filter((g) => g.full_name.toLowerCase().includes(searchLower)) : gs;
+
+  const filteredUnassigned = globalSearch
+    ? unassigned.filter((g) => g.full_name.toLowerCase().includes(searchLower))
+    : unassigned;
+
+  const brideCount = useMemo(
+    () => guests.filter((g) => g.side?.toLowerCase().includes("bride")).length,
+    [guests]
+  );
+  const groomCount = useMemo(
+    () => guests.filter((g) => g.side?.toLowerCase().includes("groom")).length,
+    [guests]
+  );
 
   const openAssign = (guest: GuestEntry) => {
     setSelectedGuest(guest);
@@ -509,9 +304,19 @@ const SeatingChart = () => {
 
   const handleExportCSV = () => {
     const rows = [["Name", "Table", "Party Size", "Side", "Checked In"]];
-    const sorted = [...guests].sort((a, b) => (a.table_assignment ?? "").localeCompare(b.table_assignment ?? ""));
-    for (const g of sorted) rows.push([g.full_name, g.table_assignment || "Unassigned", String(g.party_size), g.side || "", g.checked_in ? "Yes" : "No"]);
-    const csv = rows.map(r => r.map(v => `"${v.replace(/"/g, '""')}"`).join(",")).join("\n");
+    const sorted = [...guests].sort((a, b) =>
+      (a.table_assignment ?? "").localeCompare(b.table_assignment ?? "")
+    );
+    for (const g of sorted) {
+      rows.push([
+        g.full_name,
+        g.table_assignment || "Unassigned",
+        String(g.party_size),
+        g.side || "",
+        g.checked_in ? "Yes" : "No",
+      ]);
+    }
+    const csv = rows.map((r) => r.map((v) => `"${v.replace(/"/g, '""')}"`).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -552,123 +357,265 @@ const SeatingChart = () => {
   const showUnassignedPool = unassigned.length > 0 && (!globalSearch || filteredUnassigned.length > 0);
   const noResults = globalSearch && filteredTableNames.length === 0 && filteredUnassigned.length === 0;
 
+  const renameInlineUI = (tableName: string) =>
+    renamingTable === tableName ? (
+      <div className="flex items-center gap-1.5 flex-1 min-w-0">
+        <Input
+          value={renameInput}
+          onChange={(e) => setRenameInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleRenameTable();
+            if (e.key === "Escape") setRenamingTable(null);
+          }}
+          className="h-7 text-sm bg-background/50 border-border/50 rounded-lg px-2"
+          autoFocus
+        />
+        <button onClick={handleRenameTable} className="text-primary hover:text-primary/80 flex-shrink-0" aria-label="Confirm rename">
+          <Check className="w-4 h-4" />
+        </button>
+        <button onClick={() => setRenamingTable(null)} className="text-muted-foreground hover:text-foreground flex-shrink-0" aria-label="Cancel rename">
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+    ) : null;
+
   return (
     <div>
       {/* Summary bar */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-4 text-sm text-muted-foreground">
-        <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4 text-primary" />{allTableNames.length} table{allTableNames.length !== 1 ? "s" : ""}</span>
-        <span className="flex items-center gap-1.5"><Users className="w-4 h-4 text-primary" />{guests.length - unassigned.length} / {guests.length} guests assigned</span>
-        {brideCount > 0 && <span style={{ color: "#fcd34d", fontWeight: 600 }}>{brideCount} bride's side</span>}
-        {groomCount > 0 && <span style={{ color: "#93c5fd", fontWeight: 600 }}>{groomCount} groom's side</span>}
+        <span className="flex items-center gap-1.5">
+          <MapPin className="w-4 h-4 text-primary" />
+          {allTableNames.length} table{allTableNames.length !== 1 ? "s" : ""}
+        </span>
+        <span className="flex items-center gap-1.5">
+          <Users className="w-4 h-4 text-primary" />
+          {guests.length - unassigned.length} / {guests.length} guests assigned
+        </span>
+        {brideCount > 0 && <span className="text-purple-400 font-medium">{brideCount} bride's side</span>}
+        {groomCount > 0 && <span className="text-blue-400 font-medium">{groomCount} groom's side</span>}
         {unassigned.length > 0 && <span className="text-yellow-500 font-medium">{unassigned.length} unassigned</span>}
-        <div className="ml-auto flex items-center gap-2">
-          <div className="flex items-center rounded-lg border border-border/50 bg-background/40 p-0.5 text-xs">
-            <button onClick={() => setViewMode("list")} className={`px-2.5 py-1 rounded-md transition-colors ${viewMode === "list" ? "bg-primary/20 text-primary font-medium" : "text-muted-foreground hover:text-foreground"}`}>List</button>
-            <button onClick={() => setViewMode("hall")} className={`px-2.5 py-1 rounded-md transition-colors ${viewMode === "hall" ? "bg-primary/20 text-primary font-medium" : "text-muted-foreground hover:text-foreground"}`}>Hall View</button>
-          </div>
-          <button onClick={handleExportCSV} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors border border-border/50 rounded-lg px-3 py-1.5">
-            <Download className="w-3.5 h-3.5" />Export CSV
+        <button
+          onClick={handleExportCSV}
+          className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors border border-border/50 rounded-lg px-3 py-1.5"
+        >
+          <Download className="w-3.5 h-3.5" />
+          Export CSV
+        </button>
+      </div>
+
+      {/* Controls row: search + view toggle */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+          <Input
+            placeholder="Search all guests..."
+            value={globalSearch}
+            onChange={(e) => setGlobalSearch(e.target.value)}
+            className="pl-9 pr-9 bg-background/50 border-border/50 rounded-xl"
+          />
+          {globalSearch && (
+            <button
+              onClick={() => setGlobalSearch("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label="Clear search"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+
+        {/* View toggle */}
+        <div className="flex items-center rounded-lg border border-border/50 overflow-hidden">
+          <button
+            onClick={() => setViewMode("list")}
+            aria-label="List view"
+            className={`px-3 py-2 flex items-center gap-1.5 text-xs transition-colors ${
+              viewMode === "list"
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <LayoutGrid className="w-3.5 h-3.5" />
+            List
+          </button>
+          <button
+            onClick={() => setViewMode("hall")}
+            aria-label="Hall view"
+            className={`px-3 py-2 flex items-center gap-1.5 text-xs transition-colors border-l border-border/50 ${
+              viewMode === "hall"
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Table2 className="w-3.5 h-3.5" />
+            Hall
           </button>
         </div>
       </div>
 
-      {/* Hall view */}
-      {viewMode === "hall" && (
-        <HallView tableMap={tableMap} unassigned={unassigned} allTableNames={allTableNames} onAssignGuest={assignGuestDirect} tableSides={tableSides} onSetTableSide={setTableSideOverride} />
+      {/* Bulk assign bar */}
+      {selectedUnassigned.size > 0 && (
+        <div className="flex items-center gap-3 mb-4 px-4 py-3 rounded-xl bg-primary/10 border border-primary/20">
+          <span className="text-sm text-foreground font-medium">
+            {selectedUnassigned.size} guest{selectedUnassigned.size !== 1 ? "s" : ""} selected
+          </span>
+          <Button size="sm" onClick={() => setBulkAssignOpen(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground ml-auto">
+            Assign to table
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setSelectedUnassigned(new Set())} className="text-muted-foreground">
+            Clear
+          </Button>
+        </div>
       )}
 
-      {/* List view */}
+      {/* ── LIST VIEW ── */}
       {viewMode === "list" && (
-        <DndContext sensors={sensors} onDragStart={handleListDragStart} onDragEnd={handleListDragEnd}>
-          {/* Search */}
-          <div className="relative mb-4 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-            <Input placeholder="Search all guests..." value={globalSearch} onChange={(e) => setGlobalSearch(e.target.value)} className="pl-9 pr-9 bg-background/50 border-border/50 rounded-xl" />
-            {globalSearch && (
-              <button onClick={() => setGlobalSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label="Clear search"><X className="w-4 h-4" /></button>
-            )}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filteredTableNames.map((tableName) => {
+            const tableGuests = tableMap.get(tableName)!;
+            const visibleGuests = getVisibleGuests(tableGuests);
+            const seats = totalSeats(tableGuests);
+            const isRenaming = renamingTable === tableName;
+
+            return (
+              <div key={tableName} className="glass-card p-4 group">
+                <div className="flex items-center justify-between mb-1 gap-2">
+                  {isRenaming ? (
+                    renameInlineUI(tableName)
+                  ) : (
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <h3 className="font-serif text-base text-foreground truncate">{tableName}</h3>
+                      <button
+                        onClick={() => { setRenamingTable(tableName); setRenameInput(tableName); }}
+                        className="text-muted-foreground/0 group-hover:text-muted-foreground/50 hover:!text-muted-foreground flex-shrink-0 transition-colors"
+                        aria-label={`Rename ${tableName}`}
+                      >
+                        <Pencil className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+                  <span className="text-xs text-muted-foreground flex-shrink-0">
+                    {tableGuests.length} guest{tableGuests.length !== 1 ? "s" : ""}
+                  </span>
+                </div>
+
+                <CapacityBar seats={seats} />
+
+                <div className="space-y-1.5">
+                  {visibleGuests.map((g) => (
+                    <div key={g.id} className="flex items-center justify-between gap-2 py-1.5 px-2 rounded-lg bg-background/40 group/row">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="text-sm text-foreground truncate">{g.full_name}</p>
+                          <SideBadge side={g.side} />
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {g.party_size > 1 ? `Party of ${g.party_size}` : "1 seat"}
+                          {g.checked_in ? " · ✓ checked in" : ""}
+                        </p>
+                      </div>
+                      <div className="flex gap-1.5 flex-shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity">
+                        <button onClick={() => openAssign(g)} className="text-xs text-primary hover:underline">Move</button>
+                        <button onClick={() => handleRemoveInline(g)} className="text-destructive hover:text-destructive/70" aria-label="Remove from table">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  {globalSearch && visibleGuests.length === 0 && (
+                    <p className="text-xs text-muted-foreground text-center py-1 italic">No match in this table</p>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Unassigned pool — list view */}
+          {showUnassignedPool && <UnassignedPool
+            unassigned={unassigned}
+            filteredUnassigned={filteredUnassigned}
+            globalSearch={globalSearch}
+            selectedUnassigned={selectedUnassigned}
+            toggleSelectGuest={toggleSelectGuest}
+            openAssign={openAssign}
+          />}
+
+          {noResults && (
+            <div className="col-span-full text-center py-12 text-muted-foreground">
+              No guests found for &ldquo;{globalSearch}&rdquo;
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── HALL VIEW ── */}
+      {viewMode === "hall" && (
+        <div>
+          {/* Legend */}
+          <div className="flex items-center gap-4 mb-6 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-purple-400 inline-block" /> Bride's side</span>
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-blue-400 inline-block" /> Groom's side</span>
+            <span className="flex items-center gap-1.5"><span className="text-primary font-bold">✓</span> Checked in</span>
           </div>
 
-          {/* Bulk assign bar */}
-          {selectedUnassigned.size > 0 && (
-            <div className="flex items-center gap-3 mb-4 px-4 py-3 rounded-xl bg-primary/10 border border-primary/20">
-              <span className="text-sm text-foreground font-medium">{selectedUnassigned.size} guest{selectedUnassigned.size !== 1 ? "s" : ""} selected</span>
-              <Button size="sm" onClick={() => setBulkAssignOpen(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground ml-auto">Assign to table</Button>
-              <Button size="sm" variant="ghost" onClick={() => setSelectedUnassigned(new Set())} className="text-muted-foreground">Clear</Button>
-            </div>
-          )}
-
-          {/* Unassigned pool */}
-          {showUnassignedPool && (
-            <div
-              className="mb-5 rounded-2xl p-4"
-              style={{
-                background: "linear-gradient(145deg,#1a1200 0%,#100c00 100%)",
-                border: "1.5px solid rgba(250,204,21,0.18)",
-                boxShadow: "0 4px 28px rgba(0,0,0,0.5)",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
-                <div>
-                  <h3 className="font-serif" style={{ fontSize: 15, color: "#fde68a", margin: 0, textShadow: "0 0 14px rgba(250,204,21,0.2)" }}>
-                    Unassigned Guests
-                  </h3>
-                  <p style={{ fontSize: 11, color: "rgba(253,230,138,0.4)", marginTop: 3 }}>
-                    Drag a guest onto a table card to assign · or select &amp; bulk assign
-                  </p>
-                </div>
-                <span style={{ fontSize: 11, color: "rgba(253,230,138,0.7)", background: "rgba(250,204,21,0.1)", border: "1px solid rgba(250,204,21,0.2)", borderRadius: 9999, padding: "3px 11px", fontWeight: 700, flexShrink: 0, marginTop: 2 }}>
-                  {unassigned.length} guests
-                </span>
-              </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                {filteredUnassigned.map(g => (
-                  <DraggableGuestPill
-                    key={g.id}
-                    guest={g}
-                    isSelected={selectedUnassigned.has(g.id)}
-                    onToggleSelect={() => toggleSelectGuest(g.id)}
-                    onAssignClick={() => openAssign(g)}
-                  />
-                ))}
-                {filteredUnassigned.length === 0 && globalSearch && (
-                  <p style={{ fontSize: 12, color: "rgba(255,255,255,0.28)", padding: "4px 0" }}>No match</p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Table cards grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredTableNames.map((tableName) => {
               const tableGuests = tableMap.get(tableName)!;
               const visibleGuests = getVisibleGuests(tableGuests);
               const seats = totalSeats(tableGuests);
-              const brideSeatsCount = tableGuests.filter(g => g.side?.toLowerCase().includes("bride")).reduce((s, g) => s + g.party_size, 0);
-              const groomSeatsCount = tableGuests.filter(g => g.side?.toLowerCase().includes("groom")).reduce((s, g) => s + g.party_size, 0);
-              const autoTableSide = tableGuests.length === 0 ? null : brideSeatsCount > groomSeatsCount ? "bride" : groomSeatsCount > brideSeatsCount ? "groom" : "mixed";
-              const tableSide = (tableSides[tableName] ?? autoTableSide) as "bride" | "groom" | "mixed" | null;
+              const isRenaming = renamingTable === tableName;
 
               return (
-                <DroppableTableCard
-                  key={tableName}
-                  tableName={tableName}
-                  tableGuests={tableGuests}
-                  tableSide={tableSide}
-                  tableSideOverride={tableSides[tableName]}
-                  visibleGuests={visibleGuests}
-                  seats={seats}
-                  isRenaming={renamingTable === tableName}
-                  renameInput={renameInput}
-                  onRenameChange={setRenameInput}
-                  onRenameConfirm={handleRenameTable}
-                  onRenameCancel={() => setRenamingTable(null)}
-                  onStartRename={() => { setRenamingTable(tableName); setRenameInput(tableName); }}
-                  onOpenAssign={openAssign}
-                  onRemove={handleRemoveInline}
-                  onSetSide={(side) => setTableSideOverride(tableName, side)}
-                  globalSearch={globalSearch}
-                />
+                <div key={tableName} className="group/hall">
+                  {/* Round table ring */}
+                  {isRenaming ? (
+                    <div className="flex items-center justify-center gap-2 mb-3 px-4">
+                      {renameInlineUI(tableName)}
+                    </div>
+                  ) : (
+                    <TableRing
+                      tableName={tableName}
+                      seats={seats}
+                      onRename={() => { setRenamingTable(tableName); setRenameInput(tableName); }}
+                    />
+                  )}
+
+                  {/* Guest name list */}
+                  <div className="mt-4 glass-card p-4 space-y-0 divide-y divide-border/30">
+                    {visibleGuests.length === 0 ? (
+                      <p className="text-xs text-muted-foreground text-center py-2 italic">
+                        {globalSearch ? "No match" : "No guests assigned"}
+                      </p>
+                    ) : (
+                      visibleGuests.map((g) => (
+                        <div
+                          key={g.id}
+                          className="flex items-center gap-2.5 py-2 group/row"
+                        >
+                          <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 mt-0.5 ${sideColor(g.side)}`} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-foreground font-medium leading-snug">
+                              {g.full_name}
+                              {g.party_size > 1 && (
+                                <span className="text-muted-foreground font-normal"> +{g.party_size - 1}</span>
+                              )}
+                              {g.checked_in && (
+                                <span className="text-primary font-medium ml-1.5 text-xs">✓</span>
+                              )}
+                            </p>
+                            {g.side && <p className="text-[11px] text-muted-foreground leading-none mt-0.5">{g.side}</p>}
+                          </div>
+                          <div className="flex gap-1.5 flex-shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity">
+                            <button onClick={() => openAssign(g)} className="text-[11px] text-primary hover:underline">Move</button>
+                            <button onClick={() => handleRemoveInline(g)} className="text-destructive hover:text-destructive/70" aria-label="Remove from table">
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
               );
             })}
 
@@ -679,10 +626,46 @@ const SeatingChart = () => {
             )}
           </div>
 
-          <DragOverlay dropAnimation={null}>
-            {draggingGuest && <GuestPillOverlay guest={draggingGuest} />}
-          </DragOverlay>
-        </DndContext>
+          {/* Unassigned pool — hall view (flat list below) */}
+          {showUnassignedPool && (
+            <div className="mt-10">
+              <h3 className="font-serif text-base text-yellow-500 mb-3 flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-yellow-500/40 border border-yellow-500/60 inline-block" />
+                Unassigned guests ({unassigned.length})
+              </h3>
+              <div className="glass-card p-4 border-yellow-500/20 divide-y divide-border/30">
+                {filteredUnassigned.map((g) => (
+                  <div key={g.id} className="flex items-center gap-2.5 py-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedUnassigned.has(g.id)}
+                      onChange={() => toggleSelectGuest(g.id)}
+                      className="w-4 h-4 rounded accent-primary flex-shrink-0 cursor-pointer"
+                      aria-label={`Select ${g.full_name}`}
+                    />
+                    <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${sideColor(g.side)}`} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-foreground font-medium">
+                        {g.full_name}
+                        {g.party_size > 1 && <span className="text-muted-foreground font-normal"> +{g.party_size - 1}</span>}
+                      </p>
+                      {g.side && <p className="text-[11px] text-muted-foreground">{g.side}</p>}
+                    </div>
+                    <button
+                      onClick={() => openAssign(g)}
+                      className="flex-shrink-0 text-xs px-2.5 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                    >
+                      Assign
+                    </button>
+                  </div>
+                ))}
+                {filteredUnassigned.length === 0 && globalSearch && (
+                  <p className="text-xs text-muted-foreground text-center py-2">No match</p>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Single assign dialog */}
@@ -691,7 +674,8 @@ const SeatingChart = () => {
           <DialogHeader><DialogTitle>Assign Table</DialogTitle></DialogHeader>
           <div className="space-y-4 pt-2">
             <p className="text-sm text-muted-foreground">
-              Assigning <span className="text-foreground font-medium">{selectedGuest?.full_name}</span>
+              Assigning{" "}
+              <span className="text-foreground font-medium">{selectedGuest?.full_name}</span>
               {selectedGuest && selectedGuest.party_size > 1 ? ` (party of ${selectedGuest.party_size})` : ""}
             </p>
             <div>
@@ -716,7 +700,9 @@ const SeatingChart = () => {
           </div>
           <DialogFooter className="gap-2 pt-2">
             {selectedGuest?.table_assignment && (
-              <Button variant="ghost" size="sm" onClick={() => handleAssign(null)} disabled={isSaving} className="text-muted-foreground mr-auto">Remove from table</Button>
+              <Button variant="ghost" size="sm" onClick={() => handleAssign(null)} disabled={isSaving} className="text-muted-foreground mr-auto">
+                Remove from table
+              </Button>
             )}
             <Button variant="outline" size="sm" onClick={() => setSelectedGuest(null)} className="border-border/50">Cancel</Button>
             <Button onClick={() => handleAssign()} disabled={isSaving || !assignInput.trim()} className="bg-primary hover:bg-primary/90 text-primary-foreground">
@@ -729,7 +715,9 @@ const SeatingChart = () => {
       {/* Bulk assign dialog */}
       <Dialog open={bulkAssignOpen} onOpenChange={setBulkAssignOpen}>
         <DialogContent className="sm:max-w-sm">
-          <DialogHeader><DialogTitle>Assign {selectedUnassigned.size} Guest{selectedUnassigned.size !== 1 ? "s" : ""}</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>Assign {selectedUnassigned.size} Guest{selectedUnassigned.size !== 1 ? "s" : ""}</DialogTitle>
+          </DialogHeader>
           <div className="space-y-4 pt-2">
             <Input
               placeholder="Table name or number (e.g. Table 1)"
@@ -760,5 +748,62 @@ const SeatingChart = () => {
     </div>
   );
 };
+
+// Extracted to avoid repetition between list and hall views
+const UnassignedPool = ({
+  unassigned,
+  filteredUnassigned,
+  globalSearch,
+  selectedUnassigned,
+  toggleSelectGuest,
+  openAssign,
+}: {
+  unassigned: GuestEntry[];
+  filteredUnassigned: GuestEntry[];
+  globalSearch: string;
+  selectedUnassigned: Set<string>;
+  toggleSelectGuest: (id: string) => void;
+  openAssign: (g: GuestEntry) => void;
+}) => (
+  <div className="glass-card p-4 border-yellow-500/20">
+    <div className="flex items-center justify-between mb-3">
+      <h3 className="font-serif text-base text-yellow-500">Unassigned</h3>
+      <span className="text-xs text-muted-foreground">
+        {unassigned.length} guest{unassigned.length !== 1 ? "s" : ""}
+      </span>
+    </div>
+    <div className="space-y-1.5">
+      {filteredUnassigned.map((g) => (
+        <div key={g.id} className="flex items-center gap-2 py-1.5 px-2 rounded-lg bg-background/40">
+          <input
+            type="checkbox"
+            checked={selectedUnassigned.has(g.id)}
+            onChange={() => toggleSelectGuest(g.id)}
+            className="w-4 h-4 rounded accent-primary flex-shrink-0 cursor-pointer"
+            aria-label={`Select ${g.full_name}`}
+          />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <p className="text-sm text-foreground">{g.full_name}</p>
+              <SideBadge side={g.side} />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {g.party_size > 1 ? `Party of ${g.party_size}` : "1 seat"}
+            </p>
+          </div>
+          <button
+            onClick={() => openAssign(g)}
+            className="flex-shrink-0 text-xs px-2.5 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+          >
+            Assign
+          </button>
+        </div>
+      ))}
+      {filteredUnassigned.length === 0 && globalSearch && (
+        <p className="text-xs text-muted-foreground text-center py-2">No match</p>
+      )}
+    </div>
+  </div>
+);
 
 export default SeatingChart;
