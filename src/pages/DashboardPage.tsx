@@ -36,7 +36,16 @@ import {
   KeyRound,
   AlertCircle,
   LayoutGrid,
+  Pencil,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import type { User } from "@supabase/supabase-js";
 import JSZip from "jszip";
 import SeatingChart from "@/components/wedding/SeatingChart";
@@ -47,11 +56,13 @@ const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAIL || "oluwatosinadeyemo50@g
 
 interface RSVPEntry {
   id: string;
+  guest_id: string;
   attending: string;
   number_of_guests: number;
   message: string | null;
   submitted_at: string;
   guest: {
+    id: string;
     full_name: string;
     invite_code: string;
     party_size: number;
@@ -106,6 +117,21 @@ const DashboardPage = () => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isDeletingPhoto, setIsDeletingPhoto] = useState<string | null>(null);
   const [isExportingCSV, setIsExportingCSV] = useState(false);
+
+  // Guest editing state
+  const [editingRsvp, setEditingRsvp] = useState<RSVPEntry | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editPartySize, setEditPartySize] = useState(1);
+  const [editSide, setEditSide] = useState("");
+  const [editAttending, setEditAttending] = useState("");
+  const [editNumGuests, setEditNumGuests] = useState(1);
+  const [editMessage, setEditMessage] = useState("");
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+  // Guest deletion state
+  const [deleteTarget, setDeleteTarget] = useState<RSVPEntry | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -145,8 +171,8 @@ const DashboardPage = () => {
   const fetchData = useCallback(async () => {
     const { data: rsvpData } = await (supabase.from("rsvps" as any) as any)
       .select(
-        `id, attending, number_of_guests, message, submitted_at,
-         guest:guests!inner(full_name, invite_code, party_size, side, checked_in, checked_in_at)`
+        `id, guest_id, attending, number_of_guests, message, submitted_at,
+         guest:guests!inner(id, full_name, invite_code, party_size, side, checked_in, checked_in_at)`
       )
       .order("submitted_at", { ascending: false });
 
@@ -320,6 +346,87 @@ const DashboardPage = () => {
       setPhotos((prev) => prev.map((p) => (p.id === photo.id ? { ...p, category } : p)));
     } catch (err: any) {
       toast({ title: "Update failed", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const handleEditClick = (rsvp: RSVPEntry) => {
+    setEditingRsvp(rsvp);
+    setEditName(rsvp.guest.full_name);
+    setEditPartySize(rsvp.guest.party_size);
+    setEditSide(rsvp.guest.side || "");
+    setEditAttending(rsvp.attending);
+    setEditNumGuests(rsvp.number_of_guests);
+    setEditMessage(rsvp.message || "");
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingRsvp) return;
+    setIsSavingEdit(true);
+    try {
+      const { error: guestError } = await (supabase.from("guests" as any) as any)
+        .update({
+          full_name: editName.trim(),
+          party_size: editPartySize,
+          side: editSide || null,
+        })
+        .eq("id", editingRsvp.guest.id);
+      if (guestError) throw guestError;
+
+      const { error: rsvpError } = await (supabase.from("rsvps" as any) as any)
+        .update({
+          attending: editAttending,
+          number_of_guests: editNumGuests,
+          message: editMessage || null,
+        })
+        .eq("id", editingRsvp.id);
+      if (rsvpError) throw rsvpError;
+
+      setRsvps((prev) =>
+        prev.map((r) =>
+          r.id === editingRsvp.id
+            ? {
+                ...r,
+                attending: editAttending,
+                number_of_guests: editNumGuests,
+                message: editMessage || null,
+                guest: {
+                  ...r.guest,
+                  full_name: editName.trim(),
+                  party_size: editPartySize,
+                  side: editSide || null,
+                },
+              }
+            : r
+        )
+      );
+      toast({ title: "Guest updated" });
+      setEditingRsvp(null);
+    } catch (err: any) {
+      toast({ title: "Update failed", description: err.message, variant: "destructive" });
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    try {
+      // Delete RSVP first, then guest (in case no cascade)
+      await (supabase.from("rsvps" as any) as any).delete().eq("id", deleteTarget.id);
+      const { error } = await (supabase.from("guests" as any) as any)
+        .delete()
+        .eq("id", deleteTarget.guest.id);
+      if (error) throw error;
+      setRsvps((prev) => prev.filter((r) => r.id !== deleteTarget.id));
+      setTotalGuests((c) => c - 1);
+      toast({ title: "Guest removed", description: `${deleteTarget.guest.full_name} has been deleted.` });
+      setDeleteTarget(null);
+    } catch (err: any) {
+      toast({ title: "Delete failed", description: err.message, variant: "destructive" });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -680,6 +787,7 @@ const DashboardPage = () => {
                     <TableHead className="hidden md:table-cell">Checked In</TableHead>
                     <TableHead className="hidden lg:table-cell">Message</TableHead>
                     <TableHead className="hidden md:table-cell">Date</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -749,12 +857,34 @@ const DashboardPage = () => {
                       <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
                         {new Date(rsvp.submitted_at).toLocaleDateString()}
                       </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditClick(rsvp)}
+                            className="text-primary hover:text-primary hover:bg-primary/10"
+                            title="Edit guest"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setDeleteTarget(rsvp)}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            title="Delete guest"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
                   {rsvps.length === 0 && (
                     <TableRow>
                       <TableCell
-                        colSpan={7}
+                        colSpan={8}
                         className="text-center py-8 text-muted-foreground"
                       >
                         No RSVPs yet
@@ -945,6 +1075,142 @@ const DashboardPage = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Edit Guest Dialog */}
+      <Dialog open={!!editingRsvp} onOpenChange={(open) => !open && setEditingRsvp(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Guest</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSaveEdit} className="space-y-4 pt-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-name">Full Name</Label>
+              <Input
+                id="edit-name"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                required
+                className="bg-background/50 border-border/50 rounded-xl"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="edit-party-size">Party Size (max allowed)</Label>
+                <Input
+                  id="edit-party-size"
+                  type="number"
+                  min={1}
+                  value={editPartySize}
+                  onChange={(e) => setEditPartySize(Number(e.target.value))}
+                  required
+                  className="bg-background/50 border-border/50 rounded-xl"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="edit-side">Side</Label>
+                <Select value={editSide} onValueChange={setEditSide}>
+                  <SelectTrigger id="edit-side" className="bg-background/50 border-border/50 rounded-xl">
+                    <SelectValue placeholder="Select side" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="bride">Bride</SelectItem>
+                    <SelectItem value="groom">Groom</SelectItem>
+                    <SelectItem value="mutual">Mutual</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="edit-attending">RSVP Status</Label>
+                <Select value={editAttending} onValueChange={setEditAttending}>
+                  <SelectTrigger id="edit-attending" className="bg-background/50 border-border/50 rounded-xl">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="yes">Attending</SelectItem>
+                    <SelectItem value="no">Declined</SelectItem>
+                    <SelectItem value="maybe">Maybe</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="edit-num-guests">
+                  Extra Guests Bringing
+                </Label>
+                <Input
+                  id="edit-num-guests"
+                  type="number"
+                  min={1}
+                  max={editPartySize}
+                  value={editNumGuests}
+                  onChange={(e) => setEditNumGuests(Number(e.target.value))}
+                  required
+                  className="bg-background/50 border-border/50 rounded-xl"
+                />
+                <p className="text-xs text-muted-foreground">Max: {editPartySize}</p>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-message">Message</Label>
+              <Input
+                id="edit-message"
+                value={editMessage}
+                onChange={(e) => setEditMessage(e.target.value)}
+                placeholder="Optional message"
+                className="bg-background/50 border-border/50 rounded-xl"
+              />
+            </div>
+            <DialogFooter className="pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditingRsvp(null)}
+                className="border-border/50"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSavingEdit}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              >
+                {isSavingEdit ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Changes"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Guest Confirmation Dialog */}
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Remove Guest</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground pt-1">
+            Are you sure you want to remove{" "}
+            <span className="font-medium text-foreground">{deleteTarget?.guest.full_name}</span> from
+            the guest list? This will also delete their RSVP and cannot be undone.
+          </p>
+          <DialogFooter className="pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteTarget(null)}
+              className="border-border/50"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmDelete}
+              disabled={isDeleting}
+              variant="destructive"
+            >
+              {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Remove Guest"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={showChangePassword}
