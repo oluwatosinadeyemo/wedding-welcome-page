@@ -52,7 +52,7 @@ import JSZip from "jszip";
 import SeatingChart from "@/components/wedding/SeatingChart";
 import AgbadaTracker from "@/components/wedding/AgbadaTracker";
 
-const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAIL || "oluwatosinadeyemo50@gmail.com")
+const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAIL || "oluwatosinadeyemo50@gmail.com,alu_christopher@yahoo.com")
   .split(",")
   .map((e: string) => e.trim().toLowerCase());
 
