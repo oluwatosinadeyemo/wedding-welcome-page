@@ -37,6 +37,7 @@ import {
   AlertCircle,
   LayoutGrid,
   Pencil,
+  Shirt,
 } from "lucide-react";
 import {
   Select,
@@ -49,6 +50,7 @@ import { Label } from "@/components/ui/label";
 import type { User } from "@supabase/supabase-js";
 import JSZip from "jszip";
 import SeatingChart from "@/components/wedding/SeatingChart";
+import AgbadaTracker from "@/components/wedding/AgbadaTracker";
 
 const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAIL || "oluwatosinadeyemo50@gmail.com")
   .split(",")
@@ -755,6 +757,10 @@ const DashboardPage = () => {
               <LayoutGrid className="w-3.5 h-3.5 mr-1.5" />
               Seating
             </TabsTrigger>
+            <TabsTrigger value="agbada">
+              <Shirt className="w-3.5 h-3.5 mr-1.5" />
+              Agbada
+            </TabsTrigger>
             <TabsTrigger value="photos">Photos ({allPhotos.length})</TabsTrigger>
           </TabsList>
 
@@ -899,6 +905,11 @@ const DashboardPage = () => {
           {/* Seating Tab */}
           <TabsContent value="seating">
             <SeatingChart />
+          </TabsContent>
+
+          {/* Agbada Tab */}
+          <TabsContent value="agbada">
+            <AgbadaTracker />
           </TabsContent>
 
           {/* Photos Tab */}
