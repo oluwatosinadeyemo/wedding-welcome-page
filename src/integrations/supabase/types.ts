@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      agbada_orders: {
+        Row: {
+          amount: number | null
+          created_at: string
+          delivered: boolean
+          delivery_address: string | null
+          full_name: string
+          id: string
+          measurements: string | null
+          notes: string | null
+          paid: boolean
+          phone: string | null
+          tailor: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          delivered?: boolean
+          delivery_address?: string | null
+          full_name: string
+          id?: string
+          measurements?: string | null
+          notes?: string | null
+          paid?: boolean
+          phone?: string | null
+          tailor?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          delivered?: boolean
+          delivery_address?: string | null
+          full_name?: string
+          id?: string
+          measurements?: string | null
+          notes?: string | null
+          paid?: boolean
+          phone?: string | null
+          tailor?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       guests: {
         Row: {
           checked_in: boolean
