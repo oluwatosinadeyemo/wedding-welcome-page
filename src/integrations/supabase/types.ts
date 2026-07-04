@@ -19,34 +19,49 @@ export type Database = {
           checked_in: boolean
           checked_in_at: string | null
           created_at: string
+          email: string | null
           full_name: string
           id: string
           invite_code: string
           party_size: number
+          pass_generated_at: string | null
           pass_id: string | null
+          phone: string | null
           side: string | null
+          table_assignment: string | null
+          updated_at: string
         }
         Insert: {
           checked_in?: boolean
           checked_in_at?: string | null
           created_at?: string
+          email?: string | null
           full_name: string
           id?: string
           invite_code: string
           party_size?: number
+          pass_generated_at?: string | null
           pass_id?: string | null
+          phone?: string | null
           side?: string | null
+          table_assignment?: string | null
+          updated_at?: string
         }
         Update: {
           checked_in?: boolean
           checked_in_at?: string | null
           created_at?: string
+          email?: string | null
           full_name?: string
           id?: string
           invite_code?: string
           party_size?: number
+          pass_generated_at?: string | null
           pass_id?: string | null
+          phone?: string | null
           side?: string | null
+          table_assignment?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -58,6 +73,7 @@ export type Database = {
           message: string | null
           number_of_guests: number
           submitted_at: string
+          updated_at: string
         }
         Insert: {
           attending: string
@@ -66,6 +82,7 @@ export type Database = {
           message?: string | null
           number_of_guests?: number
           submitted_at?: string
+          updated_at?: string
         }
         Update: {
           attending?: string
@@ -74,6 +91,7 @@ export type Database = {
           message?: string | null
           number_of_guests?: number
           submitted_at?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -84,6 +102,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      scan_log: {
+        Row: {
+          id: string
+          label: string | null
+          pass_id: string | null
+          raw_value: string
+          scanned_at: string
+        }
+        Insert: {
+          id?: string
+          label?: string | null
+          pass_id?: string | null
+          raw_value: string
+          scanned_at?: string
+        }
+        Update: {
+          id?: string
+          label?: string | null
+          pass_id?: string | null
+          raw_value?: string
+          scanned_at?: string
+        }
+        Relationships: []
       }
       wedding_photos: {
         Row: {
@@ -131,6 +173,10 @@ export type Database = {
     Functions: {
       checkin_by_guest_id: { Args: { p_guest_id: string }; Returns: Json }
       checkin_by_pass_id: { Args: { p_pass_id: string }; Returns: Json }
+      delete_photo_with_pin: {
+        Args: { p_photo_id: string; p_pin: string }
+        Returns: string
+      }
       generate_guest_pass: {
         Args: { p_guest_id: string; p_invite_code: string }
         Returns: string
@@ -140,6 +186,10 @@ export type Database = {
         Returns: string
       }
       get_guest_pass_id: { Args: { p_guest_id: string }; Returns: string }
+      insert_scan_log: {
+        Args: { p_label?: string; p_pass_id?: string; p_raw_value: string }
+        Returns: Json
+      }
       lookup_guest_by_invite_code: {
         Args: { code: string }
         Returns: {
