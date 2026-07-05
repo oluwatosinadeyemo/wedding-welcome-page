@@ -52,9 +52,14 @@ import JSZip from "jszip";
 import SeatingChart from "@/components/wedding/SeatingChart";
 import AgbadaTracker from "@/components/wedding/AgbadaTracker";
 
-const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAIL || "oluwatosinadeyemo50@gmail.com,alu_christopher@yahoo.com")
-  .split(",")
-  .map((e: string) => e.trim().toLowerCase());
+const DEFAULT_ADMIN_EMAILS = ["oluwatosinadeyemo50@gmail.com", "alu_christopher@yahoo.com"];
+
+const ADMIN_EMAILS = Array.from(
+  new Set([
+    ...DEFAULT_ADMIN_EMAILS,
+    ...(import.meta.env.VITE_ADMIN_EMAIL || "").split(","),
+  ].map((email: string) => email.trim().toLowerCase()).filter(Boolean))
+);
 
 interface RSVPEntry {
   id: string;
