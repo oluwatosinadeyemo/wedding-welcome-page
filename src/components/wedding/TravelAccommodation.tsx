@@ -79,12 +79,12 @@ const TravelAccommodation = () => {
           rating: 5,
         },
         {
-          name: "Park Inn by Radisson Abeokuta",
-          distance: "25 mins to venue",
-          description: "Premier luxury hotel with world-class amenities and conference facilities",
-          phone: "+234 813 986 0020",
-          website: "https://www.radissonhotels.com/en-us/hotels/park-inn-abeokuta",
-          price: "₦230,000",
+          name: "Bisdot Royal Suite Abeokuta",
+          distance: "20 mins to venue",
+          description: "Luxury suites in Ibara GRA with Italian marble baths, private pools and 24/7 power",
+          phone: "+234 916 512 8000",
+          website: "https://bisdot.com.ng/",
+          price: "₦80,000",
           rating: 5,
         },
         {
