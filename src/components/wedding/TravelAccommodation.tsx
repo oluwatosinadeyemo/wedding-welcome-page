@@ -25,7 +25,7 @@ const TravelAccommodation = () => {
           description: "Well-appointed rooms with quality service and convenient location",
           phone: "+234 803 984 6021",
           website: "https://ibdhotels.com/",
-          price: "₦55,000",
+          price: "₦77,500",
           rating: 4,
         },
         {
@@ -43,7 +43,7 @@ const TravelAccommodation = () => {
           description: "Comfortable accommodation with excellent hospitality and modern amenities",
           phone: "+234 906 202 2287",
           website: "https://abiishotels.com/",
-          price: "₦45,000",
+          price: "₦85,000",
           rating: 4,
         },
         {
@@ -61,7 +61,7 @@ const TravelAccommodation = () => {
           description: "Boutique hotel in serene Kuforiji Olubi GRA blending Victorian charm with contemporary comfort",
           phone: "+234 913 123 8828",
           website: "https://royalqualitysuites.com/",
-          price: "₦80,000",
+          price: "₦75,000",
           rating: 4,
         },
       ],
@@ -75,7 +75,7 @@ const TravelAccommodation = () => {
           description: "5-star hotel with extensive facilities and premium dining",
           phone: "+234 703 178 6648",
           website: "https://conferencehotelnigeria.com/abeokuta/",
-          price: "₦195,000",
+          price: "₦150,000",
           rating: 5,
         },
         {
