@@ -110,6 +110,48 @@ export type Database = {
         }
         Relationships: []
       }
+      hotel_reservations: {
+        Row: {
+          check_in: string | null
+          check_out: string | null
+          created_at: string
+          full_name: string
+          id: string
+          nights: number | null
+          nights_booked: string | null
+          notes: string | null
+          percent_paid: number
+          room_category: string | null
+          updated_at: string
+        }
+        Insert: {
+          check_in?: string | null
+          check_out?: string | null
+          created_at?: string
+          full_name: string
+          id?: string
+          nights?: number | null
+          nights_booked?: string | null
+          notes?: string | null
+          percent_paid?: number
+          room_category?: string | null
+          updated_at?: string
+        }
+        Update: {
+          check_in?: string | null
+          check_out?: string | null
+          created_at?: string
+          full_name?: string
+          id?: string
+          nights?: number | null
+          nights_booked?: string | null
+          notes?: string | null
+          percent_paid?: number
+          room_category?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       rsvps: {
         Row: {
           attending: string
