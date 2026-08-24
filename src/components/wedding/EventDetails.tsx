@@ -75,7 +75,7 @@ const EventDetails = () => {
           <img
             src={venueImage}
             alt="Lambs Event Centre venue"
-            className="relative w-full aspect-[4/3] sm:aspect-[16/9] md:aspect-[21/9] object-cover rounded-3xl shadow-2xl"
+            className="relative w-full aspect-[4/3] sm:aspect-[16/9] md:aspect-[16/9] object-cover object-top rounded-3xl shadow-2xl"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent rounded-3xl" />
 
