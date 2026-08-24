@@ -531,7 +531,14 @@ const DashboardPage = () => {
   const declined = rsvps.filter((r) => r.attending === "no");
   const maybe = rsvps.filter((r) => r.attending === "maybe");
   const totalAttending = attending.reduce((sum, r) => sum + r.number_of_guests, 0);
+  const groomHeadcount = attending
+    .filter((r) => (r.guest?.side || "").toLowerCase() === "groom")
+    .reduce((sum, r) => sum + r.number_of_guests, 0);
+  const brideHeadcount = attending
+    .filter((r) => (r.guest?.side || "").toLowerCase() === "bride")
+    .reduce((sum, r) => sum + r.number_of_guests, 0);
   const pending = totalGuests - rsvps.length;
+
 
   if (isCheckingAuth) {
     return (
