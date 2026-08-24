@@ -154,6 +154,42 @@ const RSVPForm = ({ onSubmitSuccess }: RSVPFormProps = {}) => {
               )}
             </div>
 
+            {/* Groom or Bride */}
+            <div className="space-y-3">
+              <Label className="text-foreground font-sans text-sm flex items-center gap-2">
+                <Users className="w-4 h-4 text-primary" />
+                Are you with the groom or the bride?
+              </Label>
+              <RadioGroup
+                value={form.watch("side")}
+                onValueChange={(value) => form.setValue("side", value as "groom" | "bride", { shouldValidate: true })}
+                className="grid grid-cols-2 gap-2 sm:gap-3"
+              >
+                {[
+                  { value: "groom", label: "Groom's Side" },
+                  { value: "bride", label: "Bride's Side" },
+                ].map((option) => (
+                  <Label
+                    key={option.value}
+                    htmlFor={`side-${option.value}`}
+                    className={`flex items-center justify-center p-4 rounded-xl border cursor-pointer transition-all text-center text-xs font-sans ${
+                      form.watch("side") === option.value
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border/50 bg-background/30 text-muted-foreground hover:border-primary/30"
+                    }`}
+                  >
+                    <RadioGroupItem value={option.value} id={`side-${option.value}`} className="sr-only" />
+                    {option.label}
+                  </Label>
+                ))}
+              </RadioGroup>
+              {form.formState.errors.side && (
+                <p className="text-destructive text-xs">{form.formState.errors.side.message}</p>
+              )}
+            </div>
+
+
+
             {/* Number of Guests */}
             {form.watch("attending") !== "no" && (
               <div className="space-y-3">
