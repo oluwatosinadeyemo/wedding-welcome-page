@@ -26,6 +26,7 @@ const RSVPForm = ({ onSubmitSuccess }: RSVPFormProps = {}) => {
     defaultValues: {
       full_name: "",
       attending: undefined,
+      side: undefined,
       number_of_guests: 1,
       message: "",
     },
@@ -43,6 +44,7 @@ const RSVPForm = ({ onSubmitSuccess }: RSVPFormProps = {}) => {
           p_attending: values.attending,
           p_number_of_guests: values.number_of_guests,
           p_message: values.message || null,
+          p_side: values.side,
         }
       );
 
