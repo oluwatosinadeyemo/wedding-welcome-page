@@ -319,15 +319,26 @@ export type Database = {
         }
         Returns: string
       }
-      submit_walkin_rsvp: {
-        Args: {
-          p_attending: string
-          p_full_name: string
-          p_message?: string
-          p_number_of_guests?: number
-        }
-        Returns: Json
-      }
+      submit_walkin_rsvp:
+        | {
+            Args: {
+              p_attending: string
+              p_full_name: string
+              p_message?: string
+              p_number_of_guests?: number
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_attending: string
+              p_full_name: string
+              p_message?: string
+              p_number_of_guests?: number
+              p_side?: string
+            }
+            Returns: Json
+          }
     }
     Enums: {
       [_ in never]: never
