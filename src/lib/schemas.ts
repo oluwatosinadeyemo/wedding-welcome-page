@@ -5,6 +5,9 @@ export const manualRsvpSchema = z.object({
   attending: z.enum(["yes", "no", "maybe"], {
     required_error: "Please let us know if you can attend",
   }),
+  side: z.enum(["groom", "bride"], {
+    required_error: "Please select whose side you're attending for",
+  }),
   number_of_guests: z.number().min(1, "At least 1 guest required").max(10),
   message: z.string().max(1000, "Message is too long").optional(),
 });
