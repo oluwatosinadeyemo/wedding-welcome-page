@@ -736,7 +736,7 @@ const DashboardPage = () => {
 
       <div className="container mx-auto px-4 py-8">
         {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 sm:gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 sm:gap-4 mb-8">
           {[
             { label: "Total Invited", value: totalGuests, icon: Users, color: "text-primary" },
             {
@@ -745,6 +745,19 @@ const DashboardPage = () => {
               icon: CheckCircle,
               color: "text-green-500",
             },
+            {
+              label: "Groom's Side",
+              value: groomHeadcount,
+              icon: Users,
+              color: "text-hydrangea",
+            },
+            {
+              label: "Bride's Side",
+              value: brideHeadcount,
+              icon: Users,
+              color: "text-secondary",
+            },
+
             { label: "Declined", value: declined.length, icon: XCircle, color: "text-red-500" },
             { label: "Maybe", value: maybe.length, icon: HelpCircle, color: "text-yellow-500" },
             { label: "Pending", value: pending, icon: Clock, color: "text-muted-foreground" },
