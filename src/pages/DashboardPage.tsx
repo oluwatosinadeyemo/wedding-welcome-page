@@ -790,6 +790,10 @@ const DashboardPage = () => {
               <Shirt className="w-3.5 h-3.5 mr-1.5" />
               Agbada
             </TabsTrigger>
+            <TabsTrigger value="cap">
+              <Crown className="w-3.5 h-3.5 mr-1.5" />
+              Cap
+            </TabsTrigger>
             <TabsTrigger value="hotel">
               <BedDouble className="w-3.5 h-3.5 mr-1.5" />
               Hotel
