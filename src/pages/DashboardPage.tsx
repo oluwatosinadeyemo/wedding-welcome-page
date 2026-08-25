@@ -53,6 +53,7 @@ import type { User } from "@supabase/supabase-js";
 import JSZip from "jszip";
 import SeatingChart from "@/components/wedding/SeatingChart";
 import AgbadaTracker from "@/components/wedding/AgbadaTracker";
+import CapTracker from "@/components/wedding/CapTracker";
 import HotelReservations from "@/components/wedding/HotelReservations";
 
 const DEFAULT_ADMIN_EMAILS = ["oluwatosinadeyemo50@gmail.com", "alu_christopher@yahoo.com"];
