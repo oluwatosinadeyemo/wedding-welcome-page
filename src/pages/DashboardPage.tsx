@@ -945,6 +945,11 @@ const DashboardPage = () => {
             <AgbadaTracker />
           </TabsContent>
 
+          {/* Cap Tab */}
+          <TabsContent value="cap">
+            <CapTracker />
+          </TabsContent>
+
           {/* Hotel Tab */}
           <TabsContent value="hotel">
             <HotelReservations />
