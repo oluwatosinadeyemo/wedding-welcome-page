@@ -192,7 +192,8 @@ const QRCodePass = () => {
 
         ctx.font = "12px Inter, sans-serif";
         ctx.fillStyle = "#6b7280";
-        ctx.fillText("Present this pass at the venue entrance", canvas.width / 2, 550);
+        ctx.fillText("Present this pass at the venue entrance", canvas.width / 2, 545);
+          ctx.fillText("Admits one person only", canvas.width / 2, 563);
 
         if (passId) {
           ctx.font = "10px Inter, sans-serif";
@@ -408,6 +409,9 @@ const QRCodePass = () => {
 
                 <p className="text-center text-muted-foreground text-xs mt-4 font-sans">
                   Present this QR code at the venue entrance
+                </p>
+                <p className="text-center text-primary text-xs mt-2 font-sans uppercase tracking-wider">
+                  Admits one person only
                 </p>
               </div>
 
