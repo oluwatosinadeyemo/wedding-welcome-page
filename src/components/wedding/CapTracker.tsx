@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Shirt,
+  Crown,
   Loader2,
   Plus,
   Pencil,
@@ -326,7 +326,7 @@ const CapTracker = () => {
   ];
 
   const statCards = [
-    { label: "Total Orders", value: stats.total, icon: Shirt, color: "text-primary" },
+    { label: "Total Orders", value: stats.total, icon: Crown, color: "text-primary" },
     { label: "Paid", value: `${stats.paid} / ${stats.total}`, icon: Wallet, color: "text-green-500" },
     { label: "Delivered", value: `${stats.delivered} / ${stats.total}`, icon: Truck, color: "text-blue-500" },
     { label: "Our Tailor", value: stats.ourTailor, icon: Scissors, color: "text-purple-400" },
@@ -539,7 +539,7 @@ const CapTracker = () => {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingId ? "Edit Agbada Order" : "Add Agbada Order"}</DialogTitle>
+            <DialogTitle>{editingId ? "Edit Cap Order" : "Add Cap Order"}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSave} className="space-y-4 pt-2">
             <div className="space-y-1.5">
