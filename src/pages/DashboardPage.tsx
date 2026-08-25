@@ -38,6 +38,7 @@ import {
   LayoutGrid,
   Pencil,
   Shirt,
+  Crown,
   BedDouble,
 } from "lucide-react";
 import {
