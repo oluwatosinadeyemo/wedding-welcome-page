@@ -38,6 +38,7 @@ import {
   LayoutGrid,
   Pencil,
   Shirt,
+  Crown,
   BedDouble,
 } from "lucide-react";
 import {
@@ -52,6 +53,7 @@ import type { User } from "@supabase/supabase-js";
 import JSZip from "jszip";
 import SeatingChart from "@/components/wedding/SeatingChart";
 import AgbadaTracker from "@/components/wedding/AgbadaTracker";
+import CapTracker from "@/components/wedding/CapTracker";
 import HotelReservations from "@/components/wedding/HotelReservations";
 
 const DEFAULT_ADMIN_EMAILS = ["oluwatosinadeyemo50@gmail.com", "alu_christopher@yahoo.com"];
@@ -788,6 +790,10 @@ const DashboardPage = () => {
               <Shirt className="w-3.5 h-3.5 mr-1.5" />
               Agbada
             </TabsTrigger>
+            <TabsTrigger value="cap">
+              <Crown className="w-3.5 h-3.5 mr-1.5" />
+              Cap
+            </TabsTrigger>
             <TabsTrigger value="hotel">
               <BedDouble className="w-3.5 h-3.5 mr-1.5" />
               Hotel
@@ -941,6 +947,11 @@ const DashboardPage = () => {
           {/* Agbada Tab */}
           <TabsContent value="agbada">
             <AgbadaTracker />
+          </TabsContent>
+
+          {/* Cap Tab */}
+          <TabsContent value="cap">
+            <CapTracker />
           </TabsContent>
 
           {/* Hotel Tab */}
