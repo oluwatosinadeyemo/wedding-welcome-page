@@ -200,10 +200,13 @@ const RSVPForm = ({ onSubmitSuccess }: RSVPFormProps = {}) => {
                 <Input
                   type="number"
                   min={1}
-                  max={10}
+                  max={2}
                   {...form.register("number_of_guests", { valueAsNumber: true })}
                   className="bg-background/50 border-border/50 rounded-xl text-center"
                 />
+                <p className="text-muted-foreground text-xs text-center">
+                  Maximum of 2 — yourself plus one additional guest. Each access card admits one person only.
+                </p>
                 {form.formState.errors.number_of_guests && (
                   <p className="text-destructive text-xs">
                     {form.formState.errors.number_of_guests.message}

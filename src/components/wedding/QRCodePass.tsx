@@ -236,6 +236,9 @@ const QRCodePass = () => {
           <p className="text-muted-foreground font-sans max-w-2xl mx-auto mt-6">
             Generate your personalized wedding pass. Show the QR code at the venue entrance for seamless check-in.
           </p>
+          <p className="text-primary font-sans text-sm max-w-2xl mx-auto mt-4">
+            Please note: each access card admits one person only.
+          </p>
         </div>
 
         <div className="max-w-md mx-auto">
