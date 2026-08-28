@@ -665,10 +665,11 @@ const HotelReservations = () => {
                   className="bg-background/50 border-border/50 rounded-xl"
                 />
                 <datalist id="room-category-options">
-                  <option value="Standard" />
-                  <option value="Deluxe" />
-                  <option value="Double Deluxe" />
+                  {Object.keys(ROOM_RATES).map((cat) => (
+                    <option key={cat} value={cat} />
+                  ))}
                 </datalist>
+
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="hotel-percent">% Paid</Label>
