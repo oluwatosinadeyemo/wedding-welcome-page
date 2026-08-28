@@ -510,13 +510,21 @@ const HotelReservations = () => {
                 </TableCell>
                 <TableCell>
                   {r.room_category ? (
-                    <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary whitespace-nowrap">
-                      {r.room_category}
-                    </span>
+                    <div className="space-y-1">
+                      <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary whitespace-nowrap inline-block">
+                        {r.room_category}
+                      </span>
+                      {discountedRate(r.room_category) > 0 && (
+                        <p className="text-xs text-muted-foreground tabular-nums">
+                          {naira(discountedRate(r.room_category))}/night
+                        </p>
+                      )}
+                    </div>
                   ) : (
                     <span className="text-xs text-muted-foreground">—</span>
                   )}
                 </TableCell>
+
                 <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
                   {r.nights ? (
                     <div>
