@@ -40,12 +40,14 @@ const TravelAccommodation = () => {
         {
           name: "Abiis Hotel Abeokuta",
           distance: "15 mins to venue",
-          description: "Comfortable accommodation with excellent hospitality and modern amenities",
+          description:
+            "Comfortable accommodation with excellent hospitality and modern amenities. 10% wedding discount for our guests — standard rooms from ₦76,500 (was ₦85,000), breakfast included.",
           phone: "+234 906 202 2287",
           website: "https://abiishotels.com/",
-          price: "₦85,000",
+          price: "₦76,500",
           rating: 4,
         },
+
         {
           name: "Treal Hotel and Suites Abeokuta",
           distance: "15 mins to venue",

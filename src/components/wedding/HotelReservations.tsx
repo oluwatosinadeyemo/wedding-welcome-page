@@ -72,6 +72,38 @@ const emptyForm: ResForm = {
 const clampPercent = (n: number) =>
   isNaN(n) ? 0 : Math.max(0, Math.min(100, Math.round(n)));
 
+/** Abiis Hotel & Suites published rates (with breakfast), per night */
+const ROOM_RATES: Record<string, number> = {
+  Standard: 85000,
+  Deluxe: 95000,
+  "Double Deluxe": 110000,
+  "Executive Suite": 150000,
+  "Super Deluxe": 120000,
+  "Abiis Executive Suites": 220000,
+};
+
+/** Wedding discount kindly given by the hotel */
+const DISCOUNT = 0.1;
+
+const discountedRate = (category: string | null) => {
+  if (!category) return 0;
+  const rate = ROOM_RATES[category.trim()] ?? 0;
+  return Math.round(rate * (1 - DISCOUNT));
+};
+
+const naira = (n: number) =>
+  "₦" + Math.round(n).toLocaleString("en-NG");
+
+/** Cost of a reservation after discount, and how much of it is settled */
+const resCost = (r: { room_category: string | null; nights: number | null; percent_paid: number }) => {
+  const rate = discountedRate(r.room_category);
+  const nights = r.nights ?? 0;
+  const total = rate * nights;
+  const paid = Math.round((total * r.percent_paid) / 100);
+  return { rate, total, paid, balance: total - paid };
+};
+
+
 const HotelReservations = () => {
   const [reservations, setReservations] = useState<HotelReservation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -242,14 +274,26 @@ const HotelReservations = () => {
     const notPaid = reservations.filter((r) => r.percent_paid <= 0).length;
     const partial = total - fullyPaid - notPaid;
     const totalNights = reservations.reduce((s, r) => s + (r.nights ?? 0), 0);
+    const money = reservations.reduce(
+      (acc, r) => {
+        const c = resCost(r);
+        return {
+          total: acc.total + c.total,
+          paid: acc.paid + c.paid,
+          balance: acc.balance + c.balance,
+        };
+      },
+      { total: 0, paid: 0, balance: 0 }
+    );
     const avgPaid =
       total === 0
         ? 0
         : Math.round(
             reservations.reduce((s, r) => s + r.percent_paid, 0) / total
           );
-    return { total, fullyPaid, notPaid, partial, totalNights, avgPaid };
+    return { total, fullyPaid, notPaid, partial, totalNights, avgPaid, money };
   }, [reservations]);
+
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -273,25 +317,35 @@ const HotelReservations = () => {
     const headers = [
       "Name",
       "Room Category",
-      "% Paid",
+      "Rate/night (after 10% off)",
       "Nights",
+      "Total",
+      "% Paid",
+      "Amount Paid",
+      "Balance",
       "Check-in",
       "Check-out",
       "Nights Booked",
       "Notes",
     ].map(field).join(",");
-    const rows = reservations.map((r) =>
-      [
+    const rows = reservations.map((r) => {
+      const c = resCost(r);
+      return [
         field(r.full_name),
         field(r.room_category),
-        field(r.percent_paid),
+        field(c.rate || ""),
         field(r.nights ?? ""),
+        field(c.total || ""),
+        field(r.percent_paid),
+        field(c.paid || ""),
+        field(c.balance || ""),
         field(r.check_in),
         field(r.check_out),
         field(r.nights_booked),
         field(r.notes),
-      ].join(",")
-    );
+      ].join(",");
+    });
+
     const csv = "﻿" + [headers, ...rows].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -314,9 +368,12 @@ const HotelReservations = () => {
     { label: "Fully Paid", value: `${stats.fullyPaid} / ${stats.total}`, icon: CheckCircle, color: "text-green-500" },
     { label: "Part Paid", value: stats.partial, icon: CircleDashed, color: "text-yellow-500" },
     { label: "Not Paid", value: stats.notPaid, icon: Wallet, color: "text-red-500" },
-    { label: "Avg Paid", value: `${stats.avgPaid}%`, icon: Wallet, color: "text-blue-500" },
     { label: "Room-nights", value: stats.totalNights, icon: BedDouble, color: "text-purple-400" },
+    { label: "Total (after 10% off)", value: naira(stats.money.total), icon: Wallet, color: "text-blue-500" },
+    { label: "Collected", value: naira(stats.money.paid), icon: CheckCircle, color: "text-green-500" },
+    { label: "Outstanding", value: naira(stats.money.balance), icon: Wallet, color: "text-red-500" },
   ];
+
 
   const pctColor = (p: number) =>
     p >= 100 ? "bg-green-500" : p > 0 ? "bg-yellow-500" : "bg-muted-foreground/40";
@@ -341,6 +398,29 @@ const HotelReservations = () => {
           </div>
         ))}
       </div>
+      {/* Room rate card (Abiis Hotel & Suites, 10% wedding discount applied) */}
+      <div className="glass-card p-4 mb-6">
+        <div className="flex items-center gap-2 mb-3">
+          <BedDouble className="w-4 h-4 text-primary" />
+          <p className="text-sm font-medium text-foreground">
+            Abiis Hotel &amp; Suites — rates per night (10% wedding discount applied)
+          </p>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+          {Object.entries(ROOM_RATES).map(([cat, rate]) => (
+            <div key={cat} className="rounded-xl border border-border/40 p-3">
+              <p className="text-xs text-muted-foreground">{cat}</p>
+              <p className="text-base text-foreground tabular-nums">
+                {naira(rate * (1 - DISCOUNT))}
+              </p>
+              <p className="text-xs text-muted-foreground/70 line-through tabular-nums">
+                {naira(rate)}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
 
       {/* Controls */}
       <div className="flex flex-wrap items-center gap-3 mb-4">
@@ -409,12 +489,14 @@ const HotelReservations = () => {
               <TableHead>Name</TableHead>
               <TableHead>Room Category</TableHead>
               <TableHead className="hidden md:table-cell">Nights</TableHead>
+              <TableHead className="hidden sm:table-cell">Cost</TableHead>
               <TableHead className="min-w-[150px]">% Paid</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.map((r) => (
+
               <TableRow key={r.id} className="border-border/20">
                 <TableCell>
                   <div>
@@ -428,13 +510,21 @@ const HotelReservations = () => {
                 </TableCell>
                 <TableCell>
                   {r.room_category ? (
-                    <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary whitespace-nowrap">
-                      {r.room_category}
-                    </span>
+                    <div className="space-y-1">
+                      <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary whitespace-nowrap inline-block">
+                        {r.room_category}
+                      </span>
+                      {discountedRate(r.room_category) > 0 && (
+                        <p className="text-xs text-muted-foreground tabular-nums">
+                          {naira(discountedRate(r.room_category))}/night
+                        </p>
+                      )}
+                    </div>
                   ) : (
                     <span className="text-xs text-muted-foreground">—</span>
                   )}
                 </TableCell>
+
                 <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
                   {r.nights ? (
                     <div>
@@ -454,6 +544,22 @@ const HotelReservations = () => {
                     "—"
                   )}
                 </TableCell>
+                <TableCell className="hidden sm:table-cell text-sm">
+                  {(() => {
+                    const c = resCost(r);
+                    if (!c.total) return <span className="text-muted-foreground">—</span>;
+                    return (
+                      <div className="tabular-nums">
+                        <p className="text-foreground">{naira(c.total)}</p>
+                        <p className="text-xs text-green-500">Paid {naira(c.paid)}</p>
+                        {c.balance > 0 && (
+                          <p className="text-xs text-red-400">Bal {naira(c.balance)}</p>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </TableCell>
+
                 <TableCell>
                   {editingPctId === r.id ? (
                     <Input
@@ -517,7 +623,7 @@ const HotelReservations = () => {
             ))}
             {filtered.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                   {reservations.length === 0
                     ? "No reservations yet. Click \"Add Reservation\" to start."
                     : "No reservations match your search or filter."}
@@ -559,10 +665,11 @@ const HotelReservations = () => {
                   className="bg-background/50 border-border/50 rounded-xl"
                 />
                 <datalist id="room-category-options">
-                  <option value="Standard" />
-                  <option value="Deluxe" />
-                  <option value="Double Deluxe" />
+                  {Object.keys(ROOM_RATES).map((cat) => (
+                    <option key={cat} value={cat} />
+                  ))}
                 </datalist>
+
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="hotel-percent">% Paid</Label>
