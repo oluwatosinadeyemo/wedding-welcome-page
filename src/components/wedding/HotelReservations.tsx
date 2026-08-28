@@ -72,6 +72,38 @@ const emptyForm: ResForm = {
 const clampPercent = (n: number) =>
   isNaN(n) ? 0 : Math.max(0, Math.min(100, Math.round(n)));
 
+/** Abiis Hotel & Suites published rates (with breakfast), per night */
+const ROOM_RATES: Record<string, number> = {
+  Standard: 85000,
+  Deluxe: 95000,
+  "Double Deluxe": 110000,
+  "Executive Suite": 150000,
+  "Super Deluxe": 120000,
+  "Abiis Executive Suites": 220000,
+};
+
+/** Wedding discount kindly given by the hotel */
+const DISCOUNT = 0.1;
+
+const discountedRate = (category: string | null) => {
+  if (!category) return 0;
+  const rate = ROOM_RATES[category.trim()] ?? 0;
+  return Math.round(rate * (1 - DISCOUNT));
+};
+
+const naira = (n: number) =>
+  "₦" + Math.round(n).toLocaleString("en-NG");
+
+/** Cost of a reservation after discount, and how much of it is settled */
+const resCost = (r: { room_category: string | null; nights: number | null; percent_paid: number }) => {
+  const rate = discountedRate(r.room_category);
+  const nights = r.nights ?? 0;
+  const total = rate * nights;
+  const paid = Math.round((total * r.percent_paid) / 100);
+  return { rate, total, paid, balance: total - paid };
+};
+
+
 const HotelReservations = () => {
   const [reservations, setReservations] = useState<HotelReservation[]>([]);
   const [loading, setLoading] = useState(true);
