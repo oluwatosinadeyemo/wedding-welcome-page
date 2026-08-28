@@ -274,14 +274,26 @@ const HotelReservations = () => {
     const notPaid = reservations.filter((r) => r.percent_paid <= 0).length;
     const partial = total - fullyPaid - notPaid;
     const totalNights = reservations.reduce((s, r) => s + (r.nights ?? 0), 0);
+    const money = reservations.reduce(
+      (acc, r) => {
+        const c = resCost(r);
+        return {
+          total: acc.total + c.total,
+          paid: acc.paid + c.paid,
+          balance: acc.balance + c.balance,
+        };
+      },
+      { total: 0, paid: 0, balance: 0 }
+    );
     const avgPaid =
       total === 0
         ? 0
         : Math.round(
             reservations.reduce((s, r) => s + r.percent_paid, 0) / total
           );
-    return { total, fullyPaid, notPaid, partial, totalNights, avgPaid };
+    return { total, fullyPaid, notPaid, partial, totalNights, avgPaid, money };
   }, [reservations]);
+
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
