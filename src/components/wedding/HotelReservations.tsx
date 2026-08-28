@@ -317,25 +317,35 @@ const HotelReservations = () => {
     const headers = [
       "Name",
       "Room Category",
-      "% Paid",
+      "Rate/night (after 10% off)",
       "Nights",
+      "Total",
+      "% Paid",
+      "Amount Paid",
+      "Balance",
       "Check-in",
       "Check-out",
       "Nights Booked",
       "Notes",
     ].map(field).join(",");
-    const rows = reservations.map((r) =>
-      [
+    const rows = reservations.map((r) => {
+      const c = resCost(r);
+      return [
         field(r.full_name),
         field(r.room_category),
-        field(r.percent_paid),
+        field(c.rate || ""),
         field(r.nights ?? ""),
+        field(c.total || ""),
+        field(r.percent_paid),
+        field(c.paid || ""),
+        field(c.balance || ""),
         field(r.check_in),
         field(r.check_out),
         field(r.nights_booked),
         field(r.notes),
-      ].join(",")
-    );
+      ].join(",");
+    });
+
     const csv = "﻿" + [headers, ...rows].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
