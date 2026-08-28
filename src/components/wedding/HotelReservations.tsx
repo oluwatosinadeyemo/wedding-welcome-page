@@ -623,7 +623,7 @@ const HotelReservations = () => {
             ))}
             {filtered.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                   {reservations.length === 0
                     ? "No reservations yet. Click \"Add Reservation\" to start."
                     : "No reservations match your search or filter."}
