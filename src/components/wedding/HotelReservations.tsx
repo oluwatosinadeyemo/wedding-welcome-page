@@ -489,12 +489,14 @@ const HotelReservations = () => {
               <TableHead>Name</TableHead>
               <TableHead>Room Category</TableHead>
               <TableHead className="hidden md:table-cell">Nights</TableHead>
+              <TableHead className="hidden sm:table-cell">Cost</TableHead>
               <TableHead className="min-w-[150px]">% Paid</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.map((r) => (
+
               <TableRow key={r.id} className="border-border/20">
                 <TableCell>
                   <div>
