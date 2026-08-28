@@ -398,6 +398,29 @@ const HotelReservations = () => {
           </div>
         ))}
       </div>
+      {/* Room rate card (Abiis Hotel & Suites, 10% wedding discount applied) */}
+      <div className="glass-card p-4 mb-6">
+        <div className="flex items-center gap-2 mb-3">
+          <BedDouble className="w-4 h-4 text-primary" />
+          <p className="text-sm font-medium text-foreground">
+            Abiis Hotel &amp; Suites — rates per night (10% wedding discount applied)
+          </p>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+          {Object.entries(ROOM_RATES).map(([cat, rate]) => (
+            <div key={cat} className="rounded-xl border border-border/40 p-3">
+              <p className="text-xs text-muted-foreground">{cat}</p>
+              <p className="text-base text-foreground tabular-nums">
+                {naira(rate * (1 - DISCOUNT))}
+              </p>
+              <p className="text-xs text-muted-foreground/70 line-through tabular-nums">
+                {naira(rate)}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
 
       {/* Controls */}
       <div className="flex flex-wrap items-center gap-3 mb-4">
