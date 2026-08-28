@@ -544,6 +544,22 @@ const HotelReservations = () => {
                     "—"
                   )}
                 </TableCell>
+                <TableCell className="hidden sm:table-cell text-sm">
+                  {(() => {
+                    const c = resCost(r);
+                    if (!c.total) return <span className="text-muted-foreground">—</span>;
+                    return (
+                      <div className="tabular-nums">
+                        <p className="text-foreground">{naira(c.total)}</p>
+                        <p className="text-xs text-green-500">Paid {naira(c.paid)}</p>
+                        {c.balance > 0 && (
+                          <p className="text-xs text-red-400">Bal {naira(c.balance)}</p>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </TableCell>
+
                 <TableCell>
                   {editingPctId === r.id ? (
                     <Input
