@@ -368,9 +368,12 @@ const HotelReservations = () => {
     { label: "Fully Paid", value: `${stats.fullyPaid} / ${stats.total}`, icon: CheckCircle, color: "text-green-500" },
     { label: "Part Paid", value: stats.partial, icon: CircleDashed, color: "text-yellow-500" },
     { label: "Not Paid", value: stats.notPaid, icon: Wallet, color: "text-red-500" },
-    { label: "Avg Paid", value: `${stats.avgPaid}%`, icon: Wallet, color: "text-blue-500" },
     { label: "Room-nights", value: stats.totalNights, icon: BedDouble, color: "text-purple-400" },
+    { label: "Total (after 10% off)", value: naira(stats.money.total), icon: Wallet, color: "text-blue-500" },
+    { label: "Collected", value: naira(stats.money.paid), icon: CheckCircle, color: "text-green-500" },
+    { label: "Outstanding", value: naira(stats.money.balance), icon: Wallet, color: "text-red-500" },
   ];
+
 
   const pctColor = (p: number) =>
     p >= 100 ? "bg-green-500" : p > 0 ? "bg-yellow-500" : "bg-muted-foreground/40";
