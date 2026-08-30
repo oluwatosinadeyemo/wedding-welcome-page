@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -442,6 +444,11 @@ const AgbadaTracker = () => {
                         Measurements: {order.measurements}
                       </p>
                     )}
+                    {order.delivery_address && (
+                      <p className="lg:hidden text-xs text-muted-foreground mt-0.5 max-w-[220px] whitespace-normal break-words">
+                        Deliver to: {order.delivery_address}
+                      </p>
+                    )}
                     {order.notes && (
                       <p className="text-xs text-muted-foreground/70 mt-0.5 italic max-w-[220px] whitespace-normal break-words">
                         {order.notes}
@@ -449,6 +456,7 @@ const AgbadaTracker = () => {
                     )}
                   </div>
                 </TableCell>
+
                 <TableCell className="hidden lg:table-cell max-w-[220px] whitespace-normal break-words text-sm text-muted-foreground">
                   {order.delivery_address || "-"}
                 </TableCell>
@@ -584,14 +592,19 @@ const AgbadaTracker = () => {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="agbada-address">Delivery Address</Label>
-              <Input
+              <Textarea
                 id="agbada-address"
+                rows={3}
                 value={form.delivery_address}
                 onChange={(e) => updateForm("delivery_address", e.target.value)}
-                placeholder="Where the agbada should be delivered"
-                className="bg-background/50 border-border/50 rounded-xl"
+                placeholder="Street, city, state and any landmark for delivery"
+                className="bg-background/50 border-border/50 rounded-xl resize-y"
               />
+              <p className="text-xs text-muted-foreground">
+                Full address including city, state and a landmark helps the courier.
+              </p>
             </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="agbada-measurements">Measurements / Size</Label>
