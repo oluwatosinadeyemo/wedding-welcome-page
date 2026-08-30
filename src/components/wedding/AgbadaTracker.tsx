@@ -584,14 +584,19 @@ const AgbadaTracker = () => {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="agbada-address">Delivery Address</Label>
-              <Input
+              <Textarea
                 id="agbada-address"
+                rows={3}
                 value={form.delivery_address}
                 onChange={(e) => updateForm("delivery_address", e.target.value)}
-                placeholder="Where the agbada should be delivered"
-                className="bg-background/50 border-border/50 rounded-xl"
+                placeholder="Street, city, state and any landmark for delivery"
+                className="bg-background/50 border-border/50 rounded-xl resize-y"
               />
+              <p className="text-xs text-muted-foreground">
+                Full address including city, state and a landmark helps the courier.
+              </p>
             </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="agbada-measurements">Measurements / Size</Label>
