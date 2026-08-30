@@ -444,6 +444,11 @@ const AgbadaTracker = () => {
                         Measurements: {order.measurements}
                       </p>
                     )}
+                    {order.delivery_address && (
+                      <p className="lg:hidden text-xs text-muted-foreground mt-0.5 max-w-[220px] whitespace-normal break-words">
+                        Deliver to: {order.delivery_address}
+                      </p>
+                    )}
                     {order.notes && (
                       <p className="text-xs text-muted-foreground/70 mt-0.5 italic max-w-[220px] whitespace-normal break-words">
                         {order.notes}
@@ -451,6 +456,7 @@ const AgbadaTracker = () => {
                     )}
                   </div>
                 </TableCell>
+
                 <TableCell className="hidden lg:table-cell max-w-[220px] whitespace-normal break-words text-sm text-muted-foreground">
                   {order.delivery_address || "-"}
                 </TableCell>
