@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
-import { QRCodeSVG } from "qrcode.react";
-import { Download, Ticket, User, Calendar, MapPin, Loader2, ArrowRight, Home } from "lucide-react";
+import DigitalAccessCard from "@/components/wedding/DigitalAccessCard";
+import { Ticket, User, Loader2, ArrowRight, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,8 +35,8 @@ const QRCodePass = () => {
   const validateGuestName = (name: string): string => {
     const trimmed = name.trim();
     if (trimmed.length === 0) throw new Error("Please enter your name");
-    if (trimmed.length > 50) throw new Error("Name must be 50 characters or less");
-    if (!/^[a-zA-Z\s'-]+$/.test(trimmed))
+    if (trimmed.length > 100) throw new Error("Name must be 100 characters or less");
+    if (!/^[\p{L}\p{M}\s’'\-]+$/u.test(trimmed))
       throw new Error("Name can only contain letters, spaces, hyphens, and apostrophes");
     return trimmed;
   };
@@ -145,72 +145,6 @@ const QRCodePass = () => {
     });
   };
 
-  const downloadPass = () => {
-    const svg = document.getElementById("wedding-qr-code");
-    if (!svg || !guest) return;
-
-    const svgData = new XMLSerializer().serializeToString(svg);
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    const img = new Image();
-
-    img.onload = () => {
-      canvas.width = 400;
-      canvas.height = 620;
-
-      if (ctx) {
-        ctx.fillStyle = "#0a0a14";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-        gradient.addColorStop(0, "rgba(59, 130, 246, 0.1)");
-        gradient.addColorStop(1, "rgba(168, 85, 247, 0.1)");
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "bold 24px 'Playfair Display', serif";
-        ctx.textAlign = "center";
-        ctx.fillText("Wedding Pass", canvas.width / 2, 50);
-
-        ctx.font = "italic 32px 'Playfair Display', serif";
-        ctx.fillText("Tosin & Pelumi", canvas.width / 2, 100);
-
-        ctx.drawImage(img, (canvas.width - 200) / 2, 130, 200, 200);
-
-        ctx.font = "18px Inter, sans-serif";
-        ctx.fillStyle = "#a1a1aa";
-        ctx.fillText("Guest", canvas.width / 2, 370);
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "bold 20px Inter, sans-serif";
-        ctx.fillText(guest.full_name, canvas.width / 2, 400);
-
-        ctx.fillStyle = "#a1a1aa";
-        ctx.font = "14px Inter, sans-serif";
-        ctx.fillText("December 12, 2026 | 10:00 AM", canvas.width / 2, 460);
-        ctx.fillText("Lambs Event Centre, Abeokuta", canvas.width / 2, 490);
-
-        ctx.font = "12px Inter, sans-serif";
-        ctx.fillStyle = "#6b7280";
-        ctx.fillText("Present this pass at the venue entrance", canvas.width / 2, 545);
-          ctx.fillText("Admits one person only", canvas.width / 2, 563);
-
-        if (passId) {
-          ctx.font = "10px Inter, sans-serif";
-          ctx.fillStyle = "#4b5563";
-          ctx.fillText(`Pass ID: ${passId.substring(0, 8)}...`, canvas.width / 2, 580);
-        }
-      }
-
-      const link = document.createElement("a");
-      link.download = `wedding-pass-${guest.full_name.replace(/\s+/g, "-").toLowerCase()}.png`;
-      link.href = canvas.toDataURL();
-      link.click();
-    };
-
-    img.src = "data:image/svg+xml;base64," + btoa(svgData);
-  };
-
   const handleStartOver = () => {
     setStep("lookup");
     setGuestName("");
@@ -232,10 +166,10 @@ const QRCodePass = () => {
             Your Invitation
           </p>
           <h2 className="font-serif text-3xl sm:text-5xl md:text-7xl text-foreground mb-4 font-medium">
-            Digital Pass
+            Digital Access Card
           </h2>
           <p className="text-muted-foreground font-sans max-w-2xl mx-auto mt-6">
-            Generate your personalized wedding pass. Show the QR code at the venue entrance for seamless check-in.
+            Your personal invitation to celebrate with Tosin & Pelumi.
           </p>
           <p className="text-primary font-sans text-sm max-w-2xl mx-auto mt-4">
             Please note: each access card admits one person only.
@@ -261,7 +195,7 @@ const QRCodePass = () => {
                   value={guestName}
                   onChange={(e) => setGuestName(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") handleLookup(); }}
-                  maxLength={50}
+                  maxLength={100}
                   className="bg-background/50 border-border/50 rounded-xl text-center text-lg py-6"
                 />
                 {error && (
@@ -358,79 +292,14 @@ const QRCodePass = () => {
           {/* Step 3: Pass Display */}
           {step === "display" && guest && passId && (
             <div className="animate-fade-in">
-              <div className="glass-card p-8 relative overflow-hidden">
-                <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-primary via-secondary to-primary" />
-
-                <div className="text-center mb-6">
-                  <p className="text-primary font-sans uppercase tracking-widest text-xs mb-2">
-                    Wedding Pass
-                  </p>
-                  <h3 className="font-serif text-3xl text-foreground italic">
-                    Tosin & Pelumi
-                  </h3>
-                </div>
-
-                <div className="flex justify-center mb-8">
-                  <div className="p-4 bg-white rounded-2xl">
-                    <QRCodeSVG
-                      id="wedding-qr-code"
-                      value={generateQRValue()}
-                      size={180}
-                      level="H"
-                      includeMargin={false}
-                      fgColor="#0a0a14"
-                      bgColor="#ffffff"
-                    />
-                  </div>
-                </div>
-
-                <div className="text-center mb-8 pb-8 border-b border-border/30">
-                  <div className="flex items-center justify-center gap-2 text-muted-foreground mb-2">
-                    <User className="w-4 h-4" />
-                    <span className="text-sm uppercase tracking-wider">Guest</span>
-                  </div>
-                  <p className="font-serif text-2xl text-foreground">{guest.full_name}</p>
-                </div>
-
-                <div className="space-y-4 text-center">
-                  <div className="flex items-center justify-center gap-3 text-muted-foreground">
-                    <Calendar className="w-4 h-4 text-primary" />
-                    <span className="font-sans">December 12, 2026 | 10:00 AM</span>
-                  </div>
-                  <div className="flex items-center justify-center gap-3 text-muted-foreground">
-                    <MapPin className="w-4 h-4 text-primary" />
-                    <span className="font-sans">Lambs Event Centre, Abeokuta</span>
-                  </div>
-                </div>
-
-                <p className="text-center text-muted-foreground text-[10px] mt-6 font-mono">
-                  Pass ID: {passId.substring(0, 8)}
-                </p>
-
-                <p className="text-center text-muted-foreground text-xs mt-4 font-sans">
-                  Present this QR code at the venue entrance
-                </p>
-                <p className="text-center text-primary text-xs mt-2 font-sans uppercase tracking-wider">
-                  Admits one person only
-                </p>
-              </div>
-
-              <div className="flex gap-4 mt-6">
-                <Button
-                  onClick={downloadPass}
-                  className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground py-6 rounded-xl"
-                >
-                  <Download className="w-5 h-5 mr-2" />
-                  Download Pass
-                </Button>
-                <Button
-                  onClick={handleStartOver}
-                  variant="outline"
-                  className="py-6 rounded-xl border-border/50"
-                >
-                  New Pass
-                </Button>
-              </div>
+              <DigitalAccessCard guestName={guest.full_name} passId={passId} qrValue={generateQRValue()} />
+              <Button
+                onClick={handleStartOver}
+                variant="outline"
+                className="w-full mt-3 py-6 rounded-xl border-border/50"
+              >
+                New Pass
+              </Button>
 
               {isStandalonePage && (
                 <Button
