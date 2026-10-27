@@ -94,7 +94,12 @@ export default function DigitalAccessCard({ guestName, passId, qrValue }: Digita
           if (line) lines.push(line);
           if (lines.length <= 3) break;
         }
-        lines.forEach((line, index) => ctx.fillText(line, 450, 635 + index * (fontSize + 12)));
+        // Centre the wrapped name block in the space between the label and the couple's names.
+        const lineHeight = fontSize + 12;
+        const nameCentre = 715;
+        const firstBaseline = nameCentre - (lines.length * lineHeight) / 2 + fontSize * 0.78;
+        lines.forEach((line, index) => ctx.fillText(line, 450, firstBaseline + index * lineHeight));
+
         ctx.font = `20px ${sans}`;
         ctx.fillStyle = color("--access-muted");
         ctx.fillText("OUR WEDDING GUEST", 450, 590);
