@@ -44,6 +44,10 @@
     --ivory: 220 25% 10%;
     --silver: 220 15% 25%;
     --gold: 45 80% 55%;
+    --access-paper: 240 12% 96%;
+    --access-ink: 225 15% 10%;
+    --access-muted: 225 8% 40%;
+    --access-rule: 225 8% 72%;
 
     /* Typography */
     --font-serif: 'Playfair Display', Georgia, serif;
@@ -108,6 +112,14 @@
 }
 
 @layer components {
+  .access-card-preview {
+    width: 100%;
+    aspect-ratio: 3 / 5;
+    overflow: hidden;
+    border-radius: 8px;
+    background: hsl(var(--card));
+  }
+
   .wedding-heading {
     font-family: var(--font-serif);
     @apply text-foreground tracking-wide font-medium;
