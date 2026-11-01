@@ -318,6 +318,10 @@ export type Database = {
         Returns: string
       }
       get_guest_pass_id: { Args: { p_guest_id: string }; Returns: string }
+      get_guest_table_assignment: {
+        Args: { p_guest_id: string }
+        Returns: string
+      }
       insert_scan_log: {
         Args: { p_label?: string; p_pass_id?: string; p_raw_value: string }
         Returns: Json
