@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import DigitalAccessCard from "@/components/wedding/DigitalAccessCard";
-import { Ticket, User, Loader2, ArrowRight, Home } from "lucide-react";
+import DigitalTableCard from "@/components/wedding/DigitalTableCard";
+import { Ticket, User, Loader2, ArrowRight, Home, Armchair } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +22,8 @@ const QRCodePass = () => {
   const [guestName, setGuestName] = useState("");
   const [guest, setGuest] = useState<GuestPassData | null>(null);
   const [passId, setPassId] = useState<string | null>(null);
+  const [tableName, setTableName] = useState<string | null>(null);
+  const [cardTab, setCardTab] = useState<"access" | "table">("access");
   const [isLoading, setIsLoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
