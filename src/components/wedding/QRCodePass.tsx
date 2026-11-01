@@ -73,6 +73,12 @@ const QRCodePass = () => {
       const result = data[0] as GuestPassData;
       setGuest(result);
 
+      const { data: tableData } = await (supabase.rpc as any)(
+        "get_guest_table_assignment",
+        { p_guest_id: result.id }
+      );
+      setTableName((tableData as string | null) || null);
+
       if (result.rsvp_attending !== "yes") {
         setStep("generate");
       } else if (result.has_pass) {
@@ -154,6 +160,8 @@ const QRCodePass = () => {
     setPassId(null);
     setGuest(null);
     setError(null);
+    setTableName(null);
+    setCardTab("access");
   };
 
   return (
