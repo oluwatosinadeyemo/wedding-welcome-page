@@ -303,7 +303,39 @@ const QRCodePass = () => {
           {/* Step 3: Pass Display */}
           {step === "display" && guest && passId && (
             <div className="animate-fade-in">
-              <DigitalAccessCard guestName={guest.full_name} passId={passId} qrValue={generateQRValue()} />
+              <div className="grid grid-cols-2 gap-2 mb-6">
+                <Button
+                  variant={cardTab === "access" ? "default" : "outline"}
+                  onClick={() => setCardTab("access")}
+                  className="rounded-xl"
+                >
+                  <Ticket className="w-4 h-4 mr-2" />Access Card
+                </Button>
+                <Button
+                  variant={cardTab === "table" ? "default" : "outline"}
+                  onClick={() => setCardTab("table")}
+                  className="rounded-xl"
+                >
+                  <Armchair className="w-4 h-4 mr-2" />Table Card
+                </Button>
+              </div>
+
+              {cardTab === "access" ? (
+                <DigitalAccessCard guestName={guest.full_name} passId={passId} qrValue={generateQRValue()} />
+              ) : tableName ? (
+                <DigitalTableCard guestName={guest.full_name} tableName={tableName} />
+              ) : (
+                <div className="glass-card p-8 text-center">
+                  <div className="flex items-center justify-center w-16 h-16 mx-auto mb-6 rounded-2xl bg-secondary/10">
+                    <Armchair className="w-8 h-8 text-secondary" />
+                  </div>
+                  <h3 className="font-serif text-2xl text-foreground mb-4">No Table Yet</h3>
+                  <p className="text-muted-foreground">
+                    Your table hasn't been assigned yet. Please check back closer to the big day.
+                  </p>
+                </div>
+              )}
+
               <Button
                 onClick={handleStartOver}
                 variant="outline"
