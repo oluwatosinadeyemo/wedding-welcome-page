@@ -13,7 +13,9 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Users, MapPin, Loader2, X, Pencil, Check, Download, Search, LayoutGrid, Table2, Printer,
 } from "lucide-react";
-import { createPortal } from "react-dom";
+import tpLogo from "@/assets/tp-logo.png";
+import { buildTableListsPdf } from "@/lib/table-lists-pdf";
+import { deliverFile } from "@/lib/download-file";
 import {
   DndContext,
   DragEndEvent,
@@ -104,15 +106,29 @@ const SeatingChart = () => {
   const { toast } = useToast();
   const [printTables, setPrintTables] = useState<string[] | null>(null);
 
-  // Hand the chosen tables to the browser's print dialog once they're on screen.
+  const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement("canvas");
+      c.width = img.naturalWidth; c.height = img.naturalHeight;
+      c.getContext("2d")?.drawImage(img, 0, 0);
+      setLogoDataUrl(c.toDataURL("image/png"));
+    };
+    img.src = tpLogo;
+  }, []);
+
+  // Generate the PDF synchronously inside the click so phones keep the download/share permission.
   useEffect(() => {
     if (!printTables) return;
-    const timer = window.setTimeout(() => {
-      window.print();
-      setPrintTables(null);
-    }, 120);
-    return () => window.clearTimeout(timer);
-  }, [printTables]);
+    const blob = buildTableListsPdf(
+      printTables.map(name => ({ name, guests: tableMap.get(name) ?? [] })),
+      logoDataUrl
+    );
+    setPrintTables(null);
+    const file = printTables.length === 1 ? `table-list-${printTables[0].replace(/[^\p{L}\p{N}]+/gu, "-").toLowerCase()}.pdf` : "tosin-pelumi-table-lists.pdf";
+    void deliverFile(blob, file);
+  }, [printTables]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
   const draggingGuest = draggingGuestId ? guests.find(g => g.id === draggingGuestId) ?? null : null;
@@ -364,7 +380,7 @@ const SeatingChart = () => {
           className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors border border-border/50 rounded-lg px-3 py-1.5 disabled:opacity-40"
         >
           <Printer className="w-3.5 h-3.5" />
-          Print Table Lists
+          Download Table Lists (PDF)
         </button>
         <button
           onClick={handleExportCSV}
@@ -618,40 +634,6 @@ const SeatingChart = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Printed table lists — rendered to the page body, visible only to the printer. */}
-      {printTables &&
-        createPortal(
-          <div className="print-portal">
-            {printTables.map((tableName) => {
-              const tableGuests = tableMap.get(tableName) ?? [];
-              const seats = totalSeats(tableGuests);
-              return (
-                <section className="print-page" key={tableName}>
-                  <p className="print-kicker">Tosin &amp; Pelumi &middot; 12 December 2026</p>
-                  <h2 className="print-table-name">{tableName}</h2>
-                  <div className="print-rule" />
-                  <ol className="print-guests">
-                    {tableGuests.map((g) => (
-                      <li key={g.id}>
-                        <span>{g.full_name}</span>
-                        {g.party_size > 1 && (
-                          <span className="print-party">
-                            +{g.party_size - 1} guest{g.party_size - 1 !== 1 ? "s" : ""}
-                          </span>
-                        )}
-                      </li>
-                    ))}
-                  </ol>
-                  <p className="print-foot">
-                    {tableGuests.length} guest{tableGuests.length !== 1 ? "s" : ""} &middot; {seats} of{" "}
-                    {TABLE_CAPACITY} seats
-                  </p>
-                </section>
-              );
-            })}
-          </div>,
-          document.body
-        )}
     </div>
   );
 };
