@@ -195,3 +195,96 @@
     }
   }
 }
+
+/* ── Printed seating lists (dashboard) ───────────────────────────────── */
+@page {
+  margin: 14mm;
+}
+
+.print-portal {
+  display: none;
+}
+
+@media print {
+  html,
+  body {
+    background: #ffffff !important;
+  }
+
+  body > *:not(.print-portal) {
+    display: none !important;
+  }
+
+  .print-portal {
+    display: block !important;
+  }
+
+  .print-page {
+    break-after: page;
+    page-break-after: always;
+    color: #14141c;
+    font-family: var(--font-sans);
+  }
+
+  .print-page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .print-kicker {
+    margin: 0 0 12px;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: #6c6c7a;
+  }
+
+  .print-table-name {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-weight: 700;
+    font-size: 42px;
+    line-height: 1.1;
+    color: #101018;
+  }
+
+  .print-rule {
+    height: 2px;
+    background: #101018;
+    margin: 16px 0 24px;
+  }
+
+  .print-guests {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    columns: 2;
+    column-gap: 28px;
+  }
+
+  .print-guests li {
+    break-inside: avoid;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid #e3e3ea;
+    font-size: 15px;
+    line-height: 1.45;
+  }
+
+  .print-party {
+    flex-shrink: 0;
+    font-size: 12px;
+    color: #6c6c7a;
+    white-space: nowrap;
+  }
+
+  .print-foot {
+    margin: 28px 0 0;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: #6c6c7a;
+  }
+}

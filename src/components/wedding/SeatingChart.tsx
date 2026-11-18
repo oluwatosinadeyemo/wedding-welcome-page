@@ -11,8 +11,9 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Users, MapPin, Loader2, X, Pencil, Check, Download, Search, LayoutGrid, Table2,
+  Users, MapPin, Loader2, X, Pencil, Check, Download, Search, LayoutGrid, Table2, Printer,
 } from "lucide-react";
+import { createPortal } from "react-dom";
 import {
   DndContext,
   DragEndEvent,
@@ -101,6 +102,17 @@ const SeatingChart = () => {
     } catch { return {}; }
   });
   const { toast } = useToast();
+  const [printTables, setPrintTables] = useState<string[] | null>(null);
+
+  // Hand the chosen tables to the browser's print dialog once they're on screen.
+  useEffect(() => {
+    if (!printTables) return;
+    const timer = window.setTimeout(() => {
+      window.print();
+      setPrintTables(null);
+    }, 120);
+    return () => window.clearTimeout(timer);
+  }, [printTables]);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
   const draggingGuest = draggingGuestId ? guests.find(g => g.id === draggingGuestId) ?? null : null;
@@ -347,8 +359,16 @@ const SeatingChart = () => {
         {groomCount > 0 && <span className="text-blue-400 font-medium">{groomCount} groom's side</span>}
         {unassigned.length > 0 && <span className="text-yellow-500 font-medium">{unassigned.length} unassigned</span>}
         <button
+          onClick={() => setPrintTables(allTableNames)}
+          disabled={allTableNames.length === 0}
+          className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors border border-border/50 rounded-lg px-3 py-1.5 disabled:opacity-40"
+        >
+          <Printer className="w-3.5 h-3.5" />
+          Print Table Lists
+        </button>
+        <button
           onClick={handleExportCSV}
-          className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors border border-border/50 rounded-lg px-3 py-1.5"
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors border border-border/50 rounded-lg px-3 py-1.5"
         >
           <Download className="w-3.5 h-3.5" />
           Export CSV
@@ -443,6 +463,14 @@ const SeatingChart = () => {
                         aria-label={`Rename ${tableName}`}
                       >
                         <Pencil className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={() => setPrintTables([tableName])}
+                        className="text-muted-foreground/50 hover:text-foreground flex-shrink-0 transition-colors"
+                        aria-label={`Print the ${tableName} list`}
+                        title={`Print the ${tableName} list`}
+                      >
+                        <Printer className="w-3 h-3" />
                       </button>
                     </div>
                   )}
@@ -589,6 +617,41 @@ const SeatingChart = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Printed table lists — rendered to the page body, visible only to the printer. */}
+      {printTables &&
+        createPortal(
+          <div className="print-portal">
+            {printTables.map((tableName) => {
+              const tableGuests = tableMap.get(tableName) ?? [];
+              const seats = totalSeats(tableGuests);
+              return (
+                <section className="print-page" key={tableName}>
+                  <p className="print-kicker">Tosin &amp; Pelumi &middot; 12 December 2026</p>
+                  <h2 className="print-table-name">{tableName}</h2>
+                  <div className="print-rule" />
+                  <ol className="print-guests">
+                    {tableGuests.map((g) => (
+                      <li key={g.id}>
+                        <span>{g.full_name}</span>
+                        {g.party_size > 1 && (
+                          <span className="print-party">
+                            +{g.party_size - 1} guest{g.party_size - 1 !== 1 ? "s" : ""}
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ol>
+                  <p className="print-foot">
+                    {tableGuests.length} guest{tableGuests.length !== 1 ? "s" : ""} &middot; {seats} of{" "}
+                    {TABLE_CAPACITY} seats
+                  </p>
+                </section>
+              );
+            })}
+          </div>,
+          document.body
+        )}
     </div>
   );
 };
