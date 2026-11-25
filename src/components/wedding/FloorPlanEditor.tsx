@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { useToast } from "@/hooks/use-toast";
 import { buildSlots, DEFAULT_HALL_CONFIG, HallConfig, normaliseConfig, Slot } from "@/lib/hall-layout";
 import FloorPlanSvg, { readFloorPlanTheme } from "./FloorPlanSvg";
+import DownloadPlanButton from "./DownloadPlanButton";
 
 interface Guest { id: string; full_name: string; party_size: number }
 interface Props {
@@ -96,6 +97,9 @@ export default function FloorPlanEditor({ tableMap, allTableNames, onGuestsChang
         <Button onClick={() => save()} disabled={!dirty || saving} className="w-full">
           {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}Save Floor Plan
         </Button>
+        <div className="[&>button]:w-full">
+          <DownloadPlanButton config={config} slots={slots} occupancy={occupancy} />
+        </div>
         <p className="text-xs text-muted-foreground">Tap any table to change its name tag. A guest's table on their access card is found by matching this name tag.</p>
         {unplaced.length > 0 && (
           <div className="text-xs rounded-lg border border-border/50 p-3 space-y-1">
