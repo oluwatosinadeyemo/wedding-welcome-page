@@ -155,6 +155,24 @@ export type Database = {
         }
         Relationships: []
       }
+      hall_layout: {
+        Row: {
+          config: Json
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          config?: Json
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          config?: Json
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       hotel_reservations: {
         Row: {
           check_in: string | null
@@ -318,6 +336,7 @@ export type Database = {
         Returns: string
       }
       get_guest_pass_id: { Args: { p_guest_id: string }; Returns: string }
+      get_guest_seating: { Args: { p_guest_id: string }; Returns: Json }
       get_guest_table_assignment: {
         Args: { p_guest_id: string }
         Returns: string

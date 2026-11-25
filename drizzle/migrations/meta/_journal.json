@@ -8,6 +8,13 @@
       "when": 1793491301356,
       "tag": "0000_add_guest_table_lookup",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1795598453384,
+      "tag": "0001_hall_layout_and_guest_seating",
+      "breakpoints": true
     }
   ]
 }

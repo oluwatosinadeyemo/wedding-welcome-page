@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Users, MapPin, Loader2, X, Pencil, Check, Download, Search, LayoutGrid, Table2, Printer,
+  Users, MapPin, Loader2, X, Pencil, Check, Download, Search, LayoutGrid, Table2, Printer, Map as MapIcon,
 } from "lucide-react";
 import tpLogo from "@/assets/tp-logo.png";
 import { buildTableListsPdf } from "@/lib/table-lists-pdf";
@@ -26,6 +26,7 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import HallView from "./HallView";
+import FloorPlanEditor from "./FloorPlanEditor";
 
 const TABLE_CAPACITY = 10;
 
@@ -86,7 +87,7 @@ const CapacityBar = ({ seats, side }: { seats: number; side?: string | null }) =
 const SeatingChart = () => {
   const [guests, setGuests] = useState<GuestEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<"list" | "hall">("list");
+  const [viewMode, setViewMode] = useState<"list" | "hall" | "plan">("list");
   const [selectedGuest, setSelectedGuest] = useState<GuestEntry | null>(null);
   const [assignInput, setAssignInput] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -438,6 +439,18 @@ const SeatingChart = () => {
             <Table2 className="w-3.5 h-3.5" />
             Hall
           </button>
+          <button
+            onClick={() => setViewMode("plan")}
+            aria-label="Floor plan view"
+            className={`px-3 py-2 flex items-center gap-1.5 text-xs transition-colors border-l border-border/50 ${
+              viewMode === "plan"
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <MapIcon className="w-3.5 h-3.5" />
+            Floor Plan
+          </button>
         </div>
       </div>
 
@@ -542,6 +555,10 @@ const SeatingChart = () => {
             </div>
           )}
         </div>
+      )}
+
+      {viewMode === "plan" && (
+        <FloorPlanEditor tableMap={tableMap} allTableNames={allTableNames} onGuestsChanged={fetchGuests} />
       )}
 
       {/* ── HALL VIEW ── */}

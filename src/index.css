@@ -48,6 +48,13 @@
     --access-ink: 225 15% 10%;
     --access-muted: 225 8% 40%;
     --access-rule: 225 8% 72%;
+    --plan-table: 30 45% 82%;
+    --plan-chair: 350 30% 70%;
+    --plan-feature: 95 60% 72%;
+    --plan-vip: 28 90% 65%;
+    --plan-highlight: 45 95% 55%;
+    --plan-red: 4 78% 52%;
+    --plan-green: 150 70% 40%;
 
     /* Typography */
     --font-serif: 'Playfair Display', Georgia, serif;
