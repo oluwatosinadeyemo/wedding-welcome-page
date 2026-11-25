@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { buildSlots, DEFAULT_HALL_CONFIG, HallConfig, normaliseConfig, planRightWingRenumber, Slot, WING_LABEL } from "@/lib/hall-layout";
 import FloorPlanSvg, { readFloorPlanTheme } from "./FloorPlanSvg";
+import DownloadPlanButton from "./DownloadPlanButton";
 
 interface GuestEntry {
   id: string;
@@ -279,7 +280,8 @@ const TableLayout = () => {
             className="pl-9 bg-background/50"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <DownloadPlanButton config={config} slots={slots} occupancy={occupancy} />
           <Link to="/pass" target="_blank">
             <Button variant="outline" size="sm" className="border-primary/30 text-primary hover:bg-primary/10">
               <Ticket className="w-4 h-4 mr-1" />Digital Pass

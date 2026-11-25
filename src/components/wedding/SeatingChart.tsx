@@ -11,22 +11,12 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Users, MapPin, Loader2, X, Pencil, Check, Download, Search, LayoutGrid, Table2, Printer, Map as MapIcon, UserPlus, Crown,
+  Users, MapPin, Loader2, X, Pencil, Check, Download, Search, LayoutGrid, Printer, Map as MapIcon, UserPlus, Crown,
 } from "lucide-react";
 import { buildSlots, normaliseConfig } from "@/lib/hall-layout";
 import tpLogo from "@/assets/tp-logo.png";
 import { buildTableListsPdf } from "@/lib/table-lists-pdf";
 import { deliverFile } from "@/lib/download-file";
-import {
-  DndContext,
-  DragEndEvent,
-  DragStartEvent,
-  DragOverlay,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
-import HallView from "./HallView";
 import FloorPlanEditor from "./FloorPlanEditor";
 
 const TABLE_CAPACITY = 10;
@@ -88,7 +78,7 @@ const CapacityBar = ({ seats, side }: { seats: number; side?: string | null }) =
 const SeatingChart = () => {
   const [guests, setGuests] = useState<GuestEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<"list" | "hall" | "plan">("list");
+  const [viewMode, setViewMode] = useState<"list" | "plan">("list");
   const [selectedGuest, setSelectedGuest] = useState<GuestEntry | null>(null);
   const [assignInput, setAssignInput] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -98,13 +88,6 @@ const SeatingChart = () => {
   const [selectedUnassigned, setSelectedUnassigned] = useState<Set<string>>(new Set());
   const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
   const [bulkAssignInput, setBulkAssignInput] = useState("");
-  const [draggingGuestId, setDraggingGuestId] = useState<string | null>(null);
-  const [tableSides, setTableSides] = useState<Record<string, "bride" | "groom">>(() => {
-    try {
-      const raw = localStorage.getItem("wedding-table-sides-v1");
-      return raw ? JSON.parse(raw) : {};
-    } catch { return {}; }
-  });
   const { toast } = useToast();
   const [printTables, setPrintTables] = useState<string[] | null>(null);
   // VIP long tables always get a card, even before anyone is seated there.
@@ -144,20 +127,6 @@ const SeatingChart = () => {
     void deliverFile(blob, file);
   }, [printTables]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
-  const draggingGuest = draggingGuestId ? guests.find(g => g.id === draggingGuestId) ?? null : null;
-
-  const setTableSideOverride = useCallback(
-    (tableName: string, side: "bride" | "groom" | null) => {
-      setTableSides(prev => {
-        const next = { ...prev };
-        if (side === null) delete next[tableName];
-        else next[tableName] = side;
-        localStorage.setItem("wedding-table-sides-v1", JSON.stringify(next));
-        return next;
-      });
-    }, []
-  );
 
   const fetchGuests = useCallback(async () => {
     setLoading(true);
@@ -318,28 +287,6 @@ const SeatingChart = () => {
     URL.revokeObjectURL(url);
   };
 
-  const assignGuestDirect = useCallback(async (guestId: string, tableName: string | null) => {
-    try {
-      const { error } = await (supabase.from("guests" as any) as any)
-        .update({ table_assignment: tableName }).eq("id", guestId);
-      if (error) throw error;
-      setGuests(prev => prev.map(g => g.id === guestId ? { ...g, table_assignment: tableName } : g));
-      toast({ title: tableName ? `Assigned to ${tableName}` : "Removed from table" });
-    } catch (err: any) {
-      toast({ title: "Failed", description: err.message, variant: "destructive" });
-    }
-  }, [toast]);
-
-  const handleListDragStart = useCallback((event: DragStartEvent) => {
-    setDraggingGuestId(event.active.id as string);
-  }, []);
-
-  const handleListDragEnd = useCallback(async (event: DragEndEvent) => {
-    setDraggingGuestId(null);
-    const { active, over } = event;
-    if (!over) return;
-    await assignGuestDirect(active.id as string, over.id as string);
-  }, [assignGuestDirect]);
 
   if (loading) {
     return <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>;
@@ -475,18 +422,6 @@ const SeatingChart = () => {
             List
           </button>
           <button
-            onClick={() => setViewMode("hall")}
-            aria-label="Hall view"
-            className={`px-3 py-2 flex items-center gap-1.5 text-xs transition-colors border-l border-border/50 ${
-              viewMode === "hall"
-                ? "bg-primary/10 text-primary"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Table2 className="w-3.5 h-3.5" />
-            Hall
-          </button>
-          <button
             onClick={() => setViewMode("plan")}
             aria-label="Floor plan view"
             className={`px-3 py-2 flex items-center gap-1.5 text-xs transition-colors border-l border-border/50 ${
@@ -619,17 +554,6 @@ const SeatingChart = () => {
         <FloorPlanEditor tableMap={tableMap} allTableNames={allTableNames} onGuestsChanged={fetchGuests} />
       )}
 
-      {/* ── HALL VIEW ── */}
-      {viewMode === "hall" && (
-        <HallView
-          tableMap={tableMap}
-          unassigned={unassigned}
-          allTableNames={allTableNames}
-          onAssignGuest={assignGuestDirect}
-          tableSides={tableSides}
-          onSetTableSide={setTableSideOverride}
-        />
-      )}
 
       {/* Single assign dialog */}
       <Dialog open={!!selectedGuest} onOpenChange={() => setSelectedGuest(null)}>
