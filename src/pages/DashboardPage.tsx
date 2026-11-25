@@ -40,6 +40,7 @@ import {
   Shirt,
   Crown,
   BedDouble,
+  Map as MapIcon,
 } from "lucide-react";
 import {
   Select,
@@ -52,6 +53,7 @@ import { Label } from "@/components/ui/label";
 import type { User } from "@supabase/supabase-js";
 import JSZip from "jszip";
 import SeatingChart from "@/components/wedding/SeatingChart";
+import TableLayout from "@/components/wedding/TableLayout";
 import AgbadaTracker from "@/components/wedding/AgbadaTracker";
 import CapTracker from "@/components/wedding/CapTracker";
 import HotelReservations from "@/components/wedding/HotelReservations";
@@ -786,6 +788,10 @@ const DashboardPage = () => {
               <LayoutGrid className="w-3.5 h-3.5 mr-1.5" />
               Seating
             </TabsTrigger>
+            <TabsTrigger value="layout">
+              <MapIcon className="w-3.5 h-3.5 mr-1.5" />
+              Table Layout
+            </TabsTrigger>
             <TabsTrigger value="agbada">
               <Shirt className="w-3.5 h-3.5 mr-1.5" />
               Agbada
@@ -942,6 +948,11 @@ const DashboardPage = () => {
           {/* Seating Tab */}
           <TabsContent value="seating">
             <SeatingChart />
+          </TabsContent>
+
+          {/* Table Layout Tab */}
+          <TabsContent value="layout">
+            <TableLayout />
           </TabsContent>
 
           {/* Agbada Tab */}

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { buildSlots, findSlot, normaliseConfig, Tablemate, WING_LABEL } from "@/lib/hall-layout";
 
 interface GuestPassData {
   id: string;
@@ -23,6 +24,8 @@ const QRCodePass = () => {
   const [guest, setGuest] = useState<GuestPassData | null>(null);
   const [passId, setPassId] = useState<string | null>(null);
   const [tableName, setTableName] = useState<string | null>(null);
+  const [tableWing, setTableWing] = useState<string | null>(null);
+  const [tablemates, setTablemates] = useState<Tablemate[]>([]);
   const [cardTab, setCardTab] = useState<"access" | "table">("access");
   const [isLoading, setIsLoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -73,11 +76,27 @@ const QRCodePass = () => {
       const result = data[0] as GuestPassData;
       setGuest(result);
 
-      const { data: tableData } = await (supabase.rpc as any)(
-        "get_guest_table_assignment",
-        { p_guest_id: result.id }
-      );
-      setTableName((tableData as string | null) || null);
+      // Table, tablemates and the wing the table sits in, all shown on the guest's cards.
+      const [seating, layout] = await Promise.all([
+        (supabase.rpc as any)("get_guest_seating", { p_guest_id: result.id }),
+        supabase.from("hall_layout").select("config").eq("id", "main").maybeSingle(),
+      ]);
+      let table: string | null = null;
+      let mates: Tablemate[] = [];
+      if (!seating.error && seating.data) {
+        table = (seating.data.table_name as string | null) || null;
+        mates = Array.isArray(seating.data.tablemates) ? seating.data.tablemates : [];
+      } else {
+        const { data: tableData } = await (supabase.rpc as any)(
+          "get_guest_table_assignment",
+          { p_guest_id: result.id }
+        );
+        table = (tableData as string | null) || null;
+      }
+      const slot = findSlot(buildSlots(normaliseConfig(layout.data?.config)), table);
+      setTableName(table);
+      setTablemates(mates);
+      setTableWing(slot ? WING_LABEL[slot.side] : null);
 
       if (result.rsvp_attending !== "yes") {
         setStep("generate");
@@ -321,9 +340,9 @@ const QRCodePass = () => {
               </div>
 
               {cardTab === "access" ? (
-                <DigitalAccessCard guestName={guest.full_name} passId={passId} qrValue={generateQRValue()} />
+                <DigitalAccessCard guestName={guest.full_name} passId={passId} qrValue={generateQRValue()} tableName={tableName} tableWing={tableWing} />
               ) : tableName ? (
-                <DigitalTableCard guestName={guest.full_name} tableName={tableName} />
+                <DigitalTableCard guestName={guest.full_name} tableName={tableName} tableWing={tableWing} tablemates={tablemates} />
               ) : (
                 <div className="glass-card p-8 text-center">
                   <div className="flex items-center justify-center w-16 h-16 mx-auto mb-6 rounded-2xl bg-secondary/10">

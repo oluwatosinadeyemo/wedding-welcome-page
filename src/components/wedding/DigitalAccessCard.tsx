@@ -9,6 +9,8 @@ interface DigitalAccessCardProps {
   guestName: string;
   passId: string;
   qrValue: string;
+  tableName?: string | null;
+  tableWing?: string | null;
 }
 
 function loadImage(src: string): Promise<HTMLImageElement> {
@@ -20,7 +22,7 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
-export default function DigitalAccessCard({ guestName, passId, qrValue }: DigitalAccessCardProps) {
+export default function DigitalAccessCard({ guestName, passId, qrValue, tableName, tableWing }: DigitalAccessCardProps) {
   const qrRef = useRef<HTMLDivElement>(null);
   const [card, setCard] = useState<{ blob: Blob; url: string } | null>(null);
   const [error, setError] = useState(false);
@@ -117,7 +119,8 @@ export default function DigitalAccessCard({ guestName, passId, qrValue }: Digita
         ctx.drawImage(qr, 345, 1110, 210, 210);
         ctx.fillStyle = color("--access-muted");
         ctx.font = `18px ${sans}`;
-        ctx.fillText(`Pass ID: ${passId.slice(0, 8)}`, 450, 1350);
+        const seat = tableName ? `  ·  ${tableName}${tableWing ? `, ${tableWing}` : ""}` : "";
+        ctx.fillText(`Pass ID: ${passId.slice(0, 8)}${seat}`, 450, 1350);
         ctx.font = `26px ${serif}`;
         ctx.fillStyle = color("--access-ink");
         ctx.fillText("#T&P2026", 450, 1420);
@@ -134,7 +137,7 @@ export default function DigitalAccessCard({ guestName, passId, qrValue }: Digita
       cancelled = true;
       if (previewUrl) URL.revokeObjectURL(previewUrl);
     };
-  }, [guestName, passId, qrValue, retry]);
+  }, [guestName, passId, qrValue, tableName, tableWing, retry]);
 
   return (
     <div>
@@ -143,7 +146,7 @@ export default function DigitalAccessCard({ guestName, passId, qrValue }: Digita
       </div>
       <div className="access-card-preview">
         {card ? (
-          <img src={card.url} alt={`Digital access card for ${guestName}. Admits one. December 12, 2026 at 10:00 AM. Includes entry QR code.`} className="w-full h-full object-contain" />
+          <img src={card.url} alt={`Digital access card for ${guestName}. Admits one. December 12, 2026 at 10:00 AM.${tableName ? ` Seated at ${tableName}${tableWing ? `, ${tableWing}` : ""}.` : ""} Includes entry QR code.`} className="w-full h-full object-contain" />
         ) : (
           <div className="h-full flex flex-col items-center justify-center gap-4 text-muted-foreground" role="status">
             {error ? <><p>Could not prepare your access card.</p><Button variant="outline" onClick={() => setRetry(value => value + 1)}>Try Again</Button></> : <><Loader2 className="w-6 h-6 animate-spin" /><p>Preparing your access card…</p></>}
