@@ -93,14 +93,6 @@ export default function FloorPlanEditor({ tableMap, allTableNames, onGuestsChang
           {num("Chairs per table", "seatsPerTable", 2, 14)}
           {num("Chairs per VIP table", "vipSeats", 2, 16)}
         </div>
-        <label className="block text-xs text-muted-foreground space-y-1">
-          <span>Red arrow (left) is for</span>
-          <Input value={config.leftArrowLabel} maxLength={24} onChange={e => update({ leftArrowLabel: e.target.value })} className="bg-background/50" />
-        </label>
-        <label className="block text-xs text-muted-foreground space-y-1">
-          <span>Green arrow (right) is for</span>
-          <Input value={config.rightArrowLabel} maxLength={24} onChange={e => update({ rightArrowLabel: e.target.value })} className="bg-background/50" />
-        </label>
         <Button onClick={() => save()} disabled={!dirty || saving} className="w-full">
           {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}Save Floor Plan
         </Button>

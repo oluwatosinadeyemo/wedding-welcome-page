@@ -3,10 +3,23 @@ import { Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { deliverFile } from "@/lib/download-file";
 import tpLogo from "@/assets/tp-logo.png";
+import type { Tablemate } from "@/lib/hall-layout";
 
 interface DigitalTableCardProps {
   guestName: string;
   tableName: string;
+  tableWing?: string | null;
+  tablemates?: Tablemate[];
+}
+
+const mateLabel = (m: Tablemate) => (m.party_size > 1 ? `${m.full_name} (+${m.party_size - 1})` : m.full_name);
+
+// Shortens a single line with an ellipsis so long names never spill into the next column.
+function fitLine(ctx: CanvasRenderingContext2D, text: string, maxWidth: number) {
+  if (ctx.measureText(text).width <= maxWidth) return text;
+  let cut = text;
+  while (cut.length > 1 && ctx.measureText(cut + "…").width > maxWidth) cut = cut.slice(0, -1);
+  return cut.trimEnd() + "…";
 }
 
 function loadImage(src: string): Promise<HTMLImageElement> {
@@ -52,7 +65,9 @@ function wrapText(
   return { lines, fontSize };
 }
 
-export default function DigitalTableCard({ guestName, tableName }: DigitalTableCardProps) {
+export default function DigitalTableCard({ guestName, tableName, tableWing, tablemates = [] }: DigitalTableCardProps) {
+  // A stable key, so a fresh lookup with the same people doesn't redraw the card.
+  const matesKey = JSON.stringify(tablemates);
   const [card, setCard] = useState<{ blob: Blob; url: string } | null>(null);
   const [error, setError] = useState(false);
   const [retry, setRetry] = useState(0);
@@ -83,51 +98,75 @@ export default function DigitalTableCard({ guestName, tableName }: DigitalTableC
         ctx.strokeStyle = color("--access-rule");
         ctx.lineWidth = 2;
         ctx.strokeRect(25, 25, 850, 1450);
-        ctx.drawImage(logo, 290, 60, 320, 320);
-        ctx.font = `48px ${serif}`;
-        ctx.fillText("TABLE CARD", 450, 435);
-        ctx.beginPath();
-        ctx.moveTo(270, 485);
-        ctx.lineTo(630, 485);
-        ctx.stroke();
+        const mates: Tablemate[] = JSON.parse(matesKey);
+        const ink = color("--access-ink");
+        const muted = color("--access-muted");
+        const rule = (y: number) => { ctx.beginPath(); ctx.moveTo(270, y); ctx.lineTo(630, y); ctx.stroke(); };
 
-        // Guest name, centred in its own band.
+        ctx.drawImage(logo, 350, 55, 200, 200);
+        ctx.font = `44px ${serif}`;
+        ctx.fillText("TABLE CARD", 450, 310);
+        rule(345);
+
+        // Guest name, up to two lines.
         ctx.font = `20px ${sans}`;
-        ctx.fillStyle = color("--access-muted");
-        ctx.fillText("OUR WEDDING GUEST", 450, 560);
-        ctx.fillStyle = color("--access-ink");
-        const guest = wrapText(ctx, guestName, serif, 730, 46, 24, 3);
-        const guestLineHeight = guest.fontSize + 12;
-        const guestCentre = 660;
-        const guestFirstBaseline = guestCentre - (guest.lines.length * guestLineHeight) / 2 + guest.fontSize * 0.78;
-        guest.lines.forEach((line, index) => ctx.fillText(line, 450, guestFirstBaseline + index * guestLineHeight));
+        ctx.fillStyle = muted;
+        ctx.fillText("OUR WEDDING GUEST", 450, 395);
+        ctx.fillStyle = ink;
+        const guest = wrapText(ctx, guestName, serif, 730, 42, 24, 2);
+        const guestLineHeight = guest.fontSize + 10;
+        guest.lines.forEach((line, index) => ctx.fillText(line, 450, 445 + index * guestLineHeight));
 
-        // Table name, centred in its own band.
+        // Table and wing.
         ctx.font = `20px ${sans}`;
-        ctx.fillStyle = color("--access-muted");
-        ctx.fillText("YOUR TABLE", 450, 800);
-        ctx.fillStyle = color("--access-ink");
-        const table = wrapText(ctx, tableName.toUpperCase(), serif, 730, 64, 28, 3);
-        const tableLineHeight = table.fontSize + 14;
-        const tableCentre = 950;
-        const tableFirstBaseline = tableCentre - (table.lines.length * tableLineHeight) / 2 + table.fontSize * 0.78;
-        table.lines.forEach((line, index) => ctx.fillText(line, 450, tableFirstBaseline + index * tableLineHeight));
+        ctx.fillStyle = muted;
+        ctx.fillText("YOUR TABLE", 450, 560);
+        ctx.fillStyle = ink;
+        const table = wrapText(ctx, tableName.toUpperCase(), serif, 730, 64, 32, 1);
+        ctx.fillText(table.lines[0] ?? "", 450, 630);
+        if (tableWing) {
+          ctx.font = `600 24px ${sans}`;
+          ctx.fillStyle = color(/right/i.test(tableWing) ? "--plan-green" : "--plan-red");
+          ctx.fillText(tableWing.toUpperCase(), 450, 680);
+          ctx.fillStyle = ink;
+        }
+        rule(720);
 
-        ctx.beginPath();
-        ctx.moveTo(270, 1100);
-        ctx.lineTo(630, 1100);
-        ctx.stroke();
+        // Everyone else at the table, in two columns.
+        ctx.font = `20px ${sans}`;
+        ctx.fillStyle = muted;
+        ctx.fillText("SEATED WITH YOU", 450, 770);
+        ctx.fillStyle = ink;
+        if (mates.length === 0) {
+          ctx.font = `italic 26px ${serif}`;
+          ctx.fillText("Your tablemates will appear here soon.", 450, 830);
+        } else {
+          const perColumn = 8;
+          const shown = mates.length > perColumn * 2 ? mates.slice(0, perColumn * 2 - 1) : mates;
+          const extra = mates.length - shown.length;
+          const items = shown.map(mateLabel).concat(extra > 0 ? [`and ${extra} more`] : []);
+          const twoColumns = items.length > 5;
+          const rows = twoColumns ? Math.ceil(items.length / 2) : items.length;
+          ctx.font = `26px ${serif}`;
+          items.forEach((label, i) => {
+            const col = twoColumns ? Math.floor(i / rows) : 0;
+            const row = twoColumns ? i % rows : i;
+            const x = twoColumns ? (col === 0 ? 255 : 645) : 450;
+            ctx.fillText(fitLine(ctx, label, twoColumns ? 360 : 730), x, 825 + row * 42);
+          });
+        }
+        rule(1180);
 
-        ctx.font = `42px ${serif}`;
-        ctx.fillText("OLUWAPELUMI", 450, 1180);
-        ctx.font = `italic 32px ${serif}`;
-        ctx.fillText("and", 450, 1230);
-        ctx.font = `42px ${serif}`;
-        ctx.fillText("OLUWATOSIN", 450, 1285);
-        ctx.font = `34px ${serif}`;
-        ctx.fillText("12 . 12 . 26", 450, 1355);
-        ctx.font = `26px ${serif}`;
-        ctx.fillText("#T&P2026", 450, 1420);
+        ctx.font = `36px ${serif}`;
+        ctx.fillText("OLUWAPELUMI", 450, 1245);
+        ctx.font = `italic 28px ${serif}`;
+        ctx.fillText("and", 450, 1288);
+        ctx.font = `36px ${serif}`;
+        ctx.fillText("OLUWATOSIN", 450, 1335);
+        ctx.font = `30px ${serif}`;
+        ctx.fillText("12 . 12 . 26", 450, 1390);
+        ctx.font = `24px ${serif}`;
+        ctx.fillText("#T&P2026", 450, 1440);
 
         const blob = await new Promise<Blob>((resolve, reject) =>
           canvas.toBlob(result => (result ? resolve(result) : reject(new Error("Could not save card"))), "image/png")
@@ -144,7 +183,7 @@ export default function DigitalTableCard({ guestName, tableName }: DigitalTableC
       cancelled = true;
       if (previewUrl) URL.revokeObjectURL(previewUrl);
     };
-  }, [guestName, tableName, retry]);
+  }, [guestName, tableName, tableWing, matesKey, retry]);
 
   return (
     <div>
@@ -152,7 +191,7 @@ export default function DigitalTableCard({ guestName, tableName }: DigitalTableC
         {card ? (
           <img
             src={card.url}
-            alt={`Table card for ${guestName}. Seated at ${tableName}. December 12, 2026.`}
+            alt={`Table card for ${guestName}. Seated at ${tableName}${tableWing ? `, ${tableWing}` : ""}${tablemates.length ? ` with ${tablemates.map(mateLabel).join(", ")}` : ""}. December 12, 2026.`}
             className="w-full h-full object-contain"
           />
         ) : (
