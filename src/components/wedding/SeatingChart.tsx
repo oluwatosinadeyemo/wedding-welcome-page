@@ -11,8 +11,9 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Users, MapPin, Loader2, X, Pencil, Check, Download, Search, LayoutGrid, Table2, Printer, Map as MapIcon,
+  Users, MapPin, Loader2, X, Pencil, Check, Download, Search, LayoutGrid, Table2, Printer, Map as MapIcon, UserPlus, Crown,
 } from "lucide-react";
+import { buildSlots, normaliseConfig } from "@/lib/hall-layout";
 import tpLogo from "@/assets/tp-logo.png";
 import { buildTableListsPdf } from "@/lib/table-lists-pdf";
 import { deliverFile } from "@/lib/download-file";
@@ -106,6 +107,18 @@ const SeatingChart = () => {
   });
   const { toast } = useToast();
   const [printTables, setPrintTables] = useState<string[] | null>(null);
+  // VIP long tables always get a card, even before anyone is seated there.
+  const [vipTables, setVipTables] = useState<string[]>(["VIP 1", "VIP 2"]);
+  const [addingTo, setAddingTo] = useState<string | null>(null);
+  const [addSearch, setAddSearch] = useState("");
+  const [addSelected, setAddSelected] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from("hall_layout").select("config").eq("id", "main").maybeSingle();
+      setVipTables(buildSlots(normaliseConfig(data?.config)).filter(s => s.kind === "vip").map(s => s.label));
+    })();
+  }, []);
 
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
   useEffect(() => {
@@ -338,6 +351,40 @@ const SeatingChart = () => {
   const showUnassignedPool = unassigned.length > 0 && (!globalSearch || filteredUnassigned.length > 0);
   const noResults = globalSearch && filteredTableNames.length === 0 && filteredUnassigned.length === 0;
 
+  // VIP cards lead the list; empty ones stay visible so guests can be added to them.
+  const isVip = (name: string) => vipTables.some(v => v.toLowerCase() === name.trim().toLowerCase());
+  const vipCards = vipTables.filter(v =>
+    !globalSearch || v.toLowerCase().includes(searchLower) || filteredTableNames.some(n => n.trim().toLowerCase() === v.toLowerCase())
+  ).map(v => allTableNames.find(n => n.trim().toLowerCase() === v.toLowerCase()) ?? v);
+  const listTableNames = [...vipCards, ...filteredTableNames.filter(n => !isVip(n))];
+
+  const openAddGuests = (tableName: string) => {
+    setAddingTo(tableName);
+    setAddSearch("");
+    setAddSelected(new Set());
+  };
+
+  // Everyone not already at this table, unassigned guests first.
+  const addQuery = addSearch.trim().toLowerCase();
+  const addCandidates = !addingTo ? [] : guests
+    .filter(g => g.table_assignment !== addingTo && (!addQuery || g.full_name.toLowerCase().includes(addQuery)))
+    .sort((a, b) => Number(!!a.table_assignment) - Number(!!b.table_assignment) || a.full_name.localeCompare(b.full_name));
+
+  const handleAddGuests = async () => {
+    if (!addingTo || addSelected.size === 0) return;
+    setIsSaving(true);
+    const ids = Array.from(addSelected);
+    try {
+      const { error } = await (supabase.from("guests" as any) as any).update({ table_assignment: addingTo }).in("id", ids);
+      if (error) throw error;
+      setGuests(prev => prev.map(g => addSelected.has(g.id) ? { ...g, table_assignment: addingTo } : g));
+      toast({ title: `Added ${ids.length} guest${ids.length !== 1 ? "s" : ""} to ${addingTo}` });
+      setAddingTo(null);
+    } catch (err: any) {
+      toast({ title: "Failed to add guests", description: err.message, variant: "destructive" });
+    } finally { setIsSaving(false); }
+  };
+
   const renameInlineUI = (tableName: string) =>
     renamingTable === tableName ? (
       <div className="flex items-center gap-1.5 flex-1 min-w-0">
@@ -472,19 +519,21 @@ const SeatingChart = () => {
       {/* ── LIST VIEW ── */}
       {viewMode === "list" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredTableNames.map((tableName) => {
-            const tableGuests = tableMap.get(tableName)!;
+          {listTableNames.map((tableName) => {
+            const tableGuests = tableMap.get(tableName) ?? [];
+            const vip = isVip(tableName);
             const visibleGuests = getVisibleGuests(tableGuests);
             const seats = totalSeats(tableGuests);
             const isRenaming = renamingTable === tableName;
 
             return (
-              <div key={tableName} className="glass-card p-4 group">
+              <div key={tableName} className={`glass-card p-4 group ${vip ? "border-primary/30" : ""}`}>
                 <div className="flex items-center justify-between mb-1 gap-2">
                   {isRenaming ? (
                     renameInlineUI(tableName)
                   ) : (
                     <div className="flex items-center gap-1.5 min-w-0">
+                      {vip && <Crown className="w-3.5 h-3.5 text-primary flex-shrink-0" aria-label="VIP table" />}
                       <h3 className="font-serif text-base text-foreground truncate">{tableName}</h3>
                       <button
                         onClick={() => { setRenamingTable(tableName); setRenameInput(tableName); }}
@@ -531,10 +580,19 @@ const SeatingChart = () => {
                       </div>
                     </div>
                   ))}
-                  {globalSearch && visibleGuests.length === 0 && (
+                  {globalSearch && tableGuests.length > 0 && visibleGuests.length === 0 && (
                     <p className="text-xs text-muted-foreground text-center py-1 italic">No match in this table</p>
                   )}
+                  {tableGuests.length === 0 && (
+                    <p className="text-xs text-muted-foreground text-center py-2 italic">Nobody seated here yet</p>
+                  )}
                 </div>
+                <button
+                  onClick={() => openAddGuests(tableName)}
+                  className="mt-3 w-full flex items-center justify-center gap-1.5 text-xs py-1.5 rounded-lg border border-dashed border-border/60 text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />Add guests
+                </button>
               </div>
             );
           })}
@@ -646,6 +704,58 @@ const SeatingChart = () => {
             <Button variant="outline" size="sm" onClick={() => setBulkAssignOpen(false)} className="border-border/50">Cancel</Button>
             <Button onClick={handleBulkAssign} disabled={isSaving || !bulkAssignInput.trim()} className="bg-primary hover:bg-primary/90 text-primary-foreground">
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Assign"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add guests to a table */}
+      <Dialog open={!!addingTo} onOpenChange={o => !o && setAddingTo(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add guests to {addingTo}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 pt-2">
+            <Input
+              placeholder="Search guests"
+              value={addSearch}
+              onChange={e => setAddSearch(e.target.value)}
+              className="bg-background/50 border-border/50 rounded-xl"
+              autoFocus
+            />
+            {addingTo && (
+              <p className="text-xs text-muted-foreground">
+                {totalSeats(tableMap.get(addingTo) ?? []) + guests.filter(g => addSelected.has(g.id)).reduce((n, g) => n + g.party_size, 0)} / {TABLE_CAPACITY} seats after adding
+              </p>
+            )}
+            <div className="max-h-72 overflow-y-auto space-y-1 pr-1">
+              {addCandidates.length === 0 && <p className="text-sm text-muted-foreground italic py-4 text-center">No guests found</p>}
+              {addCandidates.map(g => {
+                const checked = addSelected.has(g.id);
+                return (
+                  <label key={g.id} className={`flex items-center gap-3 px-2 py-2 rounded-lg cursor-pointer transition-colors ${checked ? "bg-primary/10" : "hover:bg-background/40"}`}>
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => setAddSelected(prev => { const next = new Set(prev); if (next.has(g.id)) next.delete(g.id); else next.add(g.id); return next; })}
+                      className="accent-primary"
+                    />
+                    <span className="flex-1 min-w-0">
+                      <span className="block text-sm text-foreground truncate">{g.full_name}</span>
+                      <span className="block text-xs text-muted-foreground">
+                        {g.party_size > 1 ? `Party of ${g.party_size}` : "1 seat"} · {g.table_assignment ? `moves from ${g.table_assignment}` : "Unassigned"}
+                      </span>
+                    </span>
+                    <SideBadge side={g.side} />
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+          <DialogFooter className="gap-2 pt-2">
+            <Button variant="outline" size="sm" onClick={() => setAddingTo(null)} className="border-border/50">Cancel</Button>
+            <Button onClick={handleAddGuests} disabled={isSaving || addSelected.size === 0} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+              {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : `Add ${addSelected.size || ""}`.trim()}
             </Button>
           </DialogFooter>
         </DialogContent>
